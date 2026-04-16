@@ -1,34 +1,40 @@
 FROM node:20-alpine AS base
-RUN npm install -g pnpm@10
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
-# Dependencies stage
-FROM base AS deps
+# ── installer: resolve & install all workspace deps ────────────────────────────
+FROM base AS installer
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/config/package.json ./packages/config/
-COPY packages/core/package.json ./packages/core/
-RUN pnpm install --frozen-lockfile --prod=false
 
-# Source stage
-FROM base AS runner
+# Copy workspace manifests (pnpm needs all package.json files to resolve workspace)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json     ./apps/api/
+COPY apps/web/package.json     ./apps/web/
+COPY packages/config/package.json ./packages/config/
+COPY packages/core/package.json   ./packages/core/
+COPY packages/ui/package.json     ./packages/ui/
+
+RUN pnpm install --frozen-lockfile
+
+# ── deployer: copy source, create self-contained bundle ───────────────────────
+FROM installer AS deployer
+WORKDIR /app
+
+COPY apps/api     ./apps/api
+COPY packages/config ./packages/config
+COPY packages/core   ./packages/core
+
+# pnpm deploy --prod resolves workspace deps into node_modules (no symlinks)
+RUN pnpm deploy --filter @nudge/api --prod /app/standalone
+
+# ── runner: minimal production image ──────────────────────────────────────────
+FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copy installed node_modules
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+COPY --from=deployer /app/standalone ./
 
-# Copy source
-COPY apps/api ./apps/api
-COPY packages/config ./packages/config
-COPY packages/core ./packages/core
-
-WORKDIR /app/apps/api
-
-# Non-root user
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nudge
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nudge
 USER nudge
 
 EXPOSE 3001

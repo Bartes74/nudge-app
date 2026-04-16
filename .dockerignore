@@ -1,0 +1,15 @@
+**/.git
+**/.env
+**/.env.local
+**/.env.*.local
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/*.log
+docs/
+.github/
+supabase/
+apps/web/src
+apps/web/public
