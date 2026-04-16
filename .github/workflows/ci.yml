@@ -14,6 +14,7 @@ jobs:
 
     env:
       TURBO_TELEMETRY_DISABLED: "1"
+      SKIP_ENV_VALIDATION: "1"
 
     steps:
       - name: Checkout
@@ -43,6 +44,7 @@ jobs:
       - name: Build
         run: pnpm build
         env:
-          SKIP_ENV_VALIDATION: "1"
-          # Sentry source map upload disabled in CI unless SENTRY_AUTH_TOKEN is set
+          # Sentry source map upload only when secret is configured
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
