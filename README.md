@@ -30,7 +30,9 @@ pnpm dev
 Po uruchomieniu:
 - Web: http://localhost:3000
 - API: http://localhost:3001
-- Supabase Studio: http://localhost:54323
+- Supabase Studio: http://localhost:54343
+- Supabase API: http://localhost:54341
+- Supabase DB: postgresql://postgres:postgres@localhost:54342/postgres
 
 ## Komendy
 

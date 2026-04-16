@@ -19,7 +19,8 @@
     "supabase:stop": "supabase stop",
     "supabase:migrate": "supabase db push",
     "supabase:reset": "supabase db reset",
-    "supabase:gen-types": "supabase gen types typescript --local > packages/core/src/types/db.ts"
+    "supabase:gen-types": "supabase gen types typescript --local > packages/core/src/types/db.ts",
+    "supabase:status": "supabase status"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
