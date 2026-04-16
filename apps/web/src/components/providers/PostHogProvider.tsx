@@ -2,13 +2,22 @@
 
 import { useEffect } from 'react'
 import { initPostHog, posthog } from '@/lib/posthog'
-import { env } from '@/lib/env'
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
+interface PostHogProviderProps {
+  children: React.ReactNode
+  apiKey: string
+  apiHost: string
+}
+
+export function PostHogProvider({
+  children,
+  apiKey,
+  apiHost,
+}: PostHogProviderProps) {
   useEffect(() => {
-    initPostHog(env.NEXT_PUBLIC_POSTHOG_KEY, env.NEXT_PUBLIC_POSTHOG_HOST)
+    initPostHog(apiKey, apiHost)
     posthog.capture('app_loaded')
-  }, [])
+  }, [apiKey, apiHost])
 
   return <>{children}</>
 }

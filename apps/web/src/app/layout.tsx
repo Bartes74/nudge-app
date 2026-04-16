@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
+import { env } from '@/lib/env'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -27,7 +28,12 @@ export default function RootLayout({
   return (
     <html lang="pl">
       <body>
-        <PostHogProvider>{children}</PostHogProvider>
+        <PostHogProvider
+            apiKey={env.NEXT_PUBLIC_POSTHOG_KEY}
+            apiHost={env.NEXT_PUBLIC_POSTHOG_HOST}
+          >
+            {children}
+          </PostHogProvider>
       </body>
     </html>
   )
