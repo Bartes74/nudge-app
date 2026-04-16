@@ -1,4 +1,4 @@
-app            = "nudge-api"
+app = "nudge-dajer-api"
 primary_region = "fra"
 
 [build]
