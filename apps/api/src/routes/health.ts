@@ -1,14 +1,12 @@
 import { type FastifyInstance } from 'fastify'
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { version } = require('../../package.json') as { version: string }
+// pnpm sets npm_package_version from package.json at runtime
+const VERSION = process.env['npm_package_version'] ?? '0.0.0'
 
-export async function healthRoute(fastify: FastifyInstance) {
-  fastify.get('/health', async () => {
-    return {
-      status: 'ok',
-      version,
-      timestamp: new Date().toISOString(),
-    }
-  })
+export function healthRoute(fastify: FastifyInstance) {
+  fastify.get('/health', () => ({
+    status: 'ok',
+    version: VERSION,
+    timestamp: new Date().toISOString(),
+  }))
 }

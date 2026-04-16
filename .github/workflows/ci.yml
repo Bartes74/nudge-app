@@ -12,6 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    env:
+      TURBO_TELEMETRY_DISABLED: "1"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
