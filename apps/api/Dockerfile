@@ -24,7 +24,7 @@ COPY packages/config ./packages/config
 COPY packages/core   ./packages/core
 
 # pnpm deploy --prod resolves workspace deps into node_modules (no symlinks)
-RUN pnpm deploy --filter @nudge/api --prod /app/standalone
+RUN pnpm deploy --filter @nudge/api --prod --legacy /app/standalone
 
 # ── runner: minimal production image ──────────────────────────────────────────
 FROM node:20-alpine AS runner
