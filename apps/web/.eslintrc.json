@@ -1,8 +1,4 @@
 {
   "root": true,
-  "extends": ["next/core-web-vitals"],
-  "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/consistent-type-imports": "warn"
-  }
+  "extends": ["next/core-web-vitals"]
 }
