@@ -1,5 +1,19 @@
 // @ts-check
 import { withSentryConfig } from '@sentry/nextjs'
+import withPWAInit from '@ducanh2912/next-pwa'
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  swcMinify: true,
+  // Disable SW in dev to avoid stale cache confusion
+  disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -17,8 +31,10 @@ const hasSentryCredentials = Boolean(
     process.env['SENTRY_PROJECT'],
 )
 
+const configWithPWA = withPWA(nextConfig)
+
 export default hasSentryCredentials
-  ? withSentryConfig(nextConfig, {
+  ? withSentryConfig(configWithPWA, {
       org: process.env['SENTRY_ORG'],
       project: process.env['SENTRY_PROJECT'],
       sourcemaps: {
@@ -30,4 +46,4 @@ export default hasSentryCredentials
       disableLogger: true,
       automaticVercelMonitors: true,
     })
-  : nextConfig
+  : configWithPWA

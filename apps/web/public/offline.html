@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brak połączenia — Nudge</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #fff;
+      color: #0f1729;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100svh;
+      padding: 2rem;
+      text-align: center;
+      gap: 1rem;
+    }
+    .icon { font-size: 3rem; }
+    h1 { font-size: 1.5rem; font-weight: 600; }
+    p { font-size: 0.9rem; color: #64748b; max-width: 280px; }
+    button {
+      margin-top: 0.5rem;
+      padding: 0.625rem 1.5rem;
+      background: #f97316;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f1729; color: #f1f5f9; }
+      p { color: #94a3b8; }
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">📡</div>
+  <h1>Brak połączenia</h1>
+  <p>Sprawdź swoje połączenie z internetem i spróbuj ponownie.</p>
+  <button onclick="window.location.reload()">Odśwież</button>
+</body>
+</html>
