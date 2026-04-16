@@ -1,0 +1,28 @@
+{
+  "name": "nudge-app",
+  "private": true,
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:migrate": "supabase db push",
+    "supabase:reset": "supabase db reset",
+    "supabase:gen-types": "supabase gen types typescript --local > packages/core/src/types/db.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "prettier": "^3.0.0"
+  }
+}

@@ -6,21 +6,25 @@ node_modules/
 .next/
 dist/
 build/
+out/
 *.tsbuildinfo
 
 # Env
 .env
 .env.local
 .env.*.local
+!.env.example
 
 # IDE
 .vscode/
 .idea/
 .DS_Store
+Thumbs.db
 
 # Logs
 *.log
 npm-debug.log*
+pnpm-debug.log*
 
 # Supabase
 supabase/.branches/
@@ -33,3 +37,9 @@ supabase/.temp/
 coverage/
 playwright-report/
 test-results/
+
+# Sentry
+.sentryclirc
+
+# Fly.io
+.fly/
