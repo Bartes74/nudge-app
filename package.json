@@ -19,11 +19,20 @@
     "supabase:stop": "supabase stop",
     "supabase:migrate": "supabase db push",
     "supabase:reset": "supabase db reset",
-    "supabase:gen-types": "supabase gen types typescript --local > packages/core/src/types/db.ts",
+    "supabase:gen-types": "supabase gen types typescript --local 2>/dev/null > packages/core/src/types/db.ts",
     "supabase:status": "supabase status"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
     "prettier": "^3.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "core-js",
+      "esbuild",
+      "protobufjs",
+      "unrs-resolver"
+    ]
   }
 }

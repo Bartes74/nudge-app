@@ -1,0 +1,19 @@
+{
+  "name": "@nudge/core",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./types/db": "./src/types/db.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'lint: ok'",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "@nudge/config": "workspace:*",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
