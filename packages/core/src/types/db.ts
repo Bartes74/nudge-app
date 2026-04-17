@@ -34,104 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      checkin_sessions: {
-        Row: {
-          id: string
-          user_id: string
-          week_of: string
-          workouts_completed: number | null
-          workouts_planned: number | null
-          avg_workout_rating: number | null
-          weight_measurements: number | null
-          weight_start_kg: number | null
-          weight_end_kg: number | null
-          weight_delta_kg: number | null
-          subjective_energy: number | null
-          subjective_recovery: number | null
-          subjective_motivation: number | null
-          subjective_stress: number | null
-          subjective_sleep: number | null
-          wins_text: string | null
-          struggles_text: string | null
-          focus_next_week: string | null
-          verdict: Database["public"]["Enums"]["checkin_verdict"] | null
-          verdict_summary: string | null
-          recommended_action: string | null
-          plan_change_needed: boolean
-          plan_change_details: Json | null
-          submitted_at: string | null
-          analysis_at: string | null
-          llm_call_id: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          week_of: string
-          workouts_completed?: number | null
-          workouts_planned?: number | null
-          avg_workout_rating?: number | null
-          weight_measurements?: number | null
-          weight_start_kg?: number | null
-          weight_end_kg?: number | null
-          weight_delta_kg?: number | null
-          subjective_energy?: number | null
-          subjective_recovery?: number | null
-          subjective_motivation?: number | null
-          subjective_stress?: number | null
-          subjective_sleep?: number | null
-          wins_text?: string | null
-          struggles_text?: string | null
-          focus_next_week?: string | null
-          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
-          verdict_summary?: string | null
-          recommended_action?: string | null
-          plan_change_needed?: boolean
-          plan_change_details?: Json | null
-          submitted_at?: string | null
-          analysis_at?: string | null
-          llm_call_id?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          week_of?: string
-          workouts_completed?: number | null
-          workouts_planned?: number | null
-          avg_workout_rating?: number | null
-          weight_measurements?: number | null
-          weight_start_kg?: number | null
-          weight_end_kg?: number | null
-          weight_delta_kg?: number | null
-          subjective_energy?: number | null
-          subjective_recovery?: number | null
-          subjective_motivation?: number | null
-          subjective_stress?: number | null
-          subjective_sleep?: number | null
-          wins_text?: string | null
-          struggles_text?: string | null
-          focus_next_week?: string | null
-          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
-          verdict_summary?: string | null
-          recommended_action?: string | null
-          plan_change_needed?: boolean
-          plan_change_details?: Json | null
-          submitted_at?: string | null
-          analysis_at?: string | null
-          llm_call_id?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkin_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ai_tasks: {
         Row: {
           completed_at: string | null
@@ -293,6 +195,111 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "body_measurements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkin_sessions: {
+        Row: {
+          analysis_at: string | null
+          avg_workout_rating: number | null
+          created_at: string
+          focus_next_week: string | null
+          id: string
+          llm_call_id: string | null
+          plan_change_details: Json | null
+          plan_change_needed: boolean
+          recommended_action: string | null
+          struggles_text: string | null
+          subjective_energy: number | null
+          subjective_motivation: number | null
+          subjective_recovery: number | null
+          subjective_sleep: number | null
+          subjective_stress: number | null
+          submitted_at: string | null
+          user_id: string
+          verdict: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary: string | null
+          week_of: string
+          weight_delta_kg: number | null
+          weight_end_kg: number | null
+          weight_measurements: number | null
+          weight_start_kg: number | null
+          wins_text: string | null
+          workouts_completed: number | null
+          workouts_planned: number | null
+        }
+        Insert: {
+          analysis_at?: string | null
+          avg_workout_rating?: number | null
+          created_at?: string
+          focus_next_week?: string | null
+          id?: string
+          llm_call_id?: string | null
+          plan_change_details?: Json | null
+          plan_change_needed?: boolean
+          recommended_action?: string | null
+          struggles_text?: string | null
+          subjective_energy?: number | null
+          subjective_motivation?: number | null
+          subjective_recovery?: number | null
+          subjective_sleep?: number | null
+          subjective_stress?: number | null
+          submitted_at?: string | null
+          user_id: string
+          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary?: string | null
+          week_of: string
+          weight_delta_kg?: number | null
+          weight_end_kg?: number | null
+          weight_measurements?: number | null
+          weight_start_kg?: number | null
+          wins_text?: string | null
+          workouts_completed?: number | null
+          workouts_planned?: number | null
+        }
+        Update: {
+          analysis_at?: string | null
+          avg_workout_rating?: number | null
+          created_at?: string
+          focus_next_week?: string | null
+          id?: string
+          llm_call_id?: string | null
+          plan_change_details?: Json | null
+          plan_change_needed?: boolean
+          recommended_action?: string | null
+          struggles_text?: string | null
+          subjective_energy?: number | null
+          subjective_motivation?: number | null
+          subjective_recovery?: number | null
+          subjective_sleep?: number | null
+          subjective_stress?: number | null
+          submitted_at?: string | null
+          user_id?: string
+          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary?: string | null
+          week_of?: string
+          weight_delta_kg?: number | null
+          weight_end_kg?: number | null
+          weight_measurements?: number | null
+          weight_start_kg?: number | null
+          wins_text?: string | null
+          workouts_completed?: number | null
+          workouts_planned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_sessions_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1380,6 +1387,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "user_question_asks_checkin_session_id_fkey"
+            columns: ["checkin_session_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_question_asks_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
@@ -1391,13 +1405,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_question_asks_checkin_session_id_fkey"
-            columns: ["checkin_session_id"]
-            isOneToOne: false
-            referencedRelation: "checkin_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1731,15 +1738,6 @@ export type Database = {
         | "classify_intent"
         | "proactive_nudge"
         | "recalculate_targets"
-      checkin_verdict:
-        | "on_track"
-        | "needs_adjustment"
-        | "plan_change_recommended"
-      question_source:
-        | "contextual"
-        | "proactive"
-        | "checkin"
-        | "onboarding"
       answer_type:
         | "text_short"
         | "text_long"
@@ -1750,6 +1748,10 @@ export type Database = {
         | "scale"
         | "measurement"
         | "photo"
+      checkin_verdict:
+        | "on_track"
+        | "needs_adjustment"
+        | "plan_change_recommended"
       coach_intent:
         | "technical_exercise"
         | "diet"
@@ -1802,6 +1804,7 @@ export type Database = {
         | "layer_2_segment"
         | "layer_3_behavioral"
         | "layer_4_advanced"
+      question_source: "contextual" | "proactive" | "checkin" | "onboarding"
       safety_flag:
         | "underage"
         | "pregnancy"
@@ -1965,8 +1968,6 @@ export const Constants = {
         "proactive_nudge",
         "recalculate_targets",
       ],
-      checkin_verdict: ["on_track", "needs_adjustment", "plan_change_recommended"],
-      question_source: ["contextual", "proactive", "checkin", "onboarding"],
       answer_type: [
         "text_short",
         "text_long",
@@ -1977,6 +1978,11 @@ export const Constants = {
         "scale",
         "measurement",
         "photo",
+      ],
+      checkin_verdict: [
+        "on_track",
+        "needs_adjustment",
+        "plan_change_recommended",
       ],
       coach_intent: [
         "technical_exercise",
@@ -2036,6 +2042,7 @@ export const Constants = {
         "layer_3_behavioral",
         "layer_4_advanced",
       ],
+      question_source: ["contextual", "proactive", "checkin", "onboarding"],
       safety_flag: [
         "underage",
         "pregnancy",
