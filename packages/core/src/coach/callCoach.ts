@@ -2,7 +2,23 @@ import OpenAI from 'openai'
 import { fastClassifyIntent, classifyIntent } from './classifyIntent'
 import { routeToPrompt } from './routeToPrompt'
 import { applyGuardrails } from './applyGuardrails'
-import type { CoachContext, CoachIntent } from './types'
+import type { CoachContext, CoachIntent, TonePreset } from './types'
+
+/**
+ * Polish directive injected into system prompts when `{{tone_preset}}` placeholder is present.
+ * Maps the user's `user_profile.tone_preset` to a human-readable instruction the LLM can act on.
+ * Fallback is `warm_encouraging` (product default for users who never chose a tone).
+ */
+const TONE_DIRECTIVES: Record<TonePreset, string> = {
+  warm_encouraging: 'ciepły, wspierający — dodaj szczerą zachętę bez frazesów',
+  partnering: 'partnerski — mów jak równy z równym, używaj „my", bez dystansu',
+  factual_technical: 'rzeczowy, techniczny — fakty, liczby, kroki; minimum emocji',
+  calm_guided: 'spokojny, prowadzący — krok po kroku, nie zakładaj wcześniejszej wiedzy',
+}
+
+function toneDirective(tone: TonePreset | null | undefined): string {
+  return TONE_DIRECTIVES[tone ?? 'warm_encouraging']
+}
 
 export interface CoachPromptRow {
   id: string | null
@@ -34,7 +50,7 @@ export interface CoachStreamResult {
   tokensOut: number
 }
 
-function interpolateTemplate(template: string, context: CoachContext & { user_message: string }): string {
+export function interpolateTemplate(template: string, context: CoachContext & { user_message: string }): string {
   return template
     .replace('{{user_message}}', context.user_message)
     .replace('{{segment}}', context.segment ?? 'unknown')
@@ -49,6 +65,7 @@ function interpolateTemplate(template: string, context: CoachContext & { user_me
     .replace('{{strategy_notes}}', context.strategy_notes ?? 'brak')
     .replace('{{workouts_7d}}', String(context.workouts_7d ?? 0))
     .replace('{{weight_trend}}', context.weight_trend ?? 'brak danych')
+    .replace('{{tone_preset}}', toneDirective(context.tone_preset))
 }
 
 export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResult> {

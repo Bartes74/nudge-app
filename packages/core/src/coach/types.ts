@@ -22,6 +22,15 @@ export interface GuardrailResult {
   flags: string[]
 }
 
+export const TONE_PRESETS = [
+  'warm_encouraging',
+  'partnering',
+  'factual_technical',
+  'calm_guided',
+] as const
+
+export type TonePreset = (typeof TONE_PRESETS)[number]
+
 export interface CoachContext {
   segment?: string
   primary_goal?: string | null
@@ -35,4 +44,6 @@ export interface CoachContext {
   strategy_notes?: string | null
   workouts_7d?: number
   weight_trend?: string | null
+  /** User's preferred coach tone from user_profile.tone_preset. Available as {{tone_preset}} in prompt templates. */
+  tone_preset?: TonePreset | null
 }

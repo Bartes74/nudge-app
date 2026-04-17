@@ -52,7 +52,7 @@ export async function POST(
   const [profileRes, signalsRes, safetyRes] = await Promise.all([
     supabase
       .from('user_profile')
-      .select('primary_goal, experience_level, current_weight_kg')
+      .select('primary_goal, experience_level, current_weight_kg, tone_preset')
       .eq('user_id', user.id)
       .single(),
     supabase
@@ -75,6 +75,7 @@ export async function POST(
     segment: profile?.experience_level ?? undefined,
     primary_goal: profile?.primary_goal ?? null,
     workouts_7d: signals?.coach_messages_sent_7d ?? 0,
+    tone_preset: profile?.tone_preset ?? null,
   }
 
   // Load exercise context if relevant
