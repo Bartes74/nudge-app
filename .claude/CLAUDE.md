@@ -165,9 +165,9 @@ pnpm build --filter web
 
 ## Bieżący stan (aktualizuj po każdej iteracji)
 
-- **Ostatnia ukończona iteracja:** Brak (przed Iteracją 0)
-- **Aktywne migracje:** —
-- **Otwarte feature flags:** —
+- **Ostatnia ukończona iteracja:** Iteracja 4 — Plan treningowy (2026-04-17)
+- **Aktywne migracje:** 20260418000000_training_plan_tables, 20260418100000_catalog_rls
+- **Otwarte feature flags:** NEXT_PUBLIC_DEV_MODE (sandbox kalkulatorów)
 - **Znane bugi w produkcji:** —
 
 ---

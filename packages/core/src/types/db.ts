@@ -34,6 +34,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_tasks: {
+        Row: {
+          completed_at: string | null
+          error: string | null
+          id: string
+          input_payload: Json | null
+          output_payload: Json | null
+          queued_at: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["ai_task_status"]
+          task_type: Database["public"]["Enums"]["ai_task_type"]
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          input_payload?: Json | null
+          output_payload?: Json | null
+          queued_at?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ai_task_status"]
+          task_type: Database["public"]["Enums"]["ai_task_type"]
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          input_payload?: Json | null
+          output_payload?: Json | null
+          queued_at?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ai_task_status"]
+          task_type?: Database["public"]["Enums"]["ai_task_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          alternatives_slugs: string[]
+          category: Database["public"]["Enums"]["exercise_category"] | null
+          common_mistakes: string | null
+          created_at: string
+          deprecated: boolean
+          difficulty: Database["public"]["Enums"]["difficulty"] | null
+          equipment_required: string[]
+          id: string
+          is_compound: boolean
+          name_en: string | null
+          name_pl: string
+          primary_muscles: string[]
+          secondary_muscles: string[]
+          slug: string
+          tags: string[]
+          technique_notes: string | null
+          video_url: string | null
+        }
+        Insert: {
+          alternatives_slugs?: string[]
+          category?: Database["public"]["Enums"]["exercise_category"] | null
+          common_mistakes?: string | null
+          created_at?: string
+          deprecated?: boolean
+          difficulty?: Database["public"]["Enums"]["difficulty"] | null
+          equipment_required?: string[]
+          id?: string
+          is_compound?: boolean
+          name_en?: string | null
+          name_pl: string
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          slug: string
+          tags?: string[]
+          technique_notes?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          alternatives_slugs?: string[]
+          category?: Database["public"]["Enums"]["exercise_category"] | null
+          common_mistakes?: string | null
+          created_at?: string
+          deprecated?: boolean
+          difficulty?: Database["public"]["Enums"]["difficulty"] | null
+          equipment_required?: string[]
+          id?: string
+          is_compound?: boolean
+          name_en?: string | null
+          name_pl?: string
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          slug?: string
+          tags?: string[]
+          technique_notes?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       field_explanations: {
         Row: {
           estimated_time_seconds: number | null
@@ -70,6 +177,186 @@ export type Database = {
         }
         Relationships: []
       }
+      llm_calls: {
+        Row: {
+          ai_task_id: string | null
+          cost_usd: number | null
+          created_at: string
+          id: string
+          latency_ms: number | null
+          model: string
+          output_valid: boolean
+          prompt_id: string | null
+          prompt_version: number | null
+          provider: string
+          retries: number
+          tokens_in: number | null
+          tokens_out: number | null
+          used_structured_output: boolean
+          user_id: string | null
+        }
+        Insert: {
+          ai_task_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          latency_ms?: number | null
+          model: string
+          output_valid?: boolean
+          prompt_id?: string | null
+          prompt_version?: number | null
+          provider: string
+          retries?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+          used_structured_output?: boolean
+          user_id?: string | null
+        }
+        Update: {
+          ai_task_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          id?: string
+          latency_ms?: number | null
+          model?: string
+          output_valid?: boolean
+          prompt_id?: string | null
+          prompt_version?: number | null
+          provider?: string
+          retries?: number
+          tokens_in?: number | null
+          tokens_out?: number | null
+          used_structured_output?: boolean
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_calls_ai_task_id_fkey"
+            columns: ["ai_task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "llm_calls_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "llm_calls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_exercises: {
+        Row: {
+          exercise_id: string | null
+          id: string
+          order_num: number
+          plan_workout_id: string
+          reps_max: number | null
+          reps_min: number | null
+          rest_seconds: number | null
+          rir_target: number | null
+          rpe_target: number | null
+          sets: number | null
+          substitute_exercise_ids: string[]
+          technique_notes: string | null
+          tempo: string | null
+        }
+        Insert: {
+          exercise_id?: string | null
+          id?: string
+          order_num?: number
+          plan_workout_id: string
+          reps_max?: number | null
+          reps_min?: number | null
+          rest_seconds?: number | null
+          rir_target?: number | null
+          rpe_target?: number | null
+          sets?: number | null
+          substitute_exercise_ids?: string[]
+          technique_notes?: string | null
+          tempo?: string | null
+        }
+        Update: {
+          exercise_id?: string | null
+          id?: string
+          order_num?: number
+          plan_workout_id?: string
+          reps_max?: number | null
+          reps_min?: number | null
+          rest_seconds?: number | null
+          rir_target?: number | null
+          rpe_target?: number | null
+          sets?: number | null
+          substitute_exercise_ids?: string[]
+          technique_notes?: string | null
+          tempo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_exercises_plan_workout_id_fkey"
+            columns: ["plan_workout_id"]
+            isOneToOne: false
+            referencedRelation: "plan_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_workouts: {
+        Row: {
+          cooldown_notes: string | null
+          day_label: string | null
+          duration_min_estimated: number | null
+          id: string
+          name: string | null
+          order_in_week: number
+          plan_version_id: string
+          warmup_notes: string | null
+        }
+        Insert: {
+          cooldown_notes?: string | null
+          day_label?: string | null
+          duration_min_estimated?: number | null
+          id?: string
+          name?: string | null
+          order_in_week?: number
+          plan_version_id: string
+          warmup_notes?: string | null
+        }
+        Update: {
+          cooldown_notes?: string | null
+          day_label?: string | null
+          duration_min_estimated?: number | null
+          id?: string
+          name?: string | null
+          order_in_week?: number
+          plan_version_id?: string
+          warmup_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_workouts_plan_version_id_fkey"
+            columns: ["plan_version_id"]
+            isOneToOne: false
+            referencedRelation: "training_plan_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_events: {
         Row: {
           event_name: string
@@ -104,6 +391,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prompts: {
+        Row: {
+          created_at: string
+          deprecated: boolean
+          id: string
+          output_schema: Json | null
+          purpose: string | null
+          slug: string
+          system_template: string | null
+          tone_preset: Database["public"]["Enums"]["tone_preset"] | null
+          user_template: string | null
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          deprecated?: boolean
+          id?: string
+          output_schema?: Json | null
+          purpose?: string | null
+          slug: string
+          system_template?: string | null
+          tone_preset?: Database["public"]["Enums"]["tone_preset"] | null
+          user_template?: string | null
+          version: number
+        }
+        Update: {
+          created_at?: string
+          deprecated?: boolean
+          id?: string
+          output_schema?: Json | null
+          purpose?: string | null
+          slug?: string
+          system_template?: string | null
+          tone_preset?: Database["public"]["Enums"]["tone_preset"] | null
+          user_template?: string | null
+          version?: number
+        }
+        Relationships: []
       }
       question_library: {
         Row: {
@@ -162,6 +488,118 @@ export type Database = {
           why_we_ask?: string
         }
         Relationships: []
+      }
+      training_plan_versions: {
+        Row: {
+          additional_notes: string | null
+          assumptions_snapshot: Json | null
+          change_reason: string | null
+          created_at: string
+          created_by_ai_task_id: string | null
+          goal_snapshot: Json | null
+          id: string
+          llm_call_id: string | null
+          plan_id: string
+          progression_rules: Json | null
+          version_number: number
+          week_structure: Json | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          assumptions_snapshot?: Json | null
+          change_reason?: string | null
+          created_at?: string
+          created_by_ai_task_id?: string | null
+          goal_snapshot?: Json | null
+          id?: string
+          llm_call_id?: string | null
+          plan_id: string
+          progression_rules?: Json | null
+          version_number: number
+          week_structure?: Json | null
+        }
+        Update: {
+          additional_notes?: string | null
+          assumptions_snapshot?: Json | null
+          change_reason?: string | null
+          created_at?: string
+          created_by_ai_task_id?: string | null
+          goal_snapshot?: Json | null
+          id?: string
+          llm_call_id?: string | null
+          plan_id?: string
+          progression_rules?: Json | null
+          version_number?: number
+          week_structure?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_plan_versions_created_by_ai_task_id_fkey"
+            columns: ["created_by_ai_task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_plan_versions_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_plans: {
+        Row: {
+          current_version_id: string | null
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          name: string | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          current_version_id?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          current_version_id?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_plans_current_version_fk"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "training_plan_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_equipment: {
         Row: {
@@ -646,6 +1084,21 @@ export type Database = {
         | "active"
         | "very_active"
       age_bucket: "under_25" | "age_25_40" | "age_40_55" | "age_55_plus"
+      ai_task_status:
+        | "queued"
+        | "running"
+        | "completed"
+        | "failed"
+        | "cancelled"
+      ai_task_type:
+        | "generate_training_plan"
+        | "generate_nutrition_plan"
+        | "analyze_meal_photo"
+        | "weekly_checkin_analysis"
+        | "pick_next_question"
+        | "classify_intent"
+        | "proactive_nudge"
+        | "recalculate_targets"
       answer_type:
         | "text_short"
         | "text_long"
@@ -656,6 +1109,15 @@ export type Database = {
         | "scale"
         | "measurement"
         | "photo"
+      difficulty: "beginner" | "intermediate" | "advanced"
+      exercise_category:
+        | "push"
+        | "pull"
+        | "legs"
+        | "core"
+        | "cardio"
+        | "mobility"
+        | "full_body"
       experience_level: "zero" | "beginner" | "amateur" | "advanced"
       fact_source:
         | "onboarding"
@@ -833,6 +1295,17 @@ export const Constants = {
         "very_active",
       ],
       age_bucket: ["under_25", "age_25_40", "age_40_55", "age_55_plus"],
+      ai_task_status: ["queued", "running", "completed", "failed", "cancelled"],
+      ai_task_type: [
+        "generate_training_plan",
+        "generate_nutrition_plan",
+        "analyze_meal_photo",
+        "weekly_checkin_analysis",
+        "pick_next_question",
+        "classify_intent",
+        "proactive_nudge",
+        "recalculate_targets",
+      ],
       answer_type: [
         "text_short",
         "text_long",
@@ -843,6 +1316,16 @@ export const Constants = {
         "scale",
         "measurement",
         "photo",
+      ],
+      difficulty: ["beginner", "intermediate", "advanced"],
+      exercise_category: [
+        "push",
+        "pull",
+        "legs",
+        "core",
+        "cardio",
+        "mobility",
+        "full_body",
       ],
       experience_level: ["zero", "beginner", "amateur", "advanced"],
       fact_source: [

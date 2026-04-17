@@ -15,7 +15,12 @@
     "./rules/macros": "./src/rules/macros.ts",
     "./rules/volume": "./src/rules/volume.ts",
     "./rules/progression": "./src/rules/progression.ts",
-    "./rules/guardrails": "./src/rules/guardrails/index.ts"
+    "./rules/guardrails": "./src/rules/guardrails/index.ts",
+    "./llm/client": "./src/llm/client.ts",
+    "./planners/training/types": "./src/planners/training/types.ts",
+    "./planners/training/selectTemplate": "./src/planners/training/selectTemplate.ts",
+    "./planners/training/fillTemplate": "./src/planners/training/fillTemplate.ts",
+    "./planners/training/substituteExercise": "./src/planners/training/substituteExercise.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -29,5 +34,8 @@
     "@vitest/coverage-v8": "^1.6.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "openai": "^6.34.0"
   }
 }

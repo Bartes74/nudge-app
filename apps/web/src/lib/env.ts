@@ -28,4 +28,8 @@ export const env = createEnv({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required'),
+  OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
+  INNGEST_EVENT_KEY: z.string().min(1, 'INNGEST_EVENT_KEY is required').default('local'),
+  INNGEST_SIGNING_KEY: z.string().optional(),
 })
