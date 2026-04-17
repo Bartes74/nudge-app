@@ -16,8 +16,14 @@ export default defineConfig({
         'src/rules/guardrails/**/*.ts',
         'src/rules/calculateAgeBucket.ts',
         'src/rules/classifySegment.ts',
+        'src/signals/updateBehaviorSignals.ts',
       ],
-      exclude: ['src/rules/**/*.test.ts', 'src/rules/__tests__/**'],
+      exclude: [
+        'src/rules/**/*.test.ts',
+        'src/rules/__tests__/**',
+        'src/signals/**/*.test.ts',
+        'src/signals/__tests__/**',
+      ],
       thresholds: {
         lines: 90,
         functions: 90,

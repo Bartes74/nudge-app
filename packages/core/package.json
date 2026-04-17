@@ -20,7 +20,8 @@
     "./planners/training/types": "./src/planners/training/types.ts",
     "./planners/training/selectTemplate": "./src/planners/training/selectTemplate.ts",
     "./planners/training/fillTemplate": "./src/planners/training/fillTemplate.ts",
-    "./planners/training/substituteExercise": "./src/planners/training/substituteExercise.ts"
+    "./planners/training/substituteExercise": "./src/planners/training/substituteExercise.ts",
+    "./signals/updateBehaviorSignals": "./src/signals/updateBehaviorSignals.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -36,6 +37,7 @@
     "vitest": "^1.6.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
     "openai": "^6.34.0"
   }
 }

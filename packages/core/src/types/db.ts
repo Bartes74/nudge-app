@@ -1069,6 +1069,217 @@ export type Database = {
         }
         Relationships: []
       }
+      behavior_signals: {
+        Row: {
+          user_id: string
+          days_since_last_workout_log: number | null
+          workout_completion_rate_7d: number | null
+          workout_completion_rate_30d: number | null
+          meal_logs_per_day_7d: number | null
+          photo_vs_text_ratio: number | null
+          onboarding_fields_skipped: number
+          weight_log_regularity_score: number | null
+          avg_session_length_sec: number | null
+          last_question_answered_at: string | null
+          coach_messages_sent_7d: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          days_since_last_workout_log?: number | null
+          workout_completion_rate_7d?: number | null
+          workout_completion_rate_30d?: number | null
+          meal_logs_per_day_7d?: number | null
+          photo_vs_text_ratio?: number | null
+          onboarding_fields_skipped?: number
+          weight_log_regularity_score?: number | null
+          avg_session_length_sec?: number | null
+          last_question_answered_at?: string | null
+          coach_messages_sent_7d?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          days_since_last_workout_log?: number | null
+          workout_completion_rate_7d?: number | null
+          workout_completion_rate_30d?: number | null
+          meal_logs_per_day_7d?: number | null
+          photo_vs_text_ratio?: number | null
+          onboarding_fields_skipped?: number
+          weight_log_regularity_score?: number | null
+          avg_session_length_sec?: number | null
+          last_question_answered_at?: string | null
+          coach_messages_sent_7d?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "behavior_signals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_logs: {
+        Row: {
+          id: string
+          user_id: string
+          plan_workout_id: string | null
+          started_at: string
+          ended_at: string | null
+          duration_min: number | null
+          pre_mood: Database["public"]["Enums"]["pre_mood"] | null
+          pre_energy: Database["public"]["Enums"]["energy_level"] | null
+          overall_rating: number | null
+          went_well: string | null
+          went_poorly: string | null
+          what_to_improve: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan_workout_id?: string | null
+          started_at?: string
+          ended_at?: string | null
+          duration_min?: number | null
+          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
+          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
+          overall_rating?: number | null
+          went_well?: string | null
+          went_poorly?: string | null
+          what_to_improve?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan_workout_id?: string | null
+          started_at?: string
+          ended_at?: string | null
+          duration_min?: number | null
+          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
+          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
+          overall_rating?: number | null
+          went_well?: string | null
+          went_poorly?: string | null
+          what_to_improve?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_logs_plan_workout_id_fkey"
+            columns: ["plan_workout_id"]
+            isOneToOne: false
+            referencedRelation: "plan_workouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_log_exercises: {
+        Row: {
+          id: string
+          workout_log_id: string
+          exercise_id: string | null
+          plan_exercise_id: string | null
+          order_num: number
+          notes: string | null
+          was_substituted: boolean
+          original_exercise_id: string | null
+        }
+        Insert: {
+          id?: string
+          workout_log_id: string
+          exercise_id?: string | null
+          plan_exercise_id?: string | null
+          order_num?: number
+          notes?: string | null
+          was_substituted?: boolean
+          original_exercise_id?: string | null
+        }
+        Update: {
+          id?: string
+          workout_log_id?: string
+          exercise_id?: string | null
+          plan_exercise_id?: string | null
+          order_num?: number
+          notes?: string | null
+          was_substituted?: boolean
+          original_exercise_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_log_exercises_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_log_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_log_sets: {
+        Row: {
+          id: string
+          workout_log_exercise_id: string
+          set_number: number
+          weight_kg: number | null
+          reps: number | null
+          rir: number | null
+          to_failure: boolean
+          duration_sec: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          workout_log_exercise_id: string
+          set_number: number
+          weight_kg?: number | null
+          reps?: number | null
+          rir?: number | null
+          to_failure?: boolean
+          duration_sec?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          workout_log_exercise_id?: string
+          set_number?: number
+          weight_kg?: number | null
+          reps?: number | null
+          rir?: number | null
+          to_failure?: boolean
+          duration_sec?: number | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_log_sets_workout_log_exercise_id_fkey"
+            columns: ["workout_log_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "workout_log_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1157,6 +1368,8 @@ export type Database = {
         | "overtraining_signs"
       severity_level: "info" | "warning" | "critical"
       tone_preset: "warm_encouraging" | "partnering" | "factual_technical"
+      pre_mood: "bad" | "ok" | "good" | "great"
+      energy_level: "low" | "moderate" | "high" | "variable"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1370,6 +1583,8 @@ export const Constants = {
       ],
       severity_level: ["info", "warning", "critical"],
       tone_preset: ["warm_encouraging", "partnering", "factual_technical"],
+      pre_mood: ["bad", "ok", "good", "great"],
+      energy_level: ["low", "moderate", "high", "variable"],
     },
   },
 } as const
