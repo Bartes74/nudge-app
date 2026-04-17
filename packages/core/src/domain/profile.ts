@@ -12,6 +12,8 @@ export type PrimaryGoal =
   | 'strength_performance'
   | 'general_health'
 
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+
 export type TonePreset = 'warm_encouraging' | 'partnering' | 'factual_technical'
 
 export type NutritionMode = 'simple' | 'ranges' | 'exact'

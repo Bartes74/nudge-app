@@ -24,4 +24,8 @@ export const env = createEnv({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
+  NEXT_PUBLIC_DEV_MODE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 })

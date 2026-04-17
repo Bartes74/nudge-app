@@ -9,16 +9,24 @@
     "./domain/fact": "./src/domain/fact.ts",
     "./rules/calculateAgeBucket": "./src/rules/calculateAgeBucket.ts",
     "./rules/classifySegment": "./src/rules/classifySegment.ts",
-    "./rules/generateFactsFromOnboarding": "./src/rules/generateFactsFromOnboarding.ts"
+    "./rules/generateFactsFromOnboarding": "./src/rules/generateFactsFromOnboarding.ts",
+    "./rules/bmr": "./src/rules/bmr.ts",
+    "./rules/tdee": "./src/rules/tdee.ts",
+    "./rules/macros": "./src/rules/macros.ts",
+    "./rules/volume": "./src/rules/volume.ts",
+    "./rules/progression": "./src/rules/progression.ts",
+    "./rules/guardrails": "./src/rules/guardrails/index.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "lint": "echo 'lint: ok'",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@nudge/config": "workspace:*",
+    "@vitest/coverage-v8": "^1.6.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   }
