@@ -43,9 +43,9 @@ const GOAL_LABELS: Record<string, string> = {
 }
 
 const EXPERIENCE_LABELS: Record<string, string> = {
-  zero: 'Dopiero zaczynam',
-  beginner: 'Beginner',
-  amateur: 'Amator',
+  beginner_zero: 'Spokojny start',
+  beginner: 'Początkujący',
+  intermediate: 'Średniozaawansowany',
   advanced: 'Zaawansowany',
 }
 

@@ -1,19 +1,20 @@
-import type { ExperienceLevel, PrimaryGoal } from '../domain/profile'
+import { normalizeExperienceLevel, type ExperienceLevel, type PrimaryGoal } from '../domain/profile'
 import type { SegmentKey, SegmentProfile, SegmentResult } from '../domain/segment'
 import { calculateAgeBucket } from './calculateAgeBucket'
 
 /**
- * Classifies a user into one of the 8+ active segment keys.
+ * Classifies a user into one active segment key.
  * Segment key = "{experience_level}_{primary_goal}".
  *
  * Fallbacks:
- *   - null experience_level → 'zero'
+ *   - null experience_level → 'beginner_zero'
  *   - null primary_goal     → 'general_health'
  *
  * Pure function — no side effects.
  */
 export function classifySegment(profile: SegmentProfile): SegmentResult {
-  const experience: ExperienceLevel = profile.experience_level ?? 'zero'
+  const experience: ExperienceLevel =
+    normalizeExperienceLevel(profile.experience_level) ?? 'beginner_zero'
   const goal: PrimaryGoal = profile.primary_goal ?? 'general_health'
 
   const segment_key: SegmentKey = `${experience}_${goal}` as SegmentKey

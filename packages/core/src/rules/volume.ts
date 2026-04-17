@@ -4,9 +4,9 @@
  * Based on experience_level × primary_goal.
  * Ranges from sports science literature (Schoenfeld, Israetel MEV/MAV/MRV model simplified):
  *
- *   zero:      8–10  sets/week   (minimum effective volume)
+ *   beginner_zero: 8–10  sets/week   (minimum effective volume)
  *   beginner: 10–12  sets/week
- *   amateur:  14–16  sets/week
+ *   intermediate: 14–16  sets/week
  *   advanced: 16–20  sets/week
  *
  * Goal modifier:
@@ -49,9 +49,9 @@ interface VolumeRange {
 }
 
 const VOLUME_BY_LEVEL: Record<ExperienceLevel, VolumeRange> = {
-  zero:     { min: 8,  max: 10 },
+  beginner_zero: { min: 8, max: 10 },
   beginner: { min: 10, max: 12 },
-  amateur:  { min: 14, max: 16 },
+  intermediate: { min: 14, max: 16 },
   advanced: { min: 16, max: 20 },
 }
 
@@ -65,7 +65,7 @@ function pickSets(range: VolumeRange, goal: PrimaryGoal): number {
 }
 
 function frequencyForSets(sets: number, experienceLevel: ExperienceLevel): number {
-  // Advanced/amateur can handle higher frequency; beginners benefit from lower
+  // Advanced/intermediate can handle higher frequency; beginners benefit from lower
   if (sets >= 18) return 3
   if (sets >= 14) return experienceLevel === 'advanced' ? 3 : 2
   if (sets >= 10) return 2
@@ -73,7 +73,7 @@ function frequencyForSets(sets: number, experienceLevel: ExperienceLevel): numbe
 }
 
 export function recommendedVolume(input: VolumeInput): VolumeTargets {
-  const level: ExperienceLevel = input.experience_level ?? 'zero'
+  const level: ExperienceLevel = input.experience_level ?? 'beginner_zero'
   const goal: PrimaryGoal = input.primary_goal ?? 'general_health'
 
   const range = VOLUME_BY_LEVEL[level]

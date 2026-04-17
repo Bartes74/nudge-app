@@ -76,7 +76,7 @@ describe('pickNextQuestions', () => {
   it('ranks segment-matched questions higher', async () => {
     const q1 = makeQuestion({
       id: 'q-1', field_key: 'cardio_preference',
-      applicable_segments: ['weight_loss_beginner'],
+      applicable_segments: ['beginner_weight_loss'],
       priority_base: 65,
     })
     const q2 = makeQuestion({
@@ -87,7 +87,7 @@ describe('pickNextQuestions', () => {
     const supabase = makeSupabase({ questions: [q1, q2] })
     const results = await pickNextQuestions(supabase, {
       userId: 'user-1',
-      userSegment: 'weight_loss_beginner',
+      userSegment: 'beginner_weight_loss',
       count: 2,
     })
     // q1: 65*1*1.0*1 = 65, q2: 70*1*0.7*1 = 49
@@ -117,5 +117,21 @@ describe('pickNextQuestions', () => {
     const results = await pickNextQuestions(supabase, { userId: 'user-1', count: 2 })
     expect(results.some((r) => r.fieldKey === 'primary_goal')).toBe(false)
     expect(results.some((r) => r.fieldKey === 'avg_sleep_hours')).toBe(true)
+  })
+
+  it('limits guided beginner follow-up questions to one item', async () => {
+    const q1 = makeQuestion({ id: 'q-1', field_key: 'health_constraints', priority_base: 70 })
+    const q2 = makeQuestion({ id: 'q-2', field_key: 'preferred_split', priority_base: 90 })
+    const supabase = makeSupabase({ questions: [q1, q2] })
+
+    const results = await pickNextQuestions(supabase, {
+      userId: 'user-1',
+      entryPath: 'guided_beginner',
+      tonePreset: 'calm_guided',
+      count: 3,
+    })
+
+    expect(results).toHaveLength(1)
+    expect(results[0]!.fieldKey).toBe('health_constraints')
   })
 })

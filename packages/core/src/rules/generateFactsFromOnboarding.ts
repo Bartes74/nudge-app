@@ -1,5 +1,9 @@
 import type { Fact } from '../domain/fact'
-import type { ProfileInput, LocationType } from '../domain/profile'
+import {
+  normalizeExperienceLevel,
+  type ProfileInput,
+  type LocationType,
+} from '../domain/profile'
 
 type EquipmentKey =
   | 'has_barbell'
@@ -61,6 +65,13 @@ export function generateFactsFromOnboarding(
     push('primary_goal', {}, true)
   }
 
+  // age_years
+  if (answers.age_years != null) {
+    push('age_years', { value_numeric: answers.age_years, unit: 'years', confidence: 0.9 }, false)
+  } else {
+    push('age_years', { unit: 'years' }, true)
+  }
+
   // birth_date
   if (answers.birth_date != null) {
     push('birth_date', { value_text: answers.birth_date, confidence: 1.0 }, false)
@@ -117,10 +128,10 @@ export function generateFactsFromOnboarding(
   // equipment_list — stored as JSON array of booleans
   if (answers.equipment_location != null) {
     const equipmentSelection =
-      answers.health_constraints != null
+      answers.equipment_location != null
         ? EQUIPMENT_KEYS.reduce<Record<EquipmentKey, boolean>>(
             (acc, key) => {
-              acc[key] = false
+              acc[key] = answers.equipment_list?.includes(key) ?? false
               return acc
             },
             {} as Record<EquipmentKey, boolean>,
@@ -133,10 +144,32 @@ export function generateFactsFromOnboarding(
   }
 
   // experience_level
-  if (answers.experience_level != null) {
-    push('experience_level', { value_text: answers.experience_level, confidence: 0.9 }, false)
+  const normalizedExperienceLevel = normalizeExperienceLevel(answers.experience_level)
+  if (normalizedExperienceLevel != null) {
+    push('experience_level', { value_text: normalizedExperienceLevel, confidence: 0.9 }, false)
   } else {
     push('experience_level', {}, true)
+  }
+
+  // training_background
+  if (answers.training_background != null) {
+    push('training_background', { value_text: answers.training_background, confidence: 1.0 }, false)
+  } else {
+    push('training_background', {}, true)
+  }
+
+  // recent_activity_window
+  if (answers.recent_activity_window != null) {
+    push('recent_activity_window', { value_text: answers.recent_activity_window, confidence: 1.0 }, false)
+  } else {
+    push('recent_activity_window', {}, true)
+  }
+
+  // last_regular_activity
+  if (answers.last_regular_activity != null) {
+    push('last_regular_activity', { value_text: answers.last_regular_activity, confidence: 1.0 }, false)
+  } else {
+    push('last_regular_activity', {}, true)
   }
 
   // health_constraints (multi-select stored as JSON array)
@@ -150,6 +183,21 @@ export function generateFactsFromOnboarding(
     push('health_constraints', { value_json: [], confidence: 1.0 }, false)
   } else {
     push('health_constraints', {}, true)
+  }
+
+  // entry_path
+  if (answers.entry_path != null) {
+    push('entry_path', { value_text: answers.entry_path, confidence: 1.0 }, false)
+  }
+
+  // adaptation_phase
+  if (answers.adaptation_phase != null) {
+    push('adaptation_phase', { value_text: answers.adaptation_phase, confidence: 1.0 }, false)
+  }
+
+  // needs_guided_mode
+  if (answers.needs_guided_mode != null) {
+    push('needs_guided_mode', { value_bool: answers.needs_guided_mode, confidence: 1.0 }, false)
   }
 
   // is_pregnant (guardrail)
@@ -181,6 +229,13 @@ export function generateFactsFromOnboarding(
     push('life_context', { value_json: answers.life_context, confidence: 1.0 }, false)
   } else {
     push('life_context', {}, true)
+  }
+
+  // job_activity
+  if (answers.job_activity != null) {
+    push('job_activity', { value_text: answers.job_activity, confidence: 1.0 }, false)
+  } else {
+    push('job_activity', {}, true)
   }
 
   return facts

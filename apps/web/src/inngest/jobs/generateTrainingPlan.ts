@@ -4,8 +4,10 @@ import { env } from '@/lib/env'
 import { evaluateGuardrails, hasBlockingGuardrail } from '@nudge/core/rules/guardrails'
 import { selectTemplate } from '@nudge/core/planners/training/selectTemplate'
 import { fillTemplate } from '@nudge/core/planners/training/fillTemplate'
+import { generateGuidedBeginnerPlan } from '@nudge/core/planners/training/generateGuidedBeginnerPlan'
 import type { PlannerProfile } from '@nudge/core/planners/training/types'
 import type { ExerciseCatalogEntry } from '@nudge/core/planners/training/types'
+import type { GuidedTrainingPlanOutput, TrainingPlanOutput } from '@nudge/core/planners/training/types'
 import type { GuardrailProfile, GuardrailContext } from '@nudge/core/rules/guardrails'
 
 function serviceClient() {
@@ -102,6 +104,13 @@ export const generateTrainingPlanJob = inngest.createFunction(
       primary_goal: (goal?.goal_type ?? profile.primary_goal) as PlannerProfile['primary_goal'],
       days_per_week: null, // loaded from facts/preferences below
       equipment_location: equipment?.location_type as PlannerProfile['equipment_location'] ?? 'gym',
+      entry_path: profile.entry_path as PlannerProfile['entry_path'] ?? 'standard_training',
+      adaptation_phase: profile.adaptation_phase as PlannerProfile['adaptation_phase'] ?? null,
+      needs_guided_mode: profile.needs_guided_mode ?? false,
+      clarity_score: null,
+      confidence_score: null,
+      trainer_consultation_completed_at:
+        (profile.trainer_consultation_completed_at as string | null) ?? null,
       has_barbell: equipment?.has_barbell ?? false,
       has_dumbbells: equipment?.has_dumbbells ?? false,
       has_machines: equipment?.has_machines ?? false,
@@ -151,7 +160,7 @@ export const generateTrainingPlanJob = inngest.createFunction(
     const catalog = await step.run('load-catalog', async () => {
       const { data, error } = await supabase
         .from('exercises')
-        .select('id, slug, name_pl, category, primary_muscles, equipment_required, difficulty, is_compound, alternatives_slugs')
+        .select('id, slug, name_pl, plain_language_name, simple_goal_description, category, primary_muscles, equipment_required, difficulty, is_compound, alternatives_slugs, setup_instructions, execution_steps, tempo_hint, breathing_hint, safety_notes, common_mistakes, easy_substitution_slugs, machine_busy_substitution_slugs, stop_conditions, starting_load_guidance')
         .eq('deprecated', false)
 
       if (error || !data) throw new Error('Failed to load exercise catalog')
@@ -176,57 +185,76 @@ export const generateTrainingPlanJob = inngest.createFunction(
       })
     })
 
-    // Load prompt from DB
-    const promptData = await step.run('load-prompt', async () => {
-      const { data } = await supabase
-        .from('prompts')
-        .select('id, system_template, user_template')
-        .eq('slug', 'training_plan_fill')
-        .eq('version', 1)
-        .eq('deprecated', false)
-        .single()
-      return data
-    })
+    const isGuidedBeginner =
+      plannerProfile.entry_path === 'guided_beginner' ||
+      plannerProfile.experience_level === 'beginner_zero'
 
-    if (!promptData?.system_template || !promptData?.user_template) {
-      throw new Error('training_plan_fill prompt not found in DB')
-    }
+    let planOutput: TrainingPlanOutput | GuidedTrainingPlanOutput
+    let llmCallId: string | null = null
 
-    // Call LLM
-    const { planOutput, llmCallId } = await step.run('fill-template-llm', async () => {
-      const result = await fillTemplate({
-        apiKey: env.OPENAI_API_KEY,
-        model: 'gpt-4o-mini',
-        systemTemplate: promptData.system_template!,
-        userTemplate: promptData.user_template!,
-        template,
-        profile: plannerProfile,
-        catalog,
-        promptId: promptData.id,
+    if (isGuidedBeginner) {
+      planOutput = await step.run('generate-guided-beginner-plan', async () =>
+        generateGuidedBeginnerPlan({
+          profile: {
+            ...plannerProfile,
+            adaptation_phase: plannerProfile.adaptation_phase ?? 'phase_0_familiarization',
+          },
+          catalog,
+        }),
+      )
+    } else {
+      const promptData = await step.run('load-prompt', async () => {
+        const { data } = await supabase
+          .from('prompts')
+          .select('id, system_template, user_template')
+          .eq('slug', 'training_plan_fill')
+          .eq('version', 1)
+          .eq('deprecated', false)
+          .single()
+        return data
       })
 
-      // Save LLM call record
-      const { data: llmCall } = await supabase
-        .from('llm_calls')
-        .insert({
-          user_id,
-          ai_task_id: task_id,
-          provider: result.meta.provider,
-          model: result.meta.model,
-          prompt_id: promptData.id,
-          prompt_version: 1,
-          tokens_in: result.meta.tokens_in,
-          tokens_out: result.meta.tokens_out,
-          cost_usd: result.meta.cost_usd,
-          latency_ms: result.meta.latency_ms,
-          used_structured_output: true,
-          output_valid: true,
-        })
-        .select('id')
-        .single()
+      if (!promptData?.system_template || !promptData?.user_template) {
+        throw new Error('training_plan_fill prompt not found in DB')
+      }
 
-      return { planOutput: result.plan, llmCallId: llmCall?.id ?? null }
-    })
+      const llmResult = await step.run('fill-template-llm', async () => {
+        const result = await fillTemplate({
+          apiKey: env.OPENAI_API_KEY,
+          model: 'gpt-4o-mini',
+          systemTemplate: promptData.system_template!,
+          userTemplate: promptData.user_template!,
+          template,
+          profile: plannerProfile,
+          catalog,
+          promptId: promptData.id,
+        })
+
+        const { data: llmCall } = await supabase
+          .from('llm_calls')
+          .insert({
+            user_id,
+            ai_task_id: task_id,
+            provider: result.meta.provider,
+            model: result.meta.model,
+            prompt_id: promptData.id,
+            prompt_version: 1,
+            tokens_in: result.meta.tokens_in,
+            tokens_out: result.meta.tokens_out,
+            cost_usd: result.meta.cost_usd,
+            latency_ms: result.meta.latency_ms,
+            used_structured_output: true,
+            output_valid: true,
+          })
+          .select('id')
+          .single()
+
+        return { planOutput: result.plan, llmCallId: llmCall?.id ?? null }
+      })
+
+      planOutput = llmResult.planOutput
+      llmCallId = llmResult.llmCallId
+    }
 
     // Persist plan to DB
     const planVersionId = await step.run('save-plan', async () => {
@@ -264,6 +292,10 @@ export const generateTrainingPlanJob = inngest.createFunction(
           week_structure: planOutput.week_structure,
           additional_notes: planOutput.additional_notes,
           llm_call_id: llmCallId,
+          guided_mode: 'guided_mode' in planOutput ? planOutput.guided_mode : false,
+          adaptation_phase:
+            'adaptation_phase' in planOutput ? planOutput.adaptation_phase : null,
+          view_mode: 'view_mode' in planOutput ? planOutput.view_mode : 'standard_training_view',
         })
         .select('id')
         .single()
@@ -286,36 +318,67 @@ export const generateTrainingPlanJob = inngest.createFunction(
             order_in_week: workout.order_in_week,
             name: workout.name,
             duration_min_estimated: workout.duration_min_estimated,
+            confidence_goal: 'confidence_goal' in workout ? workout.confidence_goal : null,
           })
           .select('id')
           .single()
 
         if (pwError || !pw) throw new Error(`Failed to create plan_workout: ${pwError?.message}`)
 
-        for (const ex of workout.exercises) {
-          // Look up exercise id from slug
-          const catalogEntry = catalog.find((c: ExerciseCatalogEntry) => c.slug === ex.exercise_slug)
-          if (!catalogEntry) continue
+        if ('steps' in workout) {
+          for (const stepItem of workout.steps) {
+            const catalogEntry = stepItem.exercise_slug
+              ? catalog.find((c: ExerciseCatalogEntry) => c.slug === stepItem.exercise_slug)
+              : null
 
-          // Resolve substitute exercise ids
-          const subIds: string[] = []
-          for (const subSlug of ex.substitute_exercise_slugs) {
-            const sub = catalog.find((c: ExerciseCatalogEntry) => c.slug === subSlug)
-            if (sub) subIds.push(sub.id)
+            await supabase.from('plan_workout_steps').insert({
+              plan_workout_id: pw.id,
+              step_type: stepItem.step_type,
+              order_num: stepItem.order_num,
+              title: stepItem.title,
+              duration_min: stepItem.duration_min,
+              exercise_id: catalogEntry?.id ?? null,
+              instruction_text: stepItem.instruction_text,
+              setup_instructions: stepItem.setup_instructions,
+              execution_steps: stepItem.execution_steps,
+              tempo_hint: stepItem.tempo_hint,
+              breathing_hint: stepItem.breathing_hint,
+              safety_notes: stepItem.safety_notes,
+              common_mistakes: stepItem.common_mistakes,
+              stop_conditions: stepItem.stop_conditions,
+              machine_settings: stepItem.machine_settings,
+              substitution_policy: {
+                easy: stepItem.easy_substitution_slug,
+                machine_busy: stepItem.machine_busy_substitution_slug,
+              },
+              starting_load_guidance: stepItem.starting_load_guidance,
+              is_new_skill: stepItem.is_new_skill,
+            })
           }
+        } else {
+          for (const ex of workout.exercises) {
+            const catalogEntry = catalog.find((c: ExerciseCatalogEntry) => c.slug === ex.exercise_slug)
+            if (!catalogEntry) continue
 
-          await supabase.from('plan_exercises').insert({
-            plan_workout_id: pw.id,
-            exercise_id: catalogEntry.id,
-            order_num: ex.order_num,
-            sets: ex.sets,
-            reps_min: ex.reps_min,
-            reps_max: ex.reps_max,
-            rir_target: ex.rir_target,
-            rest_seconds: ex.rest_seconds,
-            technique_notes: ex.technique_notes,
-            substitute_exercise_ids: subIds,
-          })
+            const subIds: string[] = []
+            for (const subSlug of ex.substitute_exercise_slugs) {
+              const sub = catalog.find((c: ExerciseCatalogEntry) => c.slug === subSlug)
+              if (sub) subIds.push(sub.id)
+            }
+
+            await supabase.from('plan_exercises').insert({
+              plan_workout_id: pw.id,
+              exercise_id: catalogEntry.id,
+              order_num: ex.order_num,
+              sets: ex.sets,
+              reps_min: ex.reps_min,
+              reps_max: ex.reps_max,
+              rir_target: ex.rir_target,
+              rest_seconds: ex.rest_seconds,
+              technique_notes: ex.technique_notes,
+              substitute_exercise_ids: subIds,
+            })
+          }
         }
       }
 

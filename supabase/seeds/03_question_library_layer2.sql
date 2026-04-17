@@ -60,7 +60,7 @@ INSERT INTO question_library (
 -- T3: Cardio attitude
 (
   gen_random_uuid(), 'cardio_preference', 'layer_2_segment',
-  NULL, '{"goals": ["weight_loss", "general_health", "strength_performance"]}',
+  NULL, ARRAY['weight_loss', 'general_health', 'strength_performance']::primary_goal[],
   65,
   'Stosunek do cardio wpływa na to, jak dużo i jakiego cardio wkomponujemy w plan.',
   'Wybierz to, co najbliżej opisuje Twój stosunek do ćwiczeń aerobowych.',
@@ -80,7 +80,7 @@ INSERT INTO question_library (
 -- T4: Training split preference
 (
   gen_random_uuid(), 'training_split_preference', 'layer_2_segment',
-  NULL, '{"goals": ["muscle_building", "strength_performance"]}',
+  NULL, ARRAY['muscle_building', 'strength_performance']::primary_goal[],
   60,
   'Osoby z doświadczeniem często mają preference do konkretnego podziału tygodnia treningowego.',
   'Jeśli masz preferencję — powiedz nam. Jeśli nie wiesz — zostaw na „Nudge zadecyduje".',
@@ -100,7 +100,7 @@ INSERT INTO question_library (
 -- T5: Progressive overload awareness
 (
   gen_random_uuid(), 'progressive_overload_awareness', 'layer_2_segment',
-  NULL, '{"goals": ["muscle_building", "strength_performance"]}',
+  NULL, ARRAY['muscle_building', 'strength_performance']::primary_goal[],
   55,
   'Świadomość progresji to kluczowy czynnik długoterminowych wyników. Dostosujemy poziom edukacji.',
   NULL,
@@ -215,7 +215,7 @@ INSERT INTO question_library (
 -- D3: Meal prep willingness
 (
   gen_random_uuid(), 'meal_prep_willingness', 'layer_2_segment',
-  NULL, '{"goals": ["weight_loss", "muscle_building"]}',
+  NULL, ARRAY['weight_loss', 'muscle_building']::primary_goal[],
   60,
   'Przygotowywanie posiłków z góry znacząco ułatwia trzymanie się planu żywieniowego.',
   NULL,

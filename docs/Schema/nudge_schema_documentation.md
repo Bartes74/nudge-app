@@ -1,12 +1,12 @@
 # Nudge — Dokumentacja schematu bazy danych
 
-*Wersja: 0.1 (MVP v1) — 2026-04-15*
+*Wersja: 0.2 (MVP v1 + guided beginner path) — 2026-04-18*
 *Plik źródłowy: [nudge_schema.dbml](./nudge_schema.dbml)*
 *Diagram: [nudge_schema_diagram.md](./nudge_schema_diagram.md)*
 
 ## Cel dokumentu
 
-Schemat zawiera 18 grup tabel (~40 tabel). Ten dokument wyjaśnia, po co każda grupa istnieje, jakie decyzje produktowe/architektoniczne za nimi stoją i w jakiej kolejności je implementujemy. Bez tego kontekstu schemat jest trudny do zrozumienia, a łatwo go zepsuć przy pierwszej modyfikacji.
+Schemat zawiera 18 grup tabel i kilka rozszerzeń wdrożonych po MVP v1, w tym osobną ścieżkę `beginner_zero`, guided workout, jakościową progresję i audyt bezpieczeństwa. Ten dokument wyjaśnia, po co każda grupa istnieje, jakie decyzje produktowe/architektoniczne za nimi stoją i w jakiej kolejności je implementujemy. Bez tego kontekstu schemat jest trudny do zrozumienia, a łatwo go zepsuć przy pierwszej modyfikacji.
 
 ## Zasady przekrojowe
 
@@ -56,6 +56,13 @@ GDPR — użytkownik może zażądać usunięcia. Hard delete tylko w batch job 
 
 **user_profile** to projekcja — ma tylko „ostatni znany stan" kluczowych pól. Rebuild po migracji = policzyć max(observed_at) per field_key.
 
+Po wdrożeniu guided path `user_profile` trzyma też pola sterujące zachowaniem produktu:
+- `entry_path` — czy user idzie ścieżką `guided_beginner`, czy standardową,
+- `adaptation_phase` — na jakim etapie oswajania / adaptacji jest user,
+- `needs_guided_mode` — czy uproszczony widok krok-po-kroku ma być domyślny,
+- `inferred_beginner_status` + `inferred_beginner_reason_codes` — zapis auto-kwalifikacji do łagodnego startu,
+- pola konsultacji z trenerem (`trainer_consultation_*`, `trainer_feedback_notes`) — bo konsultacja jest warunkowym krokiem produktu, a nie pytaniem wejściowym.
+
 ---
 
 ## Grupa 3 — Pomiary ciała
@@ -79,7 +86,9 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 **Klucz — `user_safety_flags`:** realizacja warstwy guardrails z ADR-002. Każda flaga ma severity i status. Flagi aktywne z severity=critical blokują generowanie planu. Flagi warning modyfikują plan (np. łagodniejsza progresja) i każą wysłać disclaimer.
 
-**Uwaga produktowa:** tych tabel NIE wypełniamy na onboardingu. Wypełniają się stopniowo przez kolejne tygodnie (warstwa 2-4 progressive profiling).
+**Uwaga produktowa:** dalej obowiązuje progressive profiling, ale po wdrożeniu `beginner_zero` część minimalnych preferencji może powstać już po onboardingu L1. Przykład: `user_training_preferences.prefers_guided_mode = true` albo uproszczony `nutrition_mode = simple` dla guided beginnera.
+
+`user_safety_flags` i `safety_escalations` współpracują: flagi to stan bezpieczeństwa usera, a eskalacje to audyt konkretnych zdarzeń, np. zgłoszonego bólu w klatce piersiowej lub ostrego bólu stawu.
 
 ---
 
@@ -89,7 +98,9 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 **Po co:** cel nie jest statyczny. User może zaczynać od redukcji, potem zmienić na budowę masy. Trzymamy historię + flagę `is_current`.
 
-**`user_segment_snapshots`:** nie jest źródłem prawdy — jest cachem do szybkich raportów i routingu promptów. Wyliczany po każdej zmianie profilu. Pole `segment_key` to scalona wartość do jednego z 8 priorytetowych segmentów (ADR-003).
+**`user_segment_snapshots`:** nie jest źródłem prawdy — jest cachem do szybkich raportów i routingu promptów. Wyliczany po każdej zmianie profilu. Pole `segment_key` to scalona wartość do jednego z 8 priorytetowych segmentów (ADR-003), już w nazewnictwie `beginner_zero / beginner / intermediate / advanced`.
+
+Snapshot zawiera też `entry_path` i `adaptation_phase`, bo w praktyce raporty i routing pytań muszą odróżniać nie tylko segment, ale też tryb produktu.
 
 ---
 
@@ -99,6 +110,8 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 **Po co:** wspólna pula ćwiczeń dla wszystkich userów. Tu kuratujemy: nazwa, grupy mięśniowe, sprzęt, trudność, zamienniki. Cała logika planów opiera się na slug-ach — jeśli zmienia się ćwiczenie, zmienia się wszędzie.
 
+Po wdrożeniu guided mode katalog ćwiczeń jest też źródłem uproszczonych instrukcji dla nowicjusza: `plain_language_name`, `simple_goal_description`, `setup_instructions`, `execution_steps`, `tempo_hint`, `breathing_hint`, `safety_notes`, `stop_conditions`, `starting_load_guidance` i reason-aware zamienniki.
+
 **Źródła danych:** start — ręczna kuracja ~150 najczęstszych ćwiczeń przez trenera. Później rozszerzenie.
 
 **Ważne:** `alternatives_slugs` to domyślne zamienniki. Per-user override (np. z powodu bólu) siedzi w `user_training_preferences.avoid_exercises`.
@@ -107,7 +120,7 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 ## Grupa 7 — Plan treningowy z wersjonowaniem
 
-**Tabele:** `training_plans`, `training_plan_versions`, `plan_workouts`, `plan_exercises`
+**Tabele:** `training_plans`, `training_plan_versions`, `plan_workouts`, `plan_exercises`, `plan_workout_steps`
 
 **Po co:** oddzielamy kontener (plan) od zawartości (version). `plan.current_version_id` wskazuje aktywną wersję. Zmiana = nowa wersja + update pointer.
 
@@ -115,10 +128,13 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 - `change_reason` — dlaczego nowa wersja (user feedback, plateau, kontuzja, automatyczna korekta)
 - `goal_snapshot` — jaki cel user miał w tym momencie (bo cel może się zmienić niezależnie)
 - `llm_call_id` — powiązanie z konkretnym wywołaniem LLM, które wygenerowało plan
+- `guided_mode`, `adaptation_phase`, `view_mode` — czy to plan standardowy, czy guided beginner i w jakiej fazie
 
 **To umożliwia odpowiedź na pytanie usera:** „Dlaczego mi to wtedy zmieniliście?" — odtwarzamy kontekst decyzji.
 
-`plan_workouts` i `plan_exercises` to konkretna rozpiska. Mapują się 1:1 na Twój szablon planu treningowego.
+`plan_workouts` i `plan_exercises` to konkretna rozpiska. `plan_workouts.confidence_goal` opisuje dodatkowo, jaki jakościowy cel ma dana sesja (np. „oswoić bieżnię” albo „poczuć się pewniej przy pierwszej maszynie”).
+
+`plan_workout_steps` to warstwa dla `Today Guided Workout`. Trzymamy tam sekwencję kroków: wejście i przygotowanie, rozgrzewkę, część główną, wyciszenie i krótkie podsumowanie. Krok może wskazywać ćwiczenie z katalogu, ale nie musi. Dzięki temu guided path nie jest tylko „listą ćwiczeń z innym copy”.
 
 ---
 
@@ -128,9 +144,15 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 **Po co:** co user realnie zrobił. Odnosi się do `plan_workout_id`, ale może też być NULL (ad-hoc trening).
 
-**Pole `was_substituted`:** jeśli user podmienił ćwiczenie (np. wyciskanie → pompki), zachowujemy to. To sygnał behawioralny → update `user_training_preferences.avoid_exercises` automatycznie po N zamianach.
+**Pole `was_substituted`:** jeśli user podmienił ćwiczenie (np. wyciskanie → pompki), zachowujemy to. Po guided path zamiana ma też reason code (`machine_busy`, `unclear`, `discomfort`, `too_hard`) — to sygnał do uproszczenia planu albo niewprowadzania progresji.
 
 **`workout_log_sets`:** pojedyncza seria — ciężar, powtórzenia, RIR, to_failure. To jest źródło do wykresów siły i heurystyk progresji.
+
+`workout_logs` po rozszerzeniu guided path trzyma też mini check-in po sesji:
+- `clarity_score`, `confidence_score`, `felt_safe`,
+- flagi `exercise_confusion_flag`, `machine_confusion_flag`, `too_hard_flag`, `pain_flag`.
+
+To ważne, bo dla `beginner_zero` progresja zależy nie tylko od wykonania treningu, ale też od zrozumienia planu, poczucia bezpieczeństwa i braku czerwonych flag bólowych.
 
 ---
 
@@ -164,7 +186,7 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 ## Grupa 11 — Check-iny tygodniowe
 
-**Tabele:** `checkins`
+**Tabele:** `checkin_sessions`
 
 **Po co:** mapowanie Twojego `szablon_checkin_tygodniowy.md`.
 
@@ -176,18 +198,22 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 
 **`ai_verdict` i `ai_recommended_action`:** wypełniane przez Check-in Analyzer (AI task). Plan działa / mała korekta / większa korekta.
 
+Osobno od tygodniowego check-inu istnieje jeszcze mini check-in po treningu dla `beginner_zero`. Nie mieszamy tych dwóch rzeczy w jednej tabeli, bo służą innym decyzjom.
+
 ---
 
 ## Grupa 12 — Sygnały behawioralne
 
 **Tabele:** `behavior_signals`
 
-**Po co:** realizacja uproszczonego „silnika monitoringu" z ADR-003. Nie ML, nie clustering — 10 liczników per user, aktualizowanych po każdym evencie.
+**Po co:** realizacja uproszczonego „silnika monitoringu" z ADR-003. Nie ML, nie clustering — rolling liczniki i średnie per user, aktualizowane po każdym evencie.
 
 **Użycie:** reguły pyta-dopytują patrzą na te liczniki. Przykłady:
 - `meal_logs_per_day_7d < 1` → nie wprowadzamy strict tracking
 - `workout_completion_rate_7d < 0.5` → nie progresujemy obciążeń
 - `weight_log_regularity_score > 0.7` → możemy proponować automatyczną korektę kalorii
+- `clarity_score_avg_7d < 4` albo `confidence_score_avg_7d < 3.5` → nie przechodzimy do kolejnej fazy `beginner_zero`
+- `pain_flag_count_7d > 0` albo dużo `too_hard_flag_count_7d` → rekomendacja `slow_down`, `repeat_similar_session` lub `trainer_consultation`
 
 **Jedna tabela z `user_id` jako PK** — zawsze jeden rekord na usera, update in-place. Bez historii (historia siedzi w eventach źródłowych).
 
@@ -204,11 +230,13 @@ Kopia danych w `user_profile_facts` i tak powstaje przy każdym insert (dla spó
 - `layer` — 1 minimum / 2 segment / 3 behavioral / 4 advanced
 - `applicable_segments` — dla kogo pytanie ma sens
 - `why_we_ask` i `how_to_measure` — copy pokazywane userowi
-- `phrasing_options` — różne warianty wypowiedzi per ton (zero/beginner/amateur/advanced)
+- `phrasing_options` — różne warianty wypowiedzi per ton (`calm_guided`, `warm_encouraging`, `partnering`, `factual_technical`)
 
 **`user_question_asks`:** każda instancja zadania pytania. Zapisujemy, że zapytaliśmy, kiedy odpowiedział (albo pominął), jaki był priority_score w momencie zadania.
 
 To jest **źródło do testowania „czy nasza logika wyboru pytań działa"**.
+
+Po wdrożeniu `guided_beginner` pytania dla nowicjusza są też throttle'owane: najpierw doświadczenie użytkownika, potem pytanie o zrozumienie, bezpieczeństwo lub regenerację. Nie zasypujemy początkującego dodatkowymi pytaniami w krótkich odstępach.
 
 ---
 
@@ -236,6 +264,8 @@ To jest **źródło do testowania „czy nasza logika wyboru pytań działa"**.
 
 **`ai_decisions`:** audyt decyzji warstwy reguł. Zapisujemy jakie reguły zadziałały, snapshot profilu w momencie decyzji, co rekomendowaliśmy, czy wykonano.
 
+Po rozszerzeniu guided path `ai_decisions` ma jawny `recommendation_type`, a także `entry_path` i `adaptation_phase`. Dzięki temu da się odtworzyć, czy system zalecił np. `repeat_similar_session`, `show_more_guidance` albo `trainer_consultation` i w jakim trybie produktu to nastąpiło.
+
 **`llm_calls`:** KAŻDE wywołanie LLM — model, tokens, cost USD, latency, prompt_version. To jest źródło do:
 - monitoringu kosztów (alert gdy cost_per_active_user > $3/mc)
 - A/B testów promptów
@@ -244,6 +274,8 @@ To jest **źródło do testowania „czy nasza logika wyboru pytań działa"**.
 **`prompts`:** wersjonowane prompty (zgodnie z ADR-002). Kod odwołuje się do `slug + version`. Zmiana promptu = nowa wersja, nie edit.
 
 **`safety_escalations`:** każda eskalacja (ADR-002). Dla audytu, raportowania, ewentualnych interakcji prawnych.
+
+To tutaj zapisujemy czerwone flagi, które blokują progresję: ból w klatce piersiowej, zawroty głowy, nietypową duszność wysiłkową, promieniujący ból czy ostry ból stawu.
 
 **`user_ai_usage`:** miesięczny licznik użycia per user. Do rate limiting (50 calls/dzień, 6 zdjęć/dzień) i reporting.
 
@@ -282,6 +314,8 @@ how_to_measure: "Taśmą krawiecką w wysokości pępka, rano na czczo. 10 sekun
 
 **Anti-spam:** proaktywny coach maksymalnie raz na 3 dni — walidacja w regule przed insertem.
 
+Dla `beginner_zero` powiadomienia mają wspierać, a nie dyscyplinować. Priorytet mają przypomnienia o prostym dzisiejszym kroku, spokojnym tempie, check-inie po treningu i komunikaty obniżające stres wejścia na siłownię.
+
 ---
 
 ## Grupa 18 — Eventy produktowe
@@ -294,6 +328,8 @@ how_to_measure: "Taśmą krawiecką w wysokości pępka, rano na czczo. 10 sekun
 - retencja ≥ 1 rok (PostHog ma limity).
 
 **Przykład użycia:** „pokaż mi userów, którzy zrobili onboarding, dodali 3+ zdjęcia, ale nie skończyli trial-a" — SQL join z `users`, `meal_logs`, `subscriptions` + filter na eventach.
+
+Po wdrożeniu guided path mirrorujemy też eventy jakościowe, a nie tylko „twarde completion”. Przykłady: `guided_workout_started`, `guided_workout_completed`, `exercise_help_opened`, `exercise_marked_confusing`, `trainer_consultation_prompt_shown`, `confidence_improved`.
 
 ---
 
@@ -312,7 +348,7 @@ Grupa 6 (exercises catalog — seedowane), Grupa 7 (training_plans z wersjonowan
 Grupa 8 (workout_logs), Grupa 9 (nutrition_plans), Grupa 18 (product_events).
 
 **Sprint 5 (check-in + sygnały + coach, 2 tyg):**
-Grupa 11 (checkins), Grupa 12 (behavior_signals), Grupa 14 (coach_conversations).
+Grupa 11 (`checkin_sessions`), Grupa 12 (behavior_signals), Grupa 14 (coach_conversations).
 
 **Sprint 6 (zdjęcia posiłków — MVP v1.5, 2-3 tyg):**
 Grupa 10 (meal_logs, meal_images, meal_log_items, nutrition_daily_totals), wizja, guardrails zdjęciowe.

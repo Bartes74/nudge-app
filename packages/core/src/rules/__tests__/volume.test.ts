@@ -3,13 +3,13 @@ import { recommendedVolume } from '../volume'
 import { VOLUME_ZERO_GENERAL, VOLUME_ADVANCED_MUSCLE } from './fixtures'
 
 describe('recommendedVolume', () => {
-  describe('zero × general_health', () => {
+  describe('beginner_zero × general_health', () => {
     it('returns minimum sets (8)', () => {
       const result = recommendedVolume(VOLUME_ZERO_GENERAL)
       expect(result.push.sets_per_week).toBe(8)
       expect(result.pull.sets_per_week).toBe(8)
       expect(result.legs.sets_per_week).toBe(8)
-      expect(result.experience_level).toBe('zero')
+      expect(result.experience_level).toBe('beginner_zero')
       expect(result.primary_goal).toBe('general_health')
     })
 
@@ -47,20 +47,20 @@ describe('recommendedVolume', () => {
 
   describe('goal modifiers', () => {
     it('weight_loss → lower bound', () => {
-      const result = recommendedVolume({ experience_level: 'amateur', primary_goal: 'weight_loss' })
-      // amateur range: 14–16, weight_loss → min = 14
+      const result = recommendedVolume({ experience_level: 'intermediate', primary_goal: 'weight_loss' })
+      // intermediate range: 14–16, weight_loss → min = 14
       expect(result.push.sets_per_week).toBe(14)
     })
 
     it('muscle_building → upper bound', () => {
-      const result = recommendedVolume({ experience_level: 'amateur', primary_goal: 'muscle_building' })
-      // amateur range: 14–16, muscle_building → max = 16
+      const result = recommendedVolume({ experience_level: 'intermediate', primary_goal: 'muscle_building' })
+      // intermediate range: 14–16, muscle_building → max = 16
       expect(result.push.sets_per_week).toBe(16)
     })
 
     it('strength_performance → mid range', () => {
-      const result = recommendedVolume({ experience_level: 'amateur', primary_goal: 'strength_performance' })
-      // amateur range: 14–16, mid = round(15) = 15
+      const result = recommendedVolume({ experience_level: 'intermediate', primary_goal: 'strength_performance' })
+      // intermediate range: 14–16, mid = round(15) = 15
       expect(result.push.sets_per_week).toBe(15)
     })
   })
@@ -78,9 +78,9 @@ describe('recommendedVolume', () => {
   })
 
   describe('null inputs', () => {
-    it('null experience_level falls back to zero', () => {
+    it('null experience_level falls back to beginner_zero', () => {
       const result = recommendedVolume({ experience_level: null, primary_goal: 'general_health' })
-      expect(result.experience_level).toBe('zero')
+      expect(result.experience_level).toBe('beginner_zero')
     })
 
     it('null primary_goal falls back to general_health', () => {
@@ -96,9 +96,9 @@ describe('recommendedVolume', () => {
       expect(result.push.frequency_per_week).toBe(3)
     })
 
-    it('amateur weight_loss (14 sets) → 2x for non-advanced', () => {
-      const result = recommendedVolume({ experience_level: 'amateur', primary_goal: 'weight_loss' })
-      // 14 sets, amateur → 2x
+    it('intermediate weight_loss (14 sets) → 2x for non-advanced', () => {
+      const result = recommendedVolume({ experience_level: 'intermediate', primary_goal: 'weight_loss' })
+      // 14 sets, intermediate → 2x
       expect(result.push.frequency_per_week).toBe(2)
     })
   })

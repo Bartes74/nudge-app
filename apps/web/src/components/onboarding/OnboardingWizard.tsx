@@ -9,98 +9,98 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { FieldWithExplanation } from './FieldWithExplanation'
+import { FieldWithExplanation, type FieldExplanation } from './FieldWithExplanation'
 import { OnboardingProgress } from './OnboardingProgress'
 import { GuardrailBlock, type GuardrailReason } from './GuardrailBlock'
-import type { FieldExplanation } from './FieldWithExplanation'
-
-// ---- Types ----
 
 export interface OnboardingAnswers {
   primary_goal: string | null
-  birth_date: string | null
-  gender: string | null
+  age_years: number | null
   height_cm: number | null
   current_weight_kg: number | null
   days_per_week: number | null
   equipment_location: string | null
-  equipment_list: string[]
-  experience_level: string | null
+  recent_activity_window: string | null
   health_constraints: string[]
-  is_pregnant: boolean | null
-  nutrition_mode: string | null
+  job_activity: string | null
+  training_background: string | null
 }
 
 const STORAGE_KEY = 'nudge_onboarding_draft'
-const TOTAL_STEPS = 11
+const TOTAL_STEPS = 10
 
 const STEP_FIELD_KEYS = [
   'primary_goal',
-  'birth_date',
-  'gender',
+  'age_years',
   'height_cm',
   'current_weight_kg',
   'days_per_week',
   'equipment_location',
-  'equipment_list',
-  'experience_level',
+  'recent_activity_window',
   'health_constraints',
-  'is_pregnant_and_nutrition',
+  'job_activity',
+  'training_background',
 ] as const
 
-const REQUIRED_STEPS = new Set([0, 5, 6]) // primary_goal, days_per_week, equipment_location
+const REQUIRED_STEPS = new Set(STEP_FIELD_KEYS.map((_, index) => index))
 
-// ---- Explanations (inline) ----
-// In production these would come from field_explanations table.
-// We embed them here so the wizard works offline (sessionStorage) without an extra fetch.
 const EXPLANATIONS: Record<string, FieldExplanation> = {
   primary_goal: {
-    why_we_ask: 'Cel główny wyznacza cały kierunek planu. Trening na redukcję wygląda inaczej niż masa mięśniowa.',
-    how_to_measure: 'Co chcesz osiągnąć w ciągu najbliższych 3 miesięcy?',
-    example: 'np. „Chcę schudnąć 5 kg" → wybierz Redukcja',
+    why_we_ask: 'To pomaga nam dobrać bezpieczny kierunek startu.',
+    how_to_measure: 'Wybierz to, co jest dziś dla Ciebie najważniejsze.',
   },
-  birth_date: {
-    why_we_ask: 'Wiek wpływa na metabolizm i regenerację.',
-    how_to_measure: 'Podaj rok urodzenia lub pełną datę.',
-  },
-  gender: {
-    why_we_ask: 'Płeć biologiczna wpływa na zapotrzebowanie kaloryczne i proporcje makro.',
-    how_to_measure: 'Wybierz opcję najbliższą Twojej fizjologii. To pole jest opcjonalne.',
+  age_years: {
+    why_we_ask: 'Wiek pomaga dobrać spokojne tempo startu i poziom ostrożności.',
+    how_to_measure: 'Podaj pełne lata. Nie potrzebujemy dokładnej daty urodzenia.',
   },
   height_cm: {
-    why_we_ask: 'Wzrost służy do obliczenia BMI i TDEE.',
-    how_to_measure: 'Stań bez butów. Wystarczy przybliżona wartość w centymetrach.',
-    example: 'np. 172',
+    why_we_ask: 'Wzrost pomaga dopasować plan i ocenić punkt startowy.',
+    how_to_measure: 'Wystarczy przybliżona wartość w centymetrach.',
   },
   current_weight_kg: {
-    why_we_ask: 'Masa ciała to punkt startowy do planu żywieniowego i treningowego.',
-    how_to_measure: 'Zważ się rano na czczo lub podaj orientacyjną wartość.',
-    example: 'np. 68',
+    why_we_ask: 'Masa pomaga dopasować plan i łagodny start.',
+    how_to_measure: 'Wystarczy orientacyjna wartość.',
   },
   days_per_week: {
-    why_we_ask: 'Liczba dni treningowych wyznacza strukturę tygodnia. Plan na 3 dni to zupełnie co innego niż 5.',
-    how_to_measure: 'Ile razy w tygodniu możesz realnie trenować? Nie idealizuj.',
+    why_we_ask: 'Chcemy zaplanować tyle, ile naprawdę dasz radę zrobić.',
+    how_to_measure: 'Wybierz realną liczbę treningów, nie wersję idealną.',
   },
   equipment_location: {
-    why_we_ask: 'Lokalizacja treningu determinuje dostępny sprzęt i strukturę planu.',
-    how_to_measure: 'Gdzie trenujesz najczęściej?',
-    example: 'Jeśli chodzisz na siłownię 3x/tydz, a w domu raz — wybierz Siłownia',
+    why_we_ask: 'To pozwala od razu dobrać ćwiczenia i prosty przebieg pierwszych wizyt.',
+    how_to_measure: 'Wskaż miejsce, w którym najłatwiej będzie Ci ćwiczyć.',
   },
-  equipment_list: {
-    why_we_ask: 'Wiemy, z czym możesz trenować — dobieramy ćwiczenia, które możesz realnie wykonać.',
-    how_to_measure: 'Zaznacz wszystko, do czego masz dostęp.',
-  },
-  experience_level: {
-    why_we_ask: 'Poziom doświadczenia decyduje o złożoności ćwiczeń i tempie progresji.',
-    how_to_measure: 'Odpowiedz szczerze — nie ma złej odpowiedzi.',
+  recent_activity_window: {
+    why_we_ask: 'Na tej podstawie oceniamy, czy potrzebujesz bardzo łagodnego wejścia.',
+    how_to_measure: 'Chodzi o regularny ruch, nie pojedyncze próby.',
   },
   health_constraints: {
-    why_we_ask: 'Ograniczenia zdrowotne to kluczowe info bezpieczeństwa — bez tego możemy zalecić ćwiczenia, których nie powinieneś robić.',
-    how_to_measure: 'Zaznacz to, co dotyczy Ciebie teraz lub nawracało w ostatnim roku.',
+    why_we_ask: 'To najważniejsza część bezpieczeństwa. Dzięki temu nie dobierzemy zbyt agresywnego startu.',
+    how_to_measure: 'Zaznacz to, co może wpływać na wysiłek lub wymaga ostrożności.',
+  },
+  job_activity: {
+    why_we_ask: 'Tryb dnia pomaga dobrać obciążenie i tempo regeneracji.',
+    how_to_measure: 'Wybierz opis najbliższy temu, jak zwykle wygląda Twój dzień.',
+  },
+  training_background: {
+    why_we_ask: 'Dzięki temu pokażemy taką ilość instrukcji, jaka naprawdę będzie pomocna.',
+    how_to_measure: 'Wybierz opis, który najlepiej pasuje do Ciebie teraz.',
   },
 }
 
-// ---- Helpers ----
+function emptyAnswers(): OnboardingAnswers {
+  return {
+    primary_goal: null,
+    age_years: null,
+    height_cm: null,
+    current_weight_kg: null,
+    days_per_week: null,
+    equipment_location: null,
+    recent_activity_window: null,
+    health_constraints: [],
+    job_activity: null,
+    training_background: null,
+  }
+}
 
 function loadDraft(): OnboardingAnswers {
   if (typeof window === 'undefined') return emptyAnswers()
@@ -116,29 +116,16 @@ function loadDraft(): OnboardingAnswers {
 function saveDraft(answers: OnboardingAnswers): void {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(answers))
-  } catch { /* storage quota */ }
+  } catch {
+    // ignore storage errors
+  }
 }
 
 function clearDraft(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY)
-  } catch { /* ignore */ }
-}
-
-function emptyAnswers(): OnboardingAnswers {
-  return {
-    primary_goal: null,
-    birth_date: null,
-    gender: null,
-    height_cm: null,
-    current_weight_kg: null,
-    days_per_week: null,
-    equipment_location: null,
-    equipment_list: [],
-    experience_level: null,
-    health_constraints: [],
-    is_pregnant: null,
-    nutrition_mode: null,
+  } catch {
+    // ignore storage errors
   }
 }
 
@@ -147,8 +134,6 @@ function trackEvent(name: string, props: Record<string, unknown> = {}): void {
   const ph = (window as unknown as { posthog?: { capture: (n: string, p: unknown) => void } }).posthog
   ph?.capture(name, props)
 }
-
-// ---- Main Component ----
 
 export function OnboardingWizard() {
   const router = useRouter()
@@ -159,14 +144,11 @@ export function OnboardingWizard() {
   const [error, setError] = React.useState<string | null>(null)
   const [guardrail, setGuardrail] = React.useState<GuardrailReason | null>(null)
 
-  // Load draft from sessionStorage on mount
   React.useEffect(() => {
-    const draft = loadDraft()
-    setAnswers(draft)
+    setAnswers(loadDraft())
     trackEvent('onboarding_started')
   }, [])
 
-  // Persist draft on every change
   React.useEffect(() => {
     saveDraft(answers)
   }, [answers])
@@ -177,41 +159,35 @@ export function OnboardingWizard() {
 
   function goNext(): void {
     const fieldKey = STEP_FIELD_KEYS[step]
-    const isRequired = REQUIRED_STEPS.has(step)
     const isAnswered = isStepAnswered(step, answers)
+    if (!isAnswered) return
 
-    if (isRequired && !isAnswered) return  // hard block — handled in UI
-
-    // Track
-    if (isAnswered) {
-      trackEvent('onboarding_field_answered', { step, field_key: fieldKey })
-    } else {
-      trackEvent('onboarding_field_skipped', { step, field_key: fieldKey })
-    }
-
+    trackEvent('onboarding_field_answered', { step, field_key: fieldKey })
     setDirection(1)
-    setStep((s) => s + 1)
+    setStep((current) => current + 1)
   }
 
   function goBack(): void {
     if (step === 0) return
     setDirection(-1)
-    setStep((s) => s - 1)
+    setStep((current) => current - 1)
   }
 
   async function handleSubmit(): Promise<void> {
     setSubmitting(true)
     setError(null)
+
     try {
-      const res = await fetch('/api/onboarding/complete', {
+      const response = await fetch('/api/onboarding/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(answers),
       })
-      const json = (await res.json()) as { blocked?: boolean; reason?: string; success?: boolean }
 
-      if (!res.ok) {
-        setError('Coś poszło nie tak. Spróbuj ponownie.')
+      const json = (await response.json()) as { blocked?: boolean; reason?: string }
+
+      if (!response.ok) {
+        setError('Nie udało się zapisać odpowiedzi. Spróbuj jeszcze raz.')
         return
       }
 
@@ -220,11 +196,11 @@ export function OnboardingWizard() {
         return
       }
 
-      trackEvent('onboarding_completed', { segment_key: (json as unknown as { segment_key?: string }).segment_key })
+      trackEvent('onboarding_completed')
       clearDraft()
       router.push('/onboarding/done')
     } catch {
-      setError('Błąd połączenia. Sprawdź internet i spróbuj ponownie.')
+      setError('Błąd połączenia. Spróbuj ponownie za chwilę.')
     } finally {
       setSubmitting(false)
     }
@@ -235,32 +211,23 @@ export function OnboardingWizard() {
   }
 
   const variants = {
-    enter: (dir: number) => ({
-      x: dir > 0 ? '100%' : '-100%',
-      opacity: 0,
-    }),
+    enter: (dir: number) => ({ x: dir > 0 ? '100%' : '-100%', opacity: 0 }),
     center: { x: 0, opacity: 1 },
-    exit: (dir: number) => ({
-      x: dir > 0 ? '-100%' : '100%',
-      opacity: 0,
-    }),
+    exit: (dir: number) => ({ x: dir > 0 ? '-100%' : '100%', opacity: 0 }),
   }
 
   const isLastStep = step === TOTAL_STEPS - 1
-  const isRequired = REQUIRED_STEPS.has(step)
-  const isAnswered = isStepAnswered(step, answers)
-  const canProceed = !isRequired || isAnswered
+  const canProceed = isStepAnswered(step, answers)
 
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b px-4 py-3">
-        <div className="flex items-center gap-3 max-w-lg mx-auto">
+      <header className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
           <button
             type="button"
             onClick={goBack}
             disabled={step === 0}
-            className="disabled:opacity-30 -ml-1 p-1 hover:bg-muted rounded"
+            className="-ml-1 rounded p-1 hover:bg-muted disabled:opacity-30"
             aria-label="Wróć"
           >
             <ChevronLeft className="h-5 w-5" />
@@ -271,9 +238,8 @@ export function OnboardingWizard() {
         </div>
       </header>
 
-      {/* Step content */}
       <main className="flex-1 overflow-hidden">
-        <div className="max-w-lg mx-auto px-4 py-8 h-full">
+        <div className="mx-auto h-full max-w-lg px-4 py-8">
           <AnimatePresence custom={direction} mode="wait">
             <motion.div
               key={step}
@@ -291,23 +257,14 @@ export function OnboardingWizard() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="sticky bottom-0 z-10 bg-background border-t px-4 py-4 safe-bottom">
-        <div className="max-w-lg mx-auto space-y-2">
+      <footer className="sticky bottom-0 z-10 border-t bg-background px-4 py-4 safe-bottom">
+        <div className="mx-auto max-w-lg space-y-2">
           {error && (
-            <p className="text-sm text-destructive text-center" role="alert">{error}</p>
+            <p className="text-center text-sm text-destructive" role="alert">
+              {error}
+            </p>
           )}
           <div className="flex gap-3">
-            {!isRequired && !isLastStep && (
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={goNext}
-                disabled={submitting}
-              >
-                Pomiń
-              </Button>
-            )}
             {isLastStep ? (
               <Button
                 className="flex-1"
@@ -315,14 +272,10 @@ export function OnboardingWizard() {
                 isLoading={submitting}
                 disabled={!canProceed}
               >
-                Gotowe — pokaż mój profil
+                Zapisz i pokaż kolejny krok
               </Button>
             ) : (
-              <Button
-                className="flex-1"
-                onClick={goNext}
-                disabled={!canProceed || submitting}
-              >
+              <Button className="flex-1" onClick={goNext} disabled={!canProceed || submitting}>
                 Dalej
               </Button>
             )}
@@ -333,22 +286,30 @@ export function OnboardingWizard() {
   )
 }
 
-// ---- Step content ----
-
 function isStepAnswered(step: number, answers: OnboardingAnswers): boolean {
   switch (step) {
-    case 0: return answers.primary_goal !== null
-    case 1: return answers.birth_date !== null
-    case 2: return answers.gender !== null
-    case 3: return answers.height_cm !== null
-    case 4: return answers.current_weight_kg !== null
-    case 5: return answers.days_per_week !== null
-    case 6: return answers.equipment_location !== null
-    case 7: return true  // equipment_list optional
-    case 8: return answers.experience_level !== null
-    case 9: return answers.health_constraints.length > 0
-    case 10: return true  // last step — is_pregnant + nutrition_mode optional by themselves
-    default: return true
+    case 0:
+      return answers.primary_goal !== null
+    case 1:
+      return answers.age_years !== null
+    case 2:
+      return answers.height_cm !== null
+    case 3:
+      return answers.current_weight_kg !== null
+    case 4:
+      return answers.days_per_week !== null
+    case 5:
+      return answers.equipment_location !== null
+    case 6:
+      return answers.recent_activity_window !== null
+    case 7:
+      return answers.health_constraints.length > 0
+    case 8:
+      return answers.job_activity !== null
+    case 9:
+      return answers.training_background !== null
+    default:
+      return true
   }
 }
 
@@ -362,26 +323,26 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
   switch (step) {
     case 0:
       return (
-        <FieldWithExplanation label="Jaki jest Twój główny cel?" explanation={EXPLANATIONS.primary_goal ?? null} required>
+        <FieldWithExplanation
+          label="Jaki jest dziś Twój główny cel?"
+          explanation={EXPLANATIONS.primary_goal ?? null}
+          required
+        >
           <RadioGroup
             value={answers.primary_goal ?? ''}
-            onValueChange={(v) => onChange({ primary_goal: v })}
+            onValueChange={(value) => onChange({ primary_goal: value })}
             className="space-y-3"
           >
             {[
-              { value: 'weight_loss', label: 'Chcę schudnąć / zredukować tkankę tłuszczową' },
-              { value: 'muscle_building', label: 'Chcę zbudować mięśnie / poprawić sylwetkę' },
-              { value: 'strength_performance', label: 'Chcę zwiększyć siłę i wydolność' },
-              { value: 'general_health', label: 'Chcę po prostu być aktywna/y i czuć się lepiej' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`goal_${opt.value}`}
-                className="flex items-start gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-              >
-                <RadioGroupItem value={opt.value} id={`goal_${opt.value}`} className="mt-0.5" />
-                <span className="text-sm leading-snug">{opt.label}</span>
-              </Label>
+              { value: 'weight_loss', label: 'Chcę schudnąć lub zmniejszyć ilość tkanki tłuszczowej' },
+              { value: 'muscle_building', label: 'Chcę zbudować mięśnie i poprawić sylwetkę' },
+              { value: 'strength_performance', label: 'Chcę poprawić siłę i sprawność' },
+              { value: 'general_health', label: 'Chcę po prostu regularnie się ruszać i czuć się lepiej' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`goal_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`goal_${option.value}`} className="mt-0.5" />
+                <span className="text-sm leading-snug">{option.label}</span>
+              </ChoiceCard>
             ))}
           </RadioGroup>
         </FieldWithExplanation>
@@ -389,47 +350,28 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
 
     case 1:
       return (
-        <FieldWithExplanation label="Kiedy się urodziłeś/aś?" explanation={EXPLANATIONS.birth_date ?? null}>
-          <Input
-            type="date"
-            value={answers.birth_date ?? ''}
-            onChange={(e) => onChange({ birth_date: e.target.value || null })}
-            max={new Date().toISOString().split('T')[0]}
-            placeholder="RRRR-MM-DD"
-          />
+        <FieldWithExplanation label="Ile masz lat?" explanation={EXPLANATIONS.age_years ?? null} required>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              min={16}
+              max={99}
+              placeholder="np. 34"
+              value={answers.age_years ?? ''}
+              onChange={(event) => {
+                const value = parseInt(event.target.value, 10)
+                onChange({ age_years: Number.isNaN(value) ? null : value })
+              }}
+              className="text-lg"
+            />
+            <span className="shrink-0 text-muted-foreground">lat</span>
+          </div>
         </FieldWithExplanation>
       )
 
     case 2:
       return (
-        <FieldWithExplanation label="Płeć" explanation={EXPLANATIONS.gender ?? null}>
-          <RadioGroup
-            value={answers.gender ?? ''}
-            onValueChange={(v) => onChange({ gender: v })}
-            className="space-y-3"
-          >
-            {[
-              { value: 'female', label: 'Kobieta' },
-              { value: 'male', label: 'Mężczyzna' },
-              { value: 'other', label: 'Inna' },
-              { value: 'prefer_not_to_say', label: 'Wolę nie podawać' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`gender_${opt.value}`}
-                className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-              >
-                <RadioGroupItem value={opt.value} id={`gender_${opt.value}`} />
-                <span className="text-sm">{opt.label}</span>
-              </Label>
-            ))}
-          </RadioGroup>
-        </FieldWithExplanation>
-      )
-
-    case 3:
-      return (
-        <FieldWithExplanation label="Wzrost (cm)" explanation={EXPLANATIONS.height_cm ?? null}>
+        <FieldWithExplanation label="Jaki masz wzrost?" explanation={EXPLANATIONS.height_cm ?? null} required>
           <div className="flex items-center gap-2">
             <Input
               type="number"
@@ -437,61 +379,79 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
               max={250}
               placeholder="np. 172"
               value={answers.height_cm ?? ''}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value)
-                onChange({ height_cm: isNaN(v) ? null : v })
+              onChange={(event) => {
+                const value = parseFloat(event.target.value)
+                onChange({ height_cm: Number.isNaN(value) ? null : value })
               }}
               className="text-lg"
             />
-            <span className="text-muted-foreground shrink-0">cm</span>
+            <span className="shrink-0 text-muted-foreground">cm</span>
           </div>
         </FieldWithExplanation>
       )
 
-    case 4:
+    case 3:
       return (
-        <FieldWithExplanation label="Aktualna masa ciała (kg)" explanation={EXPLANATIONS.current_weight_kg ?? null}>
+        <FieldWithExplanation label="Jaka jest Twoja masa ciała?" explanation={EXPLANATIONS.current_weight_kg ?? null} required>
           <div className="flex items-center gap-2">
             <Input
               type="number"
               min={30}
               max={300}
               step={0.5}
-              placeholder="np. 72"
+              placeholder="np. 78"
               value={answers.current_weight_kg ?? ''}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value)
-                onChange({ current_weight_kg: isNaN(v) ? null : v })
+              onChange={(event) => {
+                const value = parseFloat(event.target.value)
+                onChange({ current_weight_kg: Number.isNaN(value) ? null : value })
               }}
               className="text-lg"
             />
-            <span className="text-muted-foreground shrink-0">kg</span>
+            <span className="shrink-0 text-muted-foreground">kg</span>
           </div>
+        </FieldWithExplanation>
+      )
+
+    case 4:
+      return (
+        <FieldWithExplanation label="Ile treningów tygodniowo jest realne?" explanation={EXPLANATIONS.days_per_week ?? null} required>
+          <RadioGroup
+            value={answers.days_per_week?.toString() ?? ''}
+            onValueChange={(value) => onChange({ days_per_week: parseInt(value, 10) })}
+            className="space-y-3"
+          >
+            {[
+              { value: '2', label: '2 treningi tygodniowo' },
+              { value: '3', label: '3 treningi tygodniowo' },
+              { value: '4', label: '4 treningi tygodniowo' },
+              { value: '5', label: '5 lub więcej' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`days_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`days_${option.value}`} />
+                <span className="text-sm">{option.label}</span>
+              </ChoiceCard>
+            ))}
+          </RadioGroup>
         </FieldWithExplanation>
       )
 
     case 5:
       return (
-        <FieldWithExplanation label="Ile razy w tygodniu możesz trenować?" explanation={EXPLANATIONS.days_per_week ?? null} required>
+        <FieldWithExplanation label="Gdzie najłatwiej będzie Ci ćwiczyć?" explanation={EXPLANATIONS.equipment_location ?? null} required>
           <RadioGroup
-            value={answers.days_per_week?.toString() ?? ''}
-            onValueChange={(v) => onChange({ days_per_week: parseInt(v, 10) })}
+            value={answers.equipment_location ?? ''}
+            onValueChange={(value) => onChange({ equipment_location: value })}
             className="space-y-3"
           >
             {[
-              { value: '2', label: '2 razy — na start' },
-              { value: '3', label: '3 razy — klasyk' },
-              { value: '4', label: '4 razy' },
-              { value: '5', label: '5 razy lub więcej' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`days_${opt.value}`}
-                className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-              >
-                <RadioGroupItem value={opt.value} id={`days_${opt.value}`} />
-                <span className="text-sm">{opt.label}</span>
-              </Label>
+              { value: 'gym', label: 'Na siłowni' },
+              { value: 'home', label: 'W domu albo na zewnątrz' },
+              { value: 'mixed', label: 'Różnie, zależnie od dnia' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`location_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`location_${option.value}`} />
+                <span className="text-sm">{option.label}</span>
+              </ChoiceCard>
             ))}
           </RadioGroup>
         </FieldWithExplanation>
@@ -499,25 +459,26 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
 
     case 6:
       return (
-        <FieldWithExplanation label="Gdzie trenujesz?" explanation={EXPLANATIONS.equipment_location ?? null} required>
+        <FieldWithExplanation
+          label="Kiedy ostatnio miałeś/aś regularną aktywność fizyczną?"
+          explanation={EXPLANATIONS.recent_activity_window ?? null}
+          required
+        >
           <RadioGroup
-            value={answers.equipment_location ?? ''}
-            onValueChange={(v) => onChange({ equipment_location: v })}
+            value={answers.recent_activity_window ?? ''}
+            onValueChange={(value) => onChange({ recent_activity_window: value })}
             className="space-y-3"
           >
             {[
-              { value: 'home', label: 'W domu (lub na dworze)' },
-              { value: 'gym', label: 'Na siłowni' },
-              { value: 'mixed', label: 'Mixuję — i w domu, i na siłowni' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`loc_${opt.value}`}
-                className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-              >
-                <RadioGroupItem value={opt.value} id={`loc_${opt.value}`} />
-                <span className="text-sm">{opt.label}</span>
-              </Label>
+              { value: 'never_regular', label: 'Nie miałem/am jeszcze regularnych treningów' },
+              { value: 'over_12_months', label: 'Ponad 12 miesięcy temu' },
+              { value: 'within_12_months', label: 'W ostatnich 12 miesiącach, ale nie teraz regularnie' },
+              { value: 'within_3_months', label: 'Ćwiczę regularnie teraz albo ćwiczyłem/am w ostatnich 3 miesiącach' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`activity_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`activity_${option.value}`} className="mt-0.5" />
+                <span className="text-sm leading-snug">{option.label}</span>
+              </ChoiceCard>
             ))}
           </RadioGroup>
         </FieldWithExplanation>
@@ -525,34 +486,41 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
 
     case 7:
       return (
-        <FieldWithExplanation label="Dostępny sprzęt" explanation={EXPLANATIONS.equipment_list ?? null}>
+        <FieldWithExplanation
+          label="Czy coś może wpływać na bezpieczny wysiłek?"
+          explanation={EXPLANATIONS.health_constraints ?? null}
+          required
+        >
           <div className="space-y-3">
             {[
-              { value: 'has_barbell', label: 'Sztanga ze stojakiem' },
-              { value: 'has_dumbbells', label: 'Hantle' },
-              { value: 'has_kettlebells', label: 'Kettlebell' },
-              { value: 'has_machines', label: 'Maszyny (np. leg press, kablówka)' },
-              { value: 'has_cables', label: 'Wyciągi / kablówka' },
-              { value: 'has_pullup_bar', label: 'Drążek do podciągania' },
-              { value: 'has_bench', label: 'Ławeczka' },
-              { value: 'has_cardio', label: 'Sprzęt cardio (bieżnia, rower stacjonarny)' },
-            ].map((opt) => (
+              { value: 'pain_or_injury', label: 'Mam ból, uraz albo nawracający dyskomfort przy ruchu' },
+              { value: 'medical_condition', label: 'Mam chorobę lub stan zdrowotny, który warto uwzględnić' },
+              { value: 'medication_affecting_exertion', label: 'Biorę leki, które mogą wpływać na wysiłek lub tętno' },
+              { value: 'other_contraindication', label: 'Mam inne przeciwwskazanie albo potrzebuję ostrożnego startu' },
+              { value: 'none', label: 'Nic z tych rzeczy mnie nie dotyczy' },
+            ].map((option) => (
               <Label
-                key={opt.value}
-                htmlFor={`eq_${opt.value}`}
-                className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors"
+                key={option.value}
+                htmlFor={`health_${option.value}`}
+                className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors"
               >
                 <Checkbox
-                  id={`eq_${opt.value}`}
-                  checked={answers.equipment_list.includes(opt.value)}
+                  id={`health_${option.value}`}
+                  checked={answers.health_constraints.includes(option.value)}
                   onCheckedChange={(checked) => {
-                    const list = checked
-                      ? [...answers.equipment_list, opt.value]
-                      : answers.equipment_list.filter((x) => x !== opt.value)
-                    onChange({ equipment_list: list })
+                    let nextValues: string[]
+                    if (option.value === 'none') {
+                      nextValues = checked ? ['none'] : []
+                    } else {
+                      const withoutNone = answers.health_constraints.filter((item) => item !== 'none')
+                      nextValues = checked
+                        ? [...withoutNone, option.value]
+                        : withoutNone.filter((item) => item !== option.value)
+                    }
+                    onChange({ health_constraints: nextValues })
                   }}
                 />
-                <span className="text-sm">{opt.label}</span>
+                <span className="text-sm leading-snug">{option.label}</span>
               </Label>
             ))}
           </div>
@@ -561,26 +529,22 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
 
     case 8:
       return (
-        <FieldWithExplanation label="Jak oceniasz swoje doświadczenie treningowe?" explanation={EXPLANATIONS.experience_level ?? null}>
+        <FieldWithExplanation label="Jak wygląda Twój typowy dzień pracy?" explanation={EXPLANATIONS.job_activity ?? null} required>
           <RadioGroup
-            value={answers.experience_level ?? ''}
-            onValueChange={(v) => onChange({ experience_level: v })}
+            value={answers.job_activity ?? ''}
+            onValueChange={(value) => onChange({ job_activity: value })}
             className="space-y-3"
           >
             {[
-              { value: 'zero', label: 'Dopiero zaczynam — nigdy nie trenowałem/am regularnie' },
-              { value: 'beginner', label: 'Trenuję od kilku miesięcy, znam podstawy' },
-              { value: 'amateur', label: 'Trenuję regularnie od 1–3 lat' },
-              { value: 'advanced', label: 'Trenuję poważnie od 3+ lat, znam technikę' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`exp_${opt.value}`}
-                className="flex items-start gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-              >
-                <RadioGroupItem value={opt.value} id={`exp_${opt.value}`} className="mt-0.5" />
-                <span className="text-sm leading-snug">{opt.label}</span>
-              </Label>
+              { value: 'mostly_sitting', label: 'Głównie siedzę' },
+              { value: 'mixed', label: 'Trochę siedzę, trochę chodzę' },
+              { value: 'mostly_standing', label: 'Głównie stoję albo dużo chodzę' },
+              { value: 'physically_active', label: 'Moja praca jest fizyczna' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`job_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`job_${option.value}`} />
+                <span className="text-sm">{option.label}</span>
+              </ChoiceCard>
             ))}
           </RadioGroup>
         </FieldWithExplanation>
@@ -588,103 +552,43 @@ function StepContent({ step, answers, onChange }: StepContentProps) {
 
     case 9:
       return (
-        <FieldWithExplanation label="Ograniczenia zdrowotne" explanation={EXPLANATIONS.health_constraints ?? null}>
-          <div className="space-y-3">
-            {[
-              { value: 'back_pain', label: 'Ból pleców (lędźwiowy lub szyjny)' },
-              { value: 'knee_pain', label: 'Ból kolan' },
-              { value: 'shoulder_pain', label: 'Ból barków' },
-              { value: 'hip_pain', label: 'Ból bioder' },
-              { value: 'wrist_pain', label: 'Ból nadgarstków' },
-              { value: 'cardiovascular', label: 'Problemy kardiologiczne' },
-              { value: 'none', label: 'Żadnych ograniczeń — jestem zdrowy/a' },
-            ].map((opt) => (
-              <Label
-                key={opt.value}
-                htmlFor={`hc_${opt.value}`}
-                className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors"
-              >
-                <Checkbox
-                  id={`hc_${opt.value}`}
-                  checked={answers.health_constraints.includes(opt.value)}
-                  onCheckedChange={(checked) => {
-                    let list: string[]
-                    if (opt.value === 'none') {
-                      list = checked ? ['none'] : []
-                    } else {
-                      const withoutNone = answers.health_constraints.filter((x) => x !== 'none')
-                      list = checked
-                        ? [...withoutNone, opt.value]
-                        : withoutNone.filter((x) => x !== opt.value)
-                    }
-                    onChange({ health_constraints: list })
-                  }}
-                />
-                <span className="text-sm">{opt.label}</span>
-              </Label>
-            ))}
-          </div>
-        </FieldWithExplanation>
-      )
-
-    case 10:
-      return (
-        <div className="space-y-6">
-          <FieldWithExplanation label="Jesteś w ciąży?" explanation={null}>
-            <RadioGroup
-              value={answers.is_pregnant === null ? '' : String(answers.is_pregnant)}
-              onValueChange={(v) => onChange({ is_pregnant: v === 'true' })}
-              className="space-y-3"
-            >
-              {[
-                { value: 'false', label: 'Nie' },
-                { value: 'true', label: 'Tak, jestem w ciąży' },
-              ].map((opt) => (
-                <Label
-                  key={opt.value}
-                  htmlFor={`preg_${opt.value}`}
-                  className="flex items-center gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-                >
-                  <RadioGroupItem value={opt.value} id={`preg_${opt.value}`} />
-                  <span className="text-sm">{opt.label}</span>
-                </Label>
-              ))}
-            </RadioGroup>
-          </FieldWithExplanation>
-
-          <FieldWithExplanation
-            label="Jak dokładnie chcesz śledzić jedzenie?"
-            explanation={{
-              why_we_ask: 'Nudge może pracować na różnych poziomach precyzji żywieniowej. Polecamy zacząć od Prostego.',
-              how_to_measure: 'Możesz zmienić w każdej chwili.',
-              example: 'Prosty: „zjedz 4 posiłki, 1 dłoń białka na każdy"',
-            }}
+        <FieldWithExplanation label="Który opis najlepiej do Ciebie pasuje?" explanation={EXPLANATIONS.training_background ?? null} required>
+          <RadioGroup
+            value={answers.training_background ?? ''}
+            onValueChange={(value) => onChange({ training_background: value })}
+            className="space-y-3"
           >
-            <RadioGroup
-              value={answers.nutrition_mode ?? ''}
-              onValueChange={(v) => onChange({ nutrition_mode: v })}
-              className="space-y-3"
-            >
-              {[
-                { value: 'simple', label: 'Prosty — ogólne wskazówki, bez liczenia kalorii' },
-                { value: 'ranges', label: 'Zakresy — widełki kalorii i makro bez gramatur' },
-                { value: 'exact', label: 'Dokładny — pełne makro w gramach' },
-              ].map((opt) => (
-                <Label
-                  key={opt.value}
-                  htmlFor={`nm_${opt.value}`}
-                  className="flex items-start gap-3 rounded-xl border p-4 cursor-pointer has-[input:checked]:border-primary has-[input:checked]:bg-primary/5 transition-colors"
-                >
-                  <RadioGroupItem value={opt.value} id={`nm_${opt.value}`} className="mt-0.5" />
-                  <span className="text-sm leading-snug">{opt.label}</span>
-                </Label>
-              ))}
-            </RadioGroup>
-          </FieldWithExplanation>
-        </div>
+            {[
+              { value: 'just_starting', label: 'Dopiero zaczynam i chcę prostych instrukcji krok po kroku' },
+              { value: 'returning_after_break', label: 'Wracam po długiej przerwie' },
+              { value: 'knows_basics_needs_plan', label: 'Znam podstawy, ale potrzebuję planu' },
+              { value: 'training_regularly', label: 'Ćwiczę regularnie' },
+            ].map((option) => (
+              <ChoiceCard key={option.value} name={`background_${option.value}`} value={option.value}>
+                <RadioGroupItem value={option.value} id={`background_${option.value}`} className="mt-0.5" />
+                <span className="text-sm leading-snug">{option.label}</span>
+              </ChoiceCard>
+            ))}
+          </RadioGroup>
+        </FieldWithExplanation>
       )
 
     default:
       return null
   }
+}
+
+function ChoiceCard(props: {
+  children: React.ReactNode
+  name: string
+  value: string
+}) {
+  return (
+    <Label
+      htmlFor={props.name}
+      className="flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors has-[button[data-state=checked]]:border-primary has-[button[data-state=checked]]:bg-primary/5"
+    >
+      {props.children}
+    </Label>
+  )
 }

@@ -3,11 +3,12 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { substituteExercise } from '@nudge/core/planners/training/substituteExercise'
 import type { ExerciseCatalogEntry } from '@nudge/core/planners/training/types'
+import type { SubstitutionReason } from '@nudge/core/planners/training/types'
 
 const bodySchema = z.object({
   plan_exercise_id: z.string().uuid(),
   current_slug: z.string().min(1),
-  reason: z.string().min(1),
+  reason: z.enum(['machine_busy', 'unclear', 'discomfort', 'too_hard']),
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Load user equipment for filtering
   const [equipmentRes, catalogRes] = await Promise.all([
     supabase.from('user_equipment').select('*').eq('user_id', user.id).maybeSingle(),
-    supabase.from('exercises').select('id, slug, name_pl, category, primary_muscles, equipment_required, difficulty, is_compound, alternatives_slugs').eq('deprecated', false),
+    supabase.from('exercises').select('id, slug, name_pl, category, primary_muscles, equipment_required, difficulty, is_compound, alternatives_slugs, easy_substitution_slugs, machine_busy_substitution_slugs').eq('deprecated', false),
   ])
 
   const equipment = equipmentRes.data
@@ -40,7 +41,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (equipment?.has_pullup_bar) availableEquipment.push('pullup_bar')
   if (equipment?.has_bench) availableEquipment.push('bench')
 
-  const sub = substituteExercise({ currentSlug: current_slug, reason, catalog, availableEquipment })
+  const sub = substituteExercise({
+    currentSlug: current_slug,
+    reason: reason as SubstitutionReason,
+    catalog,
+    availableEquipment,
+  })
   if (!sub) {
     return NextResponse.json({ error: 'No suitable substitute found' }, { status: 404 })
   }

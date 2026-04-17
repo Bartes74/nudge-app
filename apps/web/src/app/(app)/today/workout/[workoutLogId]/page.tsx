@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { WorkoutLogger } from '@/components/workout/WorkoutLogger'
+import { GuidedWorkoutView } from '@/components/workout/GuidedWorkoutView'
 
 type PlanExercise = {
   id: string
@@ -62,7 +63,19 @@ export default async function WorkoutLoggerPage({
   const { data: planWorkout } = await supabase
     .from('plan_workouts')
     .select(`
-      id, name,
+      id, name, confidence_goal,
+      plan_version:training_plan_versions!plan_workouts_plan_version_id_fkey (
+        view_mode, adaptation_phase
+      ),
+      steps:plan_workout_steps (
+        id, order_num, step_type, title, duration_min, instruction_text,
+        setup_instructions, execution_steps, tempo_hint, breathing_hint,
+        safety_notes, common_mistakes, starting_load_guidance, stop_conditions,
+        machine_settings, substitution_policy,
+        exercise:exercises!plan_workout_steps_exercise_id_fkey (
+          slug, name_pl, plain_language_name
+        )
+      ),
       exercises:plan_exercises (
         id, order_num, sets, reps_min, reps_max, rir_target, rest_seconds, technique_notes,
         exercise:exercises!plan_exercises_exercise_id_fkey (
@@ -75,6 +88,22 @@ export default async function WorkoutLoggerPage({
     .single()
 
   if (!planWorkout) notFound()
+
+  const viewMode =
+    (planWorkout.plan_version as { view_mode?: string | null } | null)?.view_mode ?? null
+  const guidedSteps =
+    (planWorkout.steps as Parameters<typeof GuidedWorkoutView>[0]['steps'] | null) ?? []
+
+  if (viewMode === 'guided_beginner_view' || guidedSteps.length > 0) {
+    return (
+      <GuidedWorkoutView
+        workoutLogId={workoutLogId}
+        workoutName={planWorkout.name ?? 'Dzisiejszy spokojny trening'}
+        confidenceGoal={planWorkout.confidence_goal as string | null}
+        steps={guidedSteps}
+      />
+    )
+  }
 
   const planExercises = (planWorkout.exercises as PlanExercise[]).sort(
     (a, b) => a.order_num - b.order_num,

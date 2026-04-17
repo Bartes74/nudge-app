@@ -1,5 +1,5 @@
 -- =============================================================
--- Seed: question_library — Layer 1 Minimum (12 questions)
+-- Seed: question_library — Layer 1 Minimum (guided-safe onboarding)
 -- =============================================================
 
 INSERT INTO question_library (
@@ -10,192 +10,148 @@ INSERT INTO question_library (
   phrasing_options, is_active
 ) VALUES
 
--- 1. Cel główny (REQUIRED)
 (
   gen_random_uuid(), 'primary_goal', 'layer_1_minimum', 100,
-  'Cel główny wyznacza kierunek całego planu — inaczej trenuje się na masę, inaczej na zdrowie.',
-  'Wybierz to, co jest dla Ciebie najważniejsze teraz. Możesz zmienić w każdej chwili.',
+  'To pomaga nam dobrać bezpieczny kierunek startu.',
+  'Wybierz to, co jest dziś dla Ciebie najważniejsze.',
   'single_select',
   '{"options": [
-    {"value": "weight_loss",          "label": "Chcę schudnąć / zredukować tkankę tłuszczową"},
-    {"value": "muscle_building",      "label": "Chcę zbudować mięśnie / poprawić sylwetkę"},
-    {"value": "strength_performance", "label": "Chcę zwiększyć siłę i wydolność"},
-    {"value": "general_health",       "label": "Chcę po prostu być aktywna/y i czuć się lepiej"}
+    {"value": "weight_loss",          "label": "Chcę schudnąć lub zmniejszyć ilość tkanki tłuszczowej"},
+    {"value": "muscle_building",      "label": "Chcę zbudować mięśnie i poprawić sylwetkę"},
+    {"value": "strength_performance", "label": "Chcę poprawić siłę i sprawność"},
+    {"value": "general_health",       "label": "Chcę po prostu regularnie się ruszać i czuć się lepiej"}
   ]}',
   true, 15,
-  '{"warm_encouraging": "Co jest dla Ciebie teraz najważniejsze?", "factual_technical": "Wybierz cel główny planu."}',
+  '{"warm_encouraging": "Jaki jest dziś Twój główny cel?", "calm_guided": "Jaki jest dziś Twój główny cel?"}',
   true
 ),
 
--- 2. Wiek
 (
-  gen_random_uuid(), 'birth_date', 'layer_1_minimum', 90,
-  'Wiek wpływa na dobór intensywności i czasu regeneracji. Inaczej trenuje 22-latka, inaczej 50-latek.',
-  'Podaj rok urodzenia lub dokładną datę. Nie musimy znać dnia — wystarczy rok.',
-  'measurement',
-  NULL,
-  false, 10,
-  '{"warm_encouraging": "Ile masz lat?", "factual_technical": "Podaj rok urodzenia."}',
+  gen_random_uuid(), 'age_years', 'layer_1_minimum', 95,
+  'Wiek pomaga dobrać spokojne tempo startu i poziom ostrożności.',
+  'Podaj pełne lata. Nie potrzebujemy dokładnej daty urodzenia.',
+  'numeric',
+  '{"unit": "years", "min": 16, "max": 99, "placeholder": "np. 34"}',
+  true, 10,
+  '{"warm_encouraging": "Ile masz lat?", "calm_guided": "Ile masz lat?"}',
   true
 ),
 
--- 3. Płeć
 (
-  gen_random_uuid(), 'gender', 'layer_1_minimum', 85,
-  'Płeć biologiczna wpływa na kalkulację zapotrzebowania kalorycznego i objętości treningowej.',
-  'Wybierz opcję, która najbliżej odpowiada Twojej fizjologii. To pole jest opcjonalne.',
-  'single_select',
-  '{"options": [
-    {"value": "female",           "label": "Kobieta"},
-    {"value": "male",             "label": "Mężczyzna"},
-    {"value": "other",            "label": "Inna"},
-    {"value": "prefer_not_to_say","label": "Wolę nie podawać"}
-  ]}',
-  false, 10,
-  '{"warm_encouraging": "Jak się identyfikujesz?", "factual_technical": "Płeć biologiczna (potrzebna do kalibracji)."}',
-  true
-),
-
--- 4. Wzrost
-(
-  gen_random_uuid(), 'height_cm', 'layer_1_minimum', 80,
-  'Wzrost jest potrzebny do obliczenia BMI, TDEE i proporcji makroskładników.',
-  'Stań bez butów przy ścianie. Wystarczy przybliżona wartość w centymetrach.',
+  gen_random_uuid(), 'height_cm', 'layer_1_minimum', 90,
+  'Wzrost pomaga dopasować plan i ocenić punkt startowy.',
+  'Wystarczy przybliżona wartość w centymetrach.',
   'numeric',
   '{"unit": "cm", "min": 120, "max": 250, "placeholder": "np. 172"}',
-  false, 10,
-  '{"warm_encouraging": "Ile masz wzrostu?", "factual_technical": "Wzrost [cm]."}',
+  true, 10,
+  '{"warm_encouraging": "Jaki masz wzrost?", "calm_guided": "Jaki masz wzrost?"}',
   true
 ),
 
--- 5. Masa ciała
 (
-  gen_random_uuid(), 'current_weight_kg', 'layer_1_minimum', 80,
-  'Masa ciała razem ze wzrostem daje nam punkt startowy do planu żywieniowego i treningowego.',
-  'Zważ się rano na czczo. Jeśli nie masz wagi — podaj orientacyjną wartość.',
+  gen_random_uuid(), 'current_weight_kg', 'layer_1_minimum', 90,
+  'Masa pomaga dopasować plan i łagodny start.',
+  'Wystarczy orientacyjna wartość.',
   'numeric',
-  '{"unit": "kg", "min": 30, "max": 300, "placeholder": "np. 68"}',
-  false, 10,
-  '{"warm_encouraging": "Ile ważysz?", "factual_technical": "Aktualna masa ciała [kg]."}',
+  '{"unit": "kg", "min": 30, "max": 300, "placeholder": "np. 78"}',
+  true, 10,
+  '{"warm_encouraging": "Jaka jest Twoja masa ciała?", "calm_guided": "Jaka jest Twoja masa ciała?"}',
   true
 ),
 
--- 6. Liczba dni treningowych / tydzień (REQUIRED)
 (
   gen_random_uuid(), 'days_per_week', 'layer_1_minimum', 95,
-  'Liczba dni treningowych to fundament struktury planu. Każdy plan jest inny dla 2, 4 i 5 dni.',
-  'Ile razy w tygodniu realnie możesz trenować? Nie wpisuj aspiracji — wpisuj realia.',
+  'Chcemy zaplanować tyle, ile naprawdę dasz radę zrobić.',
+  'Wybierz realną liczbę treningów, nie wersję idealną.',
   'single_select',
   '{"options": [
-    {"value": 2, "label": "2 razy — na start"},
-    {"value": 3, "label": "3 razy — klasyk"},
-    {"value": 4, "label": "4 razy"},
-    {"value": 5, "label": "5 razy lub więcej"}
+    {"value": 2, "label": "2 treningi tygodniowo"},
+    {"value": 3, "label": "3 treningi tygodniowo"},
+    {"value": 4, "label": "4 treningi tygodniowo"},
+    {"value": 5, "label": "5 lub więcej"}
   ]}',
   true, 10,
-  '{"warm_encouraging": "Ile razy w tygodniu możesz trenować?", "factual_technical": "Dni treningowe / tydzień."}',
+  '{"warm_encouraging": "Ile treningów tygodniowo jest realne?", "calm_guided": "Ile treningów tygodniowo jest realne?"}',
   true
 ),
 
--- 7. Lokalizacja treningu (REQUIRED)
 (
   gen_random_uuid(), 'equipment_location', 'layer_1_minimum', 95,
-  'Różny sprzęt = różny plan. Plan domowy i siłowniany wyglądają całkowicie inaczej.',
-  'Gdzie zazwyczaj trenujesz? Jeśli mieszasz — wybierz to, gdzie trenujesz częściej.',
+  'To pozwala od razu dobrać ćwiczenia i prosty przebieg pierwszych wizyt.',
+  'Wskaż miejsce, w którym najłatwiej będzie Ci ćwiczyć.',
   'single_select',
   '{"options": [
-    {"value": "home",  "label": "W domu (lub na dworze)"},
     {"value": "gym",   "label": "Na siłowni"},
-    {"value": "mixed", "label": "Mixuję — i w domu, i na siłowni"}
+    {"value": "home",  "label": "W domu albo na zewnątrz"},
+    {"value": "mixed", "label": "Różnie, zależnie od dnia"}
   ]}',
   true, 10,
-  '{"warm_encouraging": "Gdzie trenujesz?", "factual_technical": "Lokalizacja treningów."}',
+  '{"warm_encouraging": "Gdzie najłatwiej będzie Ci ćwiczyć?", "calm_guided": "Gdzie najłatwiej będzie Ci ćwiczyć?"}',
   true
 ),
 
--- 8. Dostępny sprzęt
 (
-  gen_random_uuid(), 'equipment_list', 'layer_1_minimum', 88,
-  'Wiemy, z czym możesz trenować — dobieramy ćwiczenia, które faktycznie możesz wykonać.',
-  'Zaznacz wszystko, co masz dostęp. Jeśli jesteś na siłowni — zaznacz wszystko, z czego korzystasz.',
-  'multi_select',
-  '{"options": [
-    {"value": "has_barbell",     "label": "Sztanga ze stojakiem"},
-    {"value": "has_dumbbells",   "label": "Hantle"},
-    {"value": "has_kettlebells", "label": "Kettlebell"},
-    {"value": "has_machines",    "label": "Maszyny (np. leg press, kablówka)"},
-    {"value": "has_cables",      "label": "Wyciągi / kablówka"},
-    {"value": "has_pullup_bar",  "label": "Drążek do podciągania"},
-    {"value": "has_bench",       "label": "Ławeczka"},
-    {"value": "has_cardio",      "label": "Sprzęt cardio (bieżnia, rower stacjonarny)"}
-  ]}',
-  false, 15,
-  '{"warm_encouraging": "Co masz pod ręką do treningu?", "factual_technical": "Dostępny sprzęt."}',
-  true
-),
-
--- 9. Poziom doświadczenia (behawioralnie)
-(
-  gen_random_uuid(), 'experience_level', 'layer_1_minimum', 85,
-  'Poziom doświadczenia decyduje o złożoności ćwiczeń i tempie progresji — nie chcemy Cię ani nudzić, ani przeciążać.',
-  'Wybierz szczerze — nie ma złej odpowiedzi.',
+  gen_random_uuid(), 'recent_activity_window', 'layer_1_minimum', 92,
+  'Na tej podstawie oceniamy, czy potrzebujesz bardzo łagodnego wejścia.',
+  'Chodzi o regularny ruch, nie pojedyncze próby.',
   'single_select',
   '{"options": [
-    {"value": "zero",     "label": "Dopiero zaczynam — nigdy nie trenowałem/am regularnie"},
-    {"value": "beginner", "label": "Trenuję od kilku miesięcy, znam podstawy"},
-    {"value": "amateur",  "label": "Trenuję regularnie od 1-3 lat"},
-    {"value": "advanced", "label": "Trenuję poważnie od 3+ lat, znam technikę"}
+    {"value": "never_regular",   "label": "Nie miałem/am jeszcze regularnych treningów"},
+    {"value": "over_12_months",  "label": "Ponad 12 miesięcy temu"},
+    {"value": "within_12_months","label": "W ostatnich 12 miesiącach, ale nie teraz regularnie"},
+    {"value": "within_3_months", "label": "Ćwiczę regularnie teraz albo ćwiczyłem/am w ostatnich 3 miesiącach"}
   ]}',
-  false, 15,
-  '{"warm_encouraging": "Jak oceniasz swoje doświadczenie treningowe?", "factual_technical": "Poziom zaawansowania."}',
+  true, 15,
+  '{"warm_encouraging": "Kiedy ostatnio miałeś/aś regularną aktywność fizyczną?", "calm_guided": "Kiedy ostatnio miałeś/aś regularną aktywność fizyczną?"}',
   true
 ),
 
--- 10. Ograniczenia zdrowotne
 (
-  gen_random_uuid(), 'health_constraints', 'layer_1_minimum', 75,
-  'Kontuzje i ograniczenia to kluczowe informacje — bez tego możemy zaproponować ćwiczenia, których nie możesz (lub nie powinieneś) robić.',
-  'Zaznacz wszystko, co dotyczy Ciebie teraz lub w ostatnim roku.',
+  gen_random_uuid(), 'health_constraints', 'layer_1_minimum', 98,
+  'To najważniejsza część bezpieczeństwa. Dzięki temu nie dobierzemy zbyt agresywnego startu.',
+  'Zaznacz to, co może wpływać na wysiłek lub wymaga ostrożności.',
   'multi_select',
   '{"options": [
-    {"value": "back_pain",       "label": "Ból pleców (odcinek lędźwiowy lub szyjny)"},
-    {"value": "knee_pain",       "label": "Ból kolan"},
-    {"value": "shoulder_pain",   "label": "Ból barków"},
-    {"value": "hip_pain",        "label": "Ból bioder"},
-    {"value": "wrist_pain",      "label": "Ból nadgarstków"},
-    {"value": "cardiovascular",  "label": "Problemy kardiologiczne"},
-    {"value": "none",            "label": "Żadnych ograniczeń — jestem zdrowy/a"}
+    {"value": "pain_or_injury",               "label": "Mam ból, uraz albo nawracający dyskomfort przy ruchu"},
+    {"value": "medical_condition",            "label": "Mam chorobę lub stan zdrowotny, który warto uwzględnić"},
+    {"value": "medication_affecting_exertion","label": "Biorę leki, które mogą wpływać na wysiłek lub tętno"},
+    {"value": "other_contraindication",       "label": "Mam inne przeciwwskazanie albo potrzebuję ostrożnego startu"},
+    {"value": "none",                         "label": "Nic z tych rzeczy mnie nie dotyczy"}
   ]}',
-  false, 15,
-  '{"warm_encouraging": "Czy masz jakieś ograniczenia zdrowotne?", "factual_technical": "Ograniczenia / kontuzje."}',
+  true, 15,
+  '{"warm_encouraging": "Czy coś może wpływać na bezpieczny wysiłek?", "calm_guided": "Czy coś może wpływać na bezpieczny wysiłek?"}',
   true
 ),
 
--- 11. Ciąża (guardrail)
 (
-  gen_random_uuid(), 'is_pregnant', 'layer_1_minimum', 70,
-  'Ciąża całkowicie zmienia to, co jest bezpieczne w treningu i żywieniu. To pytanie chroni Ciebie.',
-  NULL,
-  'boolean',
-  '{"labels": {"true": "Tak, jestem w ciąży", "false": "Nie"}}',
-  false, 5,
-  '{"warm_encouraging": "Czy jesteś w ciąży?", "factual_technical": "Ciąża (guardrail)."}',
-  true
-),
-
--- 12. Tryb diety
-(
-  gen_random_uuid(), 'nutrition_mode', 'layer_1_minimum', 65,
-  'Nudge może pracować na różnych poziomach precyzji żywieniowej — od ogólnych wskazówek do dokładnych gramatur.',
-  'Polecamy zacząć od „Prosty" — można przejść na dokładniejszy tryb w każdej chwili.',
+  gen_random_uuid(), 'job_activity', 'layer_1_minimum', 80,
+  'Tryb dnia pomaga dobrać obciążenie i tempo regeneracji.',
+  'Wybierz opis najbliższy temu, jak zwykle wygląda Twój dzień.',
   'single_select',
   '{"options": [
-    {"value": "simple", "label": "Prosty — ogólne wskazówki, bez liczenia kalorii"},
-    {"value": "ranges", "label": "Zakresy — widełki kalorii i makro bez gramatur"},
-    {"value": "exact",  "label": "Dokładny — pełne makro w gramach"}
+    {"value": "mostly_sitting",   "label": "Głównie siedzę"},
+    {"value": "mixed",            "label": "Trochę siedzę, trochę chodzę"},
+    {"value": "mostly_standing",  "label": "Głównie stoję albo dużo chodzę"},
+    {"value": "physically_active","label": "Moja praca jest fizyczna"}
   ]}',
-  false, 10,
-  '{"warm_encouraging": "Jak dokładnie chcesz śledzić jedzenie?", "factual_technical": "Tryb żywieniowy."}',
+  true, 10,
+  '{"warm_encouraging": "Jak wygląda Twój typowy dzień pracy?", "calm_guided": "Jak wygląda Twój typowy dzień pracy?"}',
+  true
+),
+
+(
+  gen_random_uuid(), 'training_background', 'layer_1_minimum', 94,
+  'Dzięki temu pokażemy taką ilość instrukcji, jaka naprawdę będzie pomocna.',
+  'Wybierz opis, który najlepiej pasuje do Ciebie teraz.',
+  'single_select',
+  '{"options": [
+    {"value": "just_starting",             "label": "Dopiero zaczynam i chcę prostych instrukcji krok po kroku"},
+    {"value": "returning_after_break",     "label": "Wracam po długiej przerwie"},
+    {"value": "knows_basics_needs_plan",   "label": "Znam podstawy, ale potrzebuję planu"},
+    {"value": "training_regularly",        "label": "Ćwiczę regularnie"}
+  ]}',
+  true, 15,
+  '{"warm_encouraging": "Który opis najlepiej do Ciebie pasuje?", "calm_guided": "Który opis najlepiej do Ciebie pasuje?"}',
   true
 )
 

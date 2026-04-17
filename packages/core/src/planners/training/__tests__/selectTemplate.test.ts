@@ -35,18 +35,18 @@ describe('selectTemplate', () => {
     expect(t.workouts_per_week).toBe(3)
   })
 
-  it('returns FBW for 3 days/week (zero)', () => {
-    const t = selectTemplate(profile({ days_per_week: 3, experience_level: 'zero' }))
+  it('returns FBW for 3 days/week (beginner_zero)', () => {
+    const t = selectTemplate(profile({ days_per_week: 3, experience_level: 'beginner_zero' }))
     expect(t.split_type).toBe('fbw')
   })
 
-  it('returns FBW for 4 days/week (zero)', () => {
-    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'zero' }))
+  it('returns FBW for 4 days/week (beginner_zero)', () => {
+    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'beginner_zero' }))
     expect(t.split_type).toBe('fbw')
   })
 
-  it('returns Upper/Lower for 4 days/week (amateur)', () => {
-    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'amateur' }))
+  it('returns Upper/Lower for 4 days/week (intermediate)', () => {
+    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'intermediate' }))
     expect(t.split_type).toBe('upper_lower')
     expect(t.workouts_per_week).toBe(4)
   })
@@ -62,8 +62,8 @@ describe('selectTemplate', () => {
     expect(t.split_type).toBe('upper_lower')
   })
 
-  it('returns PPL for 5 days/week (amateur)', () => {
-    const t = selectTemplate(profile({ days_per_week: 5, experience_level: 'amateur' }))
+  it('returns PPL for 5 days/week (intermediate)', () => {
+    const t = selectTemplate(profile({ days_per_week: 5, experience_level: 'intermediate' }))
     expect(t.split_type).toBe('ppl')
   })
 
@@ -80,7 +80,7 @@ describe('selectTemplate', () => {
   })
 
   it('week_structure keys match day_labels of workouts', () => {
-    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'amateur' }))
+    const t = selectTemplate(profile({ days_per_week: 4, experience_level: 'intermediate' }))
     const labels = new Set(t.workouts.map((w) => w.day_label))
     const structureKeys = new Set(Object.keys(t.week_structure))
     expect(labels).toEqual(structureKeys)
@@ -88,10 +88,10 @@ describe('selectTemplate', () => {
 
   it('all templates have duration_min_estimated > 0', () => {
     const profiles: Partial<PlannerProfile>[] = [
-      { days_per_week: 3, experience_level: 'zero' },
-      { days_per_week: 4, experience_level: 'amateur' },
+      { days_per_week: 3, experience_level: 'beginner_zero' },
+      { days_per_week: 4, experience_level: 'intermediate' },
       { days_per_week: 5, experience_level: 'advanced' },
-      { days_per_week: 6, experience_level: 'amateur' },
+      { days_per_week: 6, experience_level: 'intermediate' },
     ]
     for (const p of profiles) {
       const t = selectTemplate(profile(p))

@@ -13,8 +13,21 @@ export async function GET(): Promise<NextResponse> {
       id, name, started_at,
       current_version:training_plan_versions!training_plans_current_version_fk (
         id, version_number, week_structure, progression_rules, additional_notes, change_reason, created_at,
+        guided_mode, adaptation_phase, view_mode,
         workouts:plan_workouts (
-          id, day_label, order_in_week, name, duration_min_estimated,
+          id, day_label, order_in_week, name, duration_min_estimated, confidence_goal,
+          steps:plan_workout_steps (
+            id, step_type, order_num, title, duration_min, instruction_text,
+            setup_instructions, execution_steps, tempo_hint, breathing_hint,
+            safety_notes, common_mistakes, stop_conditions, machine_settings,
+            substitution_policy, starting_load_guidance, is_new_skill,
+            exercise:exercises!plan_workout_steps_exercise_id_fkey (
+              id, slug, name_pl, plain_language_name, simple_goal_description, category,
+              setup_instructions, execution_steps, tempo_hint, breathing_hint,
+              safety_notes, common_mistakes, easy_substitution_slugs,
+              machine_busy_substitution_slugs, stop_conditions, starting_load_guidance
+            )
+          ),
           exercises:plan_exercises (
             id, order_num, sets, reps_min, reps_max, rir_target, rest_seconds,
             technique_notes, substitute_exercise_ids,

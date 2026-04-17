@@ -1,4 +1,6 @@
 export type { GuardrailFlag, GuardrailSeverity, GuardrailResult, GuardrailProfile, GuardrailContext } from './types'
+export type { RedFlagSymptom, RedFlagEvaluation } from './redFlags'
+export { evaluateRedFlagSymptoms, RED_FLAG_SYMPTOMS } from './redFlags'
 
 import type { GuardrailProfile, GuardrailContext, GuardrailResult } from './types'
 import { checkUnderage } from './underage'

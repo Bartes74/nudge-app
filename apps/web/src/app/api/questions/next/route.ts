@@ -19,7 +19,7 @@ export async function GET(): Promise<NextResponse> {
       .maybeSingle(),
     supabase
       .from('user_profile')
-      .select('tone_preset')
+      .select('tone_preset, entry_path')
       .eq('user_id', user.id)
       .maybeSingle(),
   ])
@@ -27,7 +27,8 @@ export async function GET(): Promise<NextResponse> {
   const questions = await pickNextQuestions(supabase, {
     userId: user.id,
     userSegment: segmentResult.data?.segment_key ?? null,
-    tonePreset: (profileResult.data?.tone_preset as 'warm_encouraging' | 'factual_technical' | null) ?? null,
+    tonePreset: (profileResult.data?.tone_preset as 'warm_encouraging' | 'partnering' | 'factual_technical' | 'calm_guided' | null) ?? null,
+    entryPath: (profileResult.data?.entry_path as 'guided_beginner' | 'standard_training' | null) ?? null,
     count: 2,
   })
 

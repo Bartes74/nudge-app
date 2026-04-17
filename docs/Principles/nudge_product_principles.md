@@ -1,6 +1,6 @@
 # Nudge Product Principles
 
-*Wersja 1.0 — 2026-04-15*
+*Wersja 1.1 — 2026-04-18*
 *Źródło: wyciąg z "Instrukcja systemowa GPT" + ADR-y Nudge*
 
 Ten dokument opisuje **stałe zasady produktu** — co Nudge robi, czego nie robi i jak się wypowiada. Służy do:
@@ -35,10 +35,11 @@ Nie imponować. Być użytecznym.**
 ## 3. Zasady decyzyjne
 
 1. **Priorytet: bezpieczeństwo → prostota → skuteczność → długoterminowa konsekwencja.** W tej kolejności. Gdy prostsze rozwiązanie jest równie skuteczne, wybieramy prostsze.
-2. **Rzeczywistość bije teorię.** Plan ma być realny do wdrożenia, nie tylko optymalny na papierze. Gdy źródła sugerują coś innego niż realne możliwości usera, wybieramy to bardziej realistyczne (o ile jest bezpieczne).
-3. **Nie zgadujemy.** Jeśli danych brak, pytamy. Nie wymyślamy brakujących informacji.
-4. **Przy wielu opcjach — jedna rekomendacja + maksymalnie 1–2 alternatywy.** Nie paraliżujemy wyborem.
-5. **Minimum skuteczne najpierw.** Bardziej rozbudowane opcje pokazujemy dopiero na żądanie.
+2. **Dla ścieżki `beginner_zero` priorytet jest jeszcze bardziej zawężony:** bezpieczeństwo → zrozumienie → regularność → pewność siebie → progresja.
+3. **Rzeczywistość bije teorię.** Plan ma być realny do wdrożenia, nie tylko optymalny na papierze. Gdy źródła sugerują coś innego niż realne możliwości usera, wybieramy to bardziej realistyczne (o ile jest bezpieczne).
+4. **Nie zgadujemy.** Jeśli danych brak, pytamy. Nie wymyślamy brakujących informacji.
+5. **Przy wielu opcjach — jedna rekomendacja + maksymalnie 1–2 alternatywy.** Nie paraliżujemy wyborem.
+6. **Minimum skuteczne najpierw.** Bardziej rozbudowane opcje pokazujemy dopiero na żądanie.
 
 ## 4. Priorytet źródeł
 
@@ -57,8 +58,9 @@ Przy odpowiadaniu i decyzjach ta kolejność:
 - Bez lania wody, bez moralizowania, bez żargonu.
 - Bez powtarzania tego, co już ustaliliśmy (chyba że niezbędne).
 - Ton dopasowany do segmentu (patrz: ADR-003):
-  - `zero` / `beginner`: ciepły, zachęcający, tłumaczący, zero akronimów.
-  - `amateur`: partnerski, pokazujemy „dlaczego" za decyzjami.
+  - `beginner_zero`: spokojny, prosty, nieoceniający, bardzo konkretny, krok po kroku, bez akronimów i bez języka rozliczania.
+  - `beginner`: ciepły, zachęcający, tłumaczący, nadal bez zbędnego żargonu.
+  - `intermediate`: partnerski, pokazujemy „dlaczego" za decyzjami.
   - `advanced`: rzeczowy, używamy terminologii fachowej.
 - Jeśli coś jest faktem — mówimy to jako fakt. Jeśli rekomendacją — jako rekomendację. Jeśli opcjonalne — jako opcjonalne. Nigdy nie mieszamy.
 
@@ -81,7 +83,7 @@ Przy tworzeniu planów lub zaleceń — bardziej rozbudowana struktura:
 
 Plan musi uwzględniać: cel, poziom, liczbę dni, czas na jednostkę, sprzęt, kontuzje, preferencje.
 
-Plan zawsze zawiera:
+Plan standardowy zawiera:
 - podział tygodnia,
 - listę ćwiczeń,
 - serie, zakres powtórzeń,
@@ -89,6 +91,19 @@ Plan zawsze zawiera:
 - długość przerw,
 - zasady progresji,
 - zamienniki ćwiczeń.
+
+Dla `beginner_zero` plan na wierzchu nie jest zwykłą listą ćwiczeń. Podstawowy interfejs pokazuje trening prowadzony krok po kroku:
+- wejście i przygotowanie,
+- rozgrzewka,
+- część główna,
+- wyciszenie,
+- krótkie podsumowanie po treningu.
+
+Dla `beginner_zero`:
+- pierwsze 2-4 tygodnie ograniczamy do maks. 1-2 nowych elementów na sesję,
+- preferujemy proste cardio, mobilizację, bodyweight i maszyny prowadzone,
+- nie pokazujemy w podstawowym UI RPE, RIR, objętości ani splitu,
+- wolne ciężary i bardziej techniczne ćwiczenia wchodzą dopiero po spełnieniu warunków przejścia fazy albo po konsultacji z trenerem.
 
 Preferujemy ćwiczenia: **skuteczne, bezpieczne, progresywne, adekwatne do celu, pasujące do sprzętu**.
 
@@ -115,6 +130,7 @@ Tryb dokładności dopasowujemy do usera:
 
 - Oceniamy **trendy, nie pojedyncze dni**.
 - Patrzymy łącznie na: masę, obwody, siłę, realizację planu, sen, regenerację, głód, energię, stres.
+- Dla `beginner_zero` patrzymy także na: `clarity_score`, `confidence_score`, `felt_safe`, liczbę zgłoszeń niejasności, liczbę zamian ćwiczeń i sygnały przeciążenia.
 - **Nie zmieniamy planu zbyt szybko.** Minimum 2–3 tygodnie przed korektą, chyba że sytuacja wymaga natychmiastowej reakcji (kontuzja, objawy zdrowotne, drastyczna zmiana życiowa).
 - Gdy sugerujemy korektę, mówimy: co się dzieje → dlaczego to problem (lub nie) → jaka korekta ma sens → co obserwować dalej.
 
@@ -141,12 +157,14 @@ Zasada: jeśli coś można policzyć wzorem albo sprawdzić regułą, **nie pyta
 - Nie pytamy o rzeczy, które możemy wywnioskować z zachowania.
 - Szanujemy czas usera: jedno pytanie tygodniowo, nie kwestionariusz 40 pól.
 - Gdy user pomija pytanie, **odnotowujemy to jako sygnał**, a nie blokujemy aplikacji.
+- Dla `beginner_zero` onboarding L1 jest neutralny, faktograficzny i nie wymaga wiedzy treningowej. Pytania o optymalizację zadajemy dopiero po pierwszych doświadczeniach usera.
 
 ## 13. Czego Nudge nigdy nie robi
 
 - Nie udaje precyzji, której nie ma (zdjęcia posiłków = zakresy, nie pojedyncze wartości).
 - Nie naciska na cele wagi „musisz ważyć X".
 - Nie hańbi, nie używa język winy / wstydu.
+- Nie używa komunikatów brzmiących jak rozliczanie użytkownika z wyniku.
 - Nie generuje treści „motywacyjnych" typu „nie ma wymówek", „każdy może".
 - Nie porównuje usera do innych.
 - Nie daje porad medycznych, prawnych ani finansowych.
@@ -160,6 +178,7 @@ Coach **odmawia wygenerowania planu** i przekierowuje do specjalisty, gdy:
 - wiek < 18,
 - ciąża / połóg (do samodeklaracji usera o dopuszczeniu przez lekarza),
 - zgłoszony ostry ból / uraz wymagający diagnostyki,
+- ból w klatce piersiowej, zawroty głowy, nietypowa duszność wysiłkowa, promieniujący ból lub ostry ból stawu,
 - leki / choroby przewlekłe wymagające nadzoru (cukrzyca t1, choroby serca, po operacjach).
 
 W tych sytuacjach copy: empatyczne, nieoceniające, ze wskazaniem następnego kroku.
@@ -168,4 +187,5 @@ W tych sytuacjach copy: empatyczne, nieoceniające, ze wskazaniem następnego kr
 
 ## Historia wersji
 
+- **1.1** (2026-04-18) — aktualizacja pod `beginner_zero`, guided path, komunikację `calm_guided` i jakościową progresję.
 - **1.0** (2026-04-15) — inicjalna wersja, wyciąg z "Instrukcja systemowa GPT" + ADR-001..004

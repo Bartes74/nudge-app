@@ -43,3 +43,14 @@ test-results/
 
 # Fly.io
 .fly/
+.vercel
+
+# Claude worktrees
+.claude/worktrees/
+
+# next-pwa generated
+apps/web/public/sw.js
+apps/web/public/sw.js.map
+apps/web/public/swe-worker-*.js
+apps/web/public/workbox-*.js
+apps/web/public/workbox-*.js.map

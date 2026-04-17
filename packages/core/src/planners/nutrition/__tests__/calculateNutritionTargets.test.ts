@@ -14,7 +14,7 @@ const ANIA: NutritionPlannerProfile = {
   nutrition_mode: 'simple',
   dietary_constraints: [],
   life_context: ['parent_young_kids'],
-  experience_level: 'zero',
+  experience_level: 'beginner_zero',
 }
 
 const KUBA: NutritionPlannerProfile = {
@@ -42,7 +42,7 @@ const MARTA: NutritionPlannerProfile = {
   nutrition_mode: 'ranges',
   dietary_constraints: [],
   life_context: ['parent_young_kids'],
-  experience_level: 'amateur',
+  experience_level: 'intermediate',
 }
 
 describe('calculateNutritionTargets', () => {

@@ -1,8 +1,8 @@
-import type { ExerciseCatalogEntry } from './types'
+import type { ExerciseCatalogEntry, SubstitutionReason } from './types'
 
 export interface SubstituteResult {
   newExerciseSlug: string
-  reason: string
+  reason: SubstitutionReason
 }
 
 /**
@@ -12,7 +12,7 @@ export interface SubstituteResult {
  */
 export function substituteExercise(opts: {
   currentSlug: string
-  reason: string
+  reason: SubstitutionReason
   catalog: ExerciseCatalogEntry[]
   availableEquipment: string[]
 }): SubstituteResult | null {
@@ -27,8 +27,13 @@ export function substituteExercise(opts: {
     e.equipment_required.length === 0 ||
     e.equipment_required.every((eq) => equipmentSet.has(eq))
 
-  // 1. Try alternatives_slugs from the current exercise
-  for (const altSlug of current.alternatives_slugs) {
+  const prioritizedSubstitutions =
+    opts.reason === 'machine_busy'
+      ? current.machine_busy_substitution_slugs ?? current.alternatives_slugs
+      : current.easy_substitution_slugs ?? current.alternatives_slugs
+
+  // 1. Try reason-specific substitutions from the current exercise
+  for (const altSlug of prioritizedSubstitutions) {
     const alt = catalog.find((e) => e.slug === altSlug && e.slug !== currentSlug)
     if (alt && isEquipmentAvailable(alt)) {
       return { newExerciseSlug: alt.slug, reason: opts.reason }
@@ -37,7 +42,15 @@ export function substituteExercise(opts: {
 
   // 2. Try same category, same equipment availability
   const sameCategory = catalog.filter(
-    (e) => e.category === current.category && e.slug !== currentSlug && isEquipmentAvailable(e),
+    (e) =>
+      e.category === current.category &&
+      e.slug !== currentSlug &&
+      isEquipmentAvailable(e) &&
+      (
+        opts.reason === 'machine_busy' ||
+        e.difficulty === 'beginner' ||
+        e.is_compound === false
+      ),
   )
   if (sameCategory.length > 0) {
     return { newExerciseSlug: sameCategory[0]!.slug, reason: opts.reason }

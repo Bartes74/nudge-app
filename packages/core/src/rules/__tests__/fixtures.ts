@@ -71,7 +71,7 @@ export const MACRO_GENERAL_HEALTH: MacroInput = {
 // ── Volume fixtures ──────────────────────────────────────────────────────────
 
 export const VOLUME_ZERO_GENERAL: VolumeInput = {
-  experience_level: 'zero',
+  experience_level: 'beginner_zero',
   primary_goal: 'general_health',
 }
 

@@ -60,9 +60,9 @@ export default async function OnboardingDonePage() {
         )}
         {profile.experience_level && (
           <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
-            {profile.experience_level === 'zero' ? 'Początkujący' :
-             profile.experience_level === 'beginner' ? 'Beginner' :
-             profile.experience_level === 'amateur' ? 'Amator' : 'Zaawansowany'}
+            {profile.experience_level === 'beginner_zero' ? 'Spokojny start' :
+             profile.experience_level === 'beginner' ? 'Początkujący' :
+             profile.experience_level === 'intermediate' ? 'Średniozaawansowany' : 'Zaawansowany'}
           </span>
         )}
       </div>

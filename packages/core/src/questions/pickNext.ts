@@ -13,7 +13,8 @@ export interface QuestionCandidate {
 export interface PickNextOptions {
   userId: string
   userSegment?: string | null
-  tonePreset?: 'warm_encouraging' | 'partnering' | 'factual_technical' | null
+  tonePreset?: 'warm_encouraging' | 'partnering' | 'factual_technical' | 'calm_guided' | null
+  entryPath?: 'guided_beginner' | 'standard_training' | null
   count?: number
 }
 
@@ -30,7 +31,8 @@ export async function pickNextQuestions(
   supabase: SupabaseClient,
   opts: PickNextOptions,
 ): Promise<QuestionCandidate[]> {
-  const { userId, userSegment, count = 2 } = opts
+  const { userId, userSegment } = opts
+  const count = opts.entryPath === 'guided_beginner' ? Math.min(opts.count ?? 1, 1) : (opts.count ?? 2)
   const tone = opts.tonePreset ?? 'warm_encouraging'
 
   const [questionsResult, askedResult, factsResult] = await Promise.all([
@@ -109,9 +111,20 @@ export async function pickNextQuestions(
       return { question: q, score: 0 }
     }
 
+    const guidedPriorityBoost =
+      opts.entryPath === 'guided_beginner'
+        ? (
+            ['health_constraints', 'recovery_status', 'clarity_score', 'confidence_score', 'pain_flag', 'ready_for_next_workout'].includes(q.field_key)
+              ? 1.4
+              : ['supplements', 'exact_macros', 'volume_preference', 'preferred_split'].includes(q.field_key)
+                ? 0.2
+                : 0.7
+          )
+        : 1
+
     return {
       question: q,
-      score: priorityBase * alreadyKnownFactor * segmentFitFactor * cooldownFactor,
+      score: priorityBase * alreadyKnownFactor * segmentFitFactor * cooldownFactor * guidedPriorityBoost,
     }
   })
 

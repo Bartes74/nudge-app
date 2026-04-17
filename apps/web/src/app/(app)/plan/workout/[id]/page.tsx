@@ -19,7 +19,13 @@ export default async function WorkoutPage({
   const { data: workout } = await supabase
     .from('plan_workouts')
     .select(`
-      id, name, day_label, duration_min_estimated, warmup_notes, cooldown_notes,
+      id, name, day_label, duration_min_estimated, warmup_notes, cooldown_notes, confidence_goal,
+      plan_version:training_plan_versions!plan_workouts_plan_version_id_fkey (
+        view_mode
+      ),
+      steps:plan_workout_steps (
+        id, order_num, title, duration_min, instruction_text
+      ),
       exercises:plan_exercises (
         id, order_num, sets, reps_min, reps_max, rir_target, rest_seconds, technique_notes,
         exercise:exercises!plan_exercises_exercise_id_fkey (
@@ -67,6 +73,69 @@ export default async function WorkoutPage({
   }
 
   const exercises = (workout.exercises as PlanExercise[]).sort((a, b) => a.order_num - b.order_num)
+  const viewMode =
+    (workout.plan_version as { view_mode?: string | null } | null)?.view_mode ?? null
+  const guidedSteps =
+    ((workout.steps as Array<{ id: string; order_num: number; title: string; duration_min: number | null; instruction_text: string }> | null) ?? [])
+      .sort((a, b) => a.order_num - b.order_num)
+
+  if (viewMode === 'guided_beginner_view') {
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-2">
+          <Link href="/app" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4" />
+            Dziś
+          </Link>
+        </div>
+
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">{workout.name}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Spokojny trening prowadzony krok po kroku</p>
+          </div>
+          <Badge variant="secondary" className="gap-1">
+            <Clock className="h-3 w-3" />
+            {workout.duration_min_estimated} min
+          </Badge>
+        </div>
+
+        {workout.confidence_goal && (
+          <div className="rounded-lg bg-muted/40 p-4 text-sm text-muted-foreground">
+            <span className="font-medium">Cel tej sesji: </span>
+            {workout.confidence_goal}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {guidedSteps.map((step, index) => (
+            <div key={step.id} className="rounded-xl border bg-card p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="font-medium">{step.title}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{step.instruction_text}</p>
+                  {step.duration_min != null && (
+                    <p className="mt-2 text-xs text-muted-foreground">około {step.duration_min} min</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Link
+          href={`/app/plan/workout/${id}/start`}
+          className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+        >
+          <Dumbbell className="h-4 w-4" />
+          Otwórz dzisiejszy spokojny trening
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4">

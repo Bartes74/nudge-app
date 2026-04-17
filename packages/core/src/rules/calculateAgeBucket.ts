@@ -21,3 +21,11 @@ export function calculateAgeBucket(birthDate: string | null): AgeBucket | null {
   if (age < 55) return 'age_40_55'
   return 'age_55_plus'
 }
+
+export function calculateAgeBucketFromAge(ageYears: number | null): AgeBucket | null {
+  if (ageYears == null || Number.isNaN(ageYears) || ageYears < 0) return null
+  if (ageYears < 25) return 'under_25'
+  if (ageYears < 40) return 'age_25_40'
+  if (ageYears < 55) return 'age_40_55'
+  return 'age_55_plus'
+}

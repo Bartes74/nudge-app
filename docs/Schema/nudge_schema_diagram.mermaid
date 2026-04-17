@@ -1,5 +1,5 @@
 %% Nudge — ER Diagram (Mermaid)
-%% Wersja: 0.1 (MVP v1) — 2026-04-15
+%% Wersja: 0.2 (MVP v1 + guided beginner path) — 2026-04-18
 %% Podgląd: https://mermaid.live lub w VS Code z rozszerzeniem Mermaid
 %% Uwaga: pokazujemy najważniejsze relacje; pełny schemat — plik .dbml
 
@@ -21,7 +21,7 @@ erDiagram
     users ||--o{ nutrition_plans : "logical plans"
     users ||--o{ workout_logs : "what user did"
     users ||--o{ meal_logs : "meal entries"
-    users ||--o{ checkins : "weekly"
+    users ||--o{ checkin_sessions : "weekly"
     users ||--o{ user_question_asks : "adaptive questions"
     users ||--o{ coach_conversations : "chat threads"
     users ||--o{ ai_tasks : "AI jobs"
@@ -34,7 +34,9 @@ erDiagram
     training_plans ||--o{ training_plan_versions : "versioned"
     training_plan_versions ||--o{ plan_workouts : "week structure"
     plan_workouts ||--o{ plan_exercises : "exercise list"
+    plan_workouts ||--o{ plan_workout_steps : "guided flow"
     plan_exercises }o--|| exercises : "from catalog"
+    plan_workout_steps }o--o| exercises : "optional catalog ref"
 
     workout_logs ||--o{ workout_log_exercises : "per exercise"
     workout_log_exercises ||--o{ workout_log_sets : "per set"

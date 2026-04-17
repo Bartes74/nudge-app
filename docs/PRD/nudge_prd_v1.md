@@ -1,7 +1,7 @@
 # Nudge — PRD v1 (PWA, full scope)
 
-- **Wersja:** 1.0
-- **Data:** 2026-04-15
+- **Wersja:** 1.1
+- **Data:** 2026-04-18
 - **Autor:** Bartek + Claude (sparring)
 - **Status:** Draft do rewizji
 - **Zakres:** pełne PWA, wszystkie funkcje. Natywne iOS/Android w kolejnej iteracji produktu (poza tym PRD).
@@ -51,11 +51,22 @@ Koszt nie rozwiązania: odpływ userów w pierwszych 14 dniach, niski LTV, powta
 
 Z ADR-003: 8 segmentów aktywnych, ale 3 najważniejsze dla persony v1:
 
-- **Ania, 34, `zero × general_health × female`** — po drugim dziecku, nigdy regularnie nie ćwiczyła, chce „po prostu się ruszać i czuć lepiej". Ma w domu hantle do 10 kg. Boi się siłowni.
+- **Ania, 34, `beginner_zero × general_health × female`** — po drugim dziecku, nie ćwiczyła regularnie od lat, chce „po prostu się ruszać i czuć lepiej". Ma w domu lekkie hantle. Potrzebuje prostych instrukcji krok po kroku i spokojnego wejścia.
 - **Kuba, 28, `beginner × muscle_building × male`** — chodzi od pół roku na siłownię z kolegą, który powiedział mu „rób 3x10". Chce „coś więcej wyciągnąć z czasu tam spędzonego".
-- **Marta, 42, `amateur × weight_loss × female × parent_young_kids`** — pracująca, dwójka dzieci, trenuje w domu 3 razy w tygodniu od 2 lat. Zgubiła motywację bo „nic się nie dzieje".
+- **Marta, 42, `intermediate × weight_loss × female × parent_young_kids`** — pracująca, dwójka dzieci, trenuje w domu 3 razy w tygodniu od 2 lat. Zgubiła motywację bo „nic się nie dzieje".
 
 Pozostałe 5 segmentów obsługujemy tym samym silnikiem, ale content/UX optymalizujemy najpierw pod te trzy.
+
+### Aktualizacja 2026-04-18 — osobna ścieżka `beginner_zero`
+
+`beginner_zero` nie jest wariantem zwykłego planu siłowego. To osobna ścieżka wejścia do produktu:
+
+- neutralny onboarding L1: wiek, wzrost, masa, cel, realna liczba treningów, miejsce ćwiczeń, ostatnia regularna aktywność, przeciwwskazania/ból/leki, typ pracy i bezpieczna samoocena poziomu,
+- automatyczna kwalifikacja do `entry_path='guided_beginner'` na bazie historii ruchu, wieku, BMI i safety screeningu,
+- trzy fazy: `phase_0_familiarization`, `phase_1_adaptation`, `phase_2_foundations`,
+- osobny generator planu, który zwraca trening prowadzony krok po kroku zamiast samej listy ćwiczeń,
+- domyślny interfejs `Today Guided Workout` oraz mini check-in po treningu skupiony na zrozumieniu, bezpieczeństwie i pewności siebie,
+- warunkowa sugestia rozmowy z trenerem jako naturalny kolejny krok, a nie pytanie wejściowe.
 
 ## 5. User stories — high level
 
@@ -65,9 +76,11 @@ Podzielone na 5 obszarów. Szczegółowe akceptacje w każdej iteracji niżej.
 - Jako nowy user chcę w < 5 min dostać pierwszy plan treningowy na bazie podstawowych danych, żeby od razu zobaczyć wartość.
 - Jako user chcę, żeby aplikacja prosiła o dodatkowe dane tylko wtedy, gdy to ma sens — z wyjaśnieniem dlaczego pyta.
 - Jako user chcę edytować swój profil w każdej chwili, ale nie muszę — aplikacja i tak działa.
+- Jako user `beginner_zero` chcę, żeby pierwszy onboarding nie zawstydzał mnie i nie wymagał znajomości ćwiczeń ani sprzętu.
 
 ### Plan treningowy
 - Jako user chcę zobaczyć „co mam dziś zrobić na treningu", od razu po otwarciu aplikacji.
+- Jako user `beginner_zero` chcę zobaczyć przede wszystkim dzisiejszy prosty krok, a nie pełną tabelę tygodnia.
 - Jako user chcę szybko wymienić ćwiczenie, jeśli nie mogę go zrobić (brak sprzętu, ból, nuda).
 - Jako user chcę widzieć, czy moja siła rośnie.
 
@@ -79,10 +92,12 @@ Podzielone na 5 obszarów. Szczegółowe akceptacje w każdej iteracji niżej.
 ### Coaching i check-in
 - Jako user chcę zapytać coacha o konkrety („mogę masło orzechowe?", „jak zrobić martwy ciąg?", „alternatywa dla ławki").
 - Jako user chcę raz w tygodniu zrobić krótki check-in i dostać konkretną rekomendację.
+- Jako user `beginner_zero` chcę po każdym treningu krótki check-in o tym, czy wiedziałem/am co robić i czy czułem/am się bezpiecznie.
 - Jako user chcę dostawać proaktywne wiadomości tylko gdy coś się zmienia (nie spam).
 
 ### Bezpieczeństwo i zdrowie
 - Jako user z bólem pleców chcę, żeby aplikacja nie kazała mi robić martwego ciągu.
+- Jako user początkujący chcę, żeby aplikacja nie wrzucała mnie od razu w technicznie złożone ćwiczenia i nie zasypywała żargonem.
 - Jako user z sygnałem ED/zaburzeń odżywiania chcę zostać przekierowany do specjalisty, a nie dostać kolejną dietę.
 - Jako user nastolatek lub w ciąży chcę jasną informację, że to nie jest apka dla mnie.
 
@@ -317,26 +332,28 @@ PRZED ZROBIENIEM PR: checklist akceptacji.
 
 #### Zakres produktowy
 **User stories:**
-- Jako user chcę odpowiedzieć na minimum pytań, żeby dostać plan.
+- Jako user chcę odpowiedzieć na minimum neutralnych pytań, żeby dostać plan.
 - Jako user przy każdym pytaniu chcę widzieć dlaczego o to pytamy i jak łatwo to sprawdzić.
-- Jako user chcę pominąć pytanie, jeśli nie umiem odpowiedzieć.
+- Jako user `beginner_zero` nie chcę na starcie pytań zawstydzających ani wymagających wiedzy treningowej.
 - Jako user chcę zobaczyć swój profil i móc go edytować.
 
 **Funkcje:**
-- Onboarding warstwy 1 (10-12 pól):
+- Onboarding warstwy 1 (10 neutralnych pól):
   - Cel główny (weight_loss / muscle_building / strength_performance / general_health).
-  - Wiek, płeć.
+  - Wiek.
   - Wzrost, masa (orientacyjna OK).
-  - Liczba dni treningu / tydzień.
-  - Sprzęt: dom vs siłownia, lista (hantle, sztanga, maszyny, cardio).
-  - Poziom — pytanie behawioralne ("Robiłeś/aś kiedyś martwy ciąg ze sztangą?" itp.).
-  - Ograniczenia zdrowotne (multi-select z listą + "inne").
-  - Tryb diety (simple / ranges / exact) — z zaleceniem.
+  - Realna liczba treningów / tydzień.
+  - Miejsce ćwiczeń.
+  - Ostatnia regularna aktywność fizyczna.
+  - Ograniczenia zdrowotne, ból, urazy, leki wpływające na wysiłek.
+  - Typ pracy i poziom siedzenia w ciągu dnia.
+  - Bezpieczna samoocena poziomu („dopiero zaczynam”, „wracam po przerwie”, „znam podstawy”, „ćwiczę regularnie”).
+- Automatyczna kwalifikacja do `experience_level`, `entry_path`, `adaptation_phase`, `guided_mode`.
+- Dla `beginner_zero` domyślny tone preset `calm_guided` i tryb żywieniowy `simple`.
 - Każde pole z „po co" + „jak to zmierzyć" (tooltip lub inline pod labelem).
-- Możliwość "nie wiem / pomiń" — zapis jako `confidence: 0`.
-- Ekran podsumowania: „Oto co wiemy o Tobie. Pomnożysz to wszystkim zyskiem. Przejdź do planu → ".
+- Ekran podsumowania: „Oto co wiemy o Tobie. Przejdź do planu →”.
 - Strona /profile z edycją każdego pola.
-- Automatyczna klasyfikacja segmentu po onboardingu.
+- Automatyczna klasyfikacja segmentu i ścieżki po onboardingu.
 
 #### Wymagania techniczne
 - Tabele: `user_profile`, `user_profile_facts`, `user_equipment`, `user_health`, `user_goals`, `user_segment_snapshots`, `field_explanations`, `question_library` (seed warstwy 1), `user_question_asks`, `product_events`.
@@ -345,24 +362,26 @@ PRZED ZROBIENIEM PR: checklist akceptacji.
   - `calculateAgeBucket(birthDate)`
   - `classifySegment(profile): SegmentKey`
   - `generateFactsFromOnboarding(answers): Fact[]`
+  - `qualifyEntryPath(input): { experienceLevel, entryPath, adaptationPhase, guidedMode, inferredBeginnerStatus }`
 - Endpointy API:
-  - `POST /api/onboarding/complete` — zapisuje facts, update profile, wylicza segment.
+  - `POST /api/onboarding/complete` — zapisuje facts, update profile, wylicza segment i zwraca `experience_level`, `entry_path`, `adaptation_phase`, `guided_mode`, `inferred_beginner_status`.
   - `GET /api/profile` — zwraca cały profil.
   - `PATCH /api/profile/field` — update single field (z zapisem w facts z nowym `observed_at`).
 - Komponent React `<OnboardingWizard>` z progress bar.
 - Komponent `<FieldWithExplanation>` reusable: label + why + how + input.
-- Seed danych: ~25 wpisów w `field_explanations` (pl-PL), ~15 pytań w `question_library` (warstwa 1).
+- Seed danych: neutralne wpisy w `field_explanations` (pl-PL), ~10 pytań w `question_library` (warstwa 1).
 
 #### Kryteria akceptacji
 - [ ] Nowy user przechodzi warstwę 1 w < 5 min (measure z Playwright).
 - [ ] Każde pole ma widoczne „po co pytamy" i „jak zmierzyć".
-- [ ] Pomijanie pól działa (`confidence: 0` w facts).
 - [ ] Po onboardingu `user_segment_snapshots` ma wpis z poprawnym `segment_key`.
+- [ ] Po onboardingu response zawiera `entry_path`, `adaptation_phase` i `guided_mode`.
 - [ ] Profil widoczny na /profile i edytowalny.
 - [ ] Edycja pola tworzy nowy wpis w `user_profile_facts` (nie update).
-- [ ] PostHog eventy: `onboarding_started`, `onboarding_field_answered`, `onboarding_field_skipped`, `onboarding_completed`.
+- [ ] PostHog eventy: `onboarding_started`, `onboarding_field_answered`, `onboarding_completed`.
 - [ ] RLS: user widzi tylko swoje facts.
 - [ ] Test: 3 profile testowe dla 3 person (Ania, Kuba, Marta) — każdy daje właściwy segment.
+- [ ] User bez regularnych treningów w ostatnich 12 miesiącach trafia do `beginner_zero` i `guided_beginner`.
 
 #### Zależności
 Iteracja 1.
@@ -375,26 +394,26 @@ KONTEKST:
 - Schema: /Schema/nudge_schema.dbml — grupy 2, 4, 5, 13, 16, 18.
 - ADR-003: segmentacja dwuosiowa + flagi.
 - Product Principles §12: każde pole ma „po co" i „jak zmierzyć".
-- Dane persona: Ania (zero × general_health × female), Kuba (beginner × muscle_building × male), Marta (amateur × weight_loss × female × parent).
+- Dane persona: Ania (beginner_zero × general_health × female), Kuba (beginner × muscle_building × male), Marta (intermediate × weight_loss × female × parent).
 
 ZADANIE:
 1. Migracje: utwórz tabele z grup 2 (user_profile, user_profile_facts), 4 (user_equipment, user_health — pola tylko wymagane na warstwę 1), 5 (user_goals, user_segment_snapshots), 13 (question_library, user_question_asks), 16 (field_explanations), 18 (product_events). Wszystkie user-scoped z RLS.
-2. Seed `question_library` z 12 pytaniami warstwy 1 (cel, wiek, płeć, wzrost, masa, dni/tydzień, sprzęt-lokalizacja, sprzęt-lista, doświadczenie-behawioralnie, ograniczenia, tryb diety).
+2. Seed `question_library` z neutralnymi pytaniami warstwy 1 (cel, wiek, wzrost, masa, dni/tydzień, miejsce ćwiczeń, ostatnia regularna aktywność, ograniczenia, typ pracy, bezpieczna samoocena poziomu).
 3. Seed `field_explanations` z 15 wpisami pl-PL (why_we_ask + how_to_measure per pole).
 4. Kod w packages/core:
    - funkcja `classifySegment(profile)` → jeden z 8 segment_keys
    - funkcja `calculateAgeBucket(birthDate)`
+   - funkcja `qualifyEntryPath(input)` → `experience_level`, `entry_path`, `adaptation_phase`, `guided_mode`
    - funkcja `generateFactsFromOnboarding(answers)` — generuje array facts z source='onboarding', confidence 0.9-1.0
 5. API endpoints: POST /api/onboarding/complete, GET /api/profile, PATCH /api/profile/field.
 6. Frontend:
    - /onboarding — wizard z progress bar (11 kroków), każdy krok z komponentem <FieldWithExplanation>.
    - /app/profile — strona profilu z grupami pól, każde z edit inline.
    - /onboarding/done — podsumowanie („Oto co wiemy...") z CTA do planu.
-7. Guardrails warstwy 1: jeśli wiek < 18 → wyzwól flagę `underage` + ekran blokujący z kontaktem do specjalisty (z ADR-002). Analogicznie dla samodeklaracji ciąży.
+7. Guardrails warstwy 1: jeśli wiek < 18 → wyzwól flagę `underage` + ekran blokujący z kontaktem do specjalisty (z ADR-002). Ograniczenia zdrowotne i leki mają wymusić safety screening, ale nie zawstydzać usera.
 
 WYMAGANIA UX:
 - Jedno pytanie na ekran na mobile, max 3 na desktop.
-- Skip na każdym polu poza 3 (cel, dni/tydzień, lokalizacja sprzętu — to MUSI być).
 - Progress bar z liczbą kroków.
 - Animacje transition między krokami (framer-motion).
 - Po każdym polu: zapis local (sessionStorage) żeby nie zgubić postępu.
@@ -402,7 +421,6 @@ WYMAGANIA UX:
 TESTY:
 - Unit: classifySegment z 10 test cases pokrywającymi wszystkie segmenty.
 - E2E: 3 pełne ścieżki onboardingu (po jednej per persona), każda kończy się właściwym segmentem.
-- E2E: pomijanie pól działa.
 - Manual: 2 konta, user A nie widzi profilu B.
 
 DELIVERABLES:
@@ -514,20 +532,23 @@ DELIVERABLES:
 **Funkcje:**
 - Katalog ćwiczeń (seed ~150) z technique_notes, muscle groups, equipment.
 - Generator planu — reguły wybierają szablon (split/FBW/upper-lower) + LLM wypełnia konkretnymi ćwiczeniami z katalogu.
+- Dla `beginner_zero` osobny generator guided path z fazami `phase_0_familiarization`, `phase_1_adaptation`, `phase_2_foundations`.
 - Wersjonowanie planu (training_plan_versions).
 - Widok „Dziś" na zakładce /app/today.
-- Widok „Plan tygodnia" na zakładce /app/plan.
+- Dla `beginner_zero` widok `Today Guided Workout` jako domyślny.
+- Widok „Plan tygodnia" na zakładce /app/plan pozostaje główny dla standardowych ścieżek.
 - Ekran szczegółu ćwiczenia: zdjęcie/wideo, 3-5 punktów techniki, zamienniki (klik → zamiana w planie).
 - Copy-language dopasowany do tonu segmentu.
 
 #### Wymagania techniczne
-- Tabele: `exercises`, `training_plans`, `training_plan_versions`, `plan_workouts`, `plan_exercises`, `ai_tasks`, `llm_calls`, `prompts`.
+- Tabele: `exercises`, `training_plans`, `training_plan_versions`, `plan_workouts`, `plan_exercises`, `plan_workout_steps`, `ai_tasks`, `llm_calls`, `prompts`.
 - Seed: 150 ćwiczeń (Bartek + trener w osobnej sesji).
 - `packages/core/planners/training/`:
   - `selectTemplate(profile): PlanTemplate` — deterministycznie (reguły).
   - `fillTemplate(template, profile, catalog): PlanVersion` — LLM z structured output (schema: lista ćwiczeń z plan_exercises).
+  - `generateGuidedBeginnerPlan(profile, catalog): GuidedPlanVersion` — deterministyczny generator guided path.
   - `substituteExercise(planVersion, exerciseSlug, reason): PlanVersion` — reguły + LLM dla lepszego copy.
-- Prompt `training_plan_fill` w tabeli `prompts`, wersja 1.
+- Prompty `training_plan_fill` i `guided_beginner_plan_fill` w tabeli `prompts`.
 - Endpoint `POST /api/plan/training/generate` (async via ai_tasks queue).
 - Endpoint `POST /api/plan/training/substitute`.
 - UI: ekran `/app/today`, `/app/plan`, `/app/plan/exercise/:slug`.
@@ -535,10 +556,12 @@ DELIVERABLES:
 
 #### Kryteria akceptacji
 - [ ] Nowy user z Iteracji 2 + onboarding → plan wygenerowany w < 30s.
-- [ ] Plan ma 3-6 treningów per tydzień w zależności od `days_per_week`.
+- [ ] Plan ma 2-6 treningów per tydzień w zależności od `days_per_week` i ścieżki wejścia.
 - [ ] Każdy trening ma 4-7 ćwiczeń z katalogu (żadne halucynacje).
+- [ ] Dla `beginner_zero` generator zwraca kroki `arrival_prep`, `warmup`, `main_block`, `cooldown`, `post_workout_summary`.
 - [ ] Rozpiska zawiera: nazwę, serie, zakres reps, RIR, przerwa, zamiennik.
-- [ ] Technique_notes są ludzkie, nie akronimy (test dla segmentu `zero`).
+- [ ] Dla `beginner_zero` w podstawowym UI nie pokazujemy RIR/RPE/objętości jako głównego języka.
+- [ ] Technique_notes są ludzkie, nie akronimy (test dla segmentu `beginner_zero` / `beginner`).
 - [ ] Zamiana ćwiczenia działa w < 5s i zapisuje nową wersję planu.
 - [ ] Historia wersji widoczna na /app/plan/history.
 - [ ] Guardrails blokują generację dla `bmi_extreme` lub `injury_reported` z severity=critical.
@@ -604,7 +627,7 @@ STRUCTURED OUTPUT SCHEMA (OpenAI):
           "reps_max": 12,
           "rir_target": 2,
           "rest_seconds": 120,
-          "technique_notes": "Short human-friendly, no acronyms for zero/beginner",
+          "technique_notes": "Short human-friendly, no acronyms for beginner_zero/beginner",
           "substitute_exercise_slugs": ["dumbbell_bench_press", "pushups"]
         }
       ]
@@ -825,7 +848,7 @@ DELIVERABLES:
 - Pytania kontekstowe (po zdjęciu / treningu / check-inie).
 
 #### Wymagania techniczne
-- Tabele: `checkins`, `user_question_asks` (użycie warstwy 2).
+- Tabele: `checkin_sessions`, `user_question_asks` (użycie warstwy 2).
 - Seed `question_library` warstwy 2 (~30 pytań per obszar).
 - `packages/core/analyzers/checkin.ts`.
 - `packages/core/questions/pickNext.ts` — scoring i wybór.
@@ -838,6 +861,7 @@ DELIVERABLES:
 - [ ] Po submit: verdict w < 10s + rekomendowana akcja.
 - [ ] Jeśli plan trzeba zmienić → generuje się nowa wersja (link „Zobacz nowy plan").
 - [ ] 1-2 pytania warstwy 2 pojawiają się w przyszłym tygodniu w kontekstowych miejscach.
+- [ ] Dla `guided_beginner` pytania warstwy 2 mają priorytet bezpieczeństwo / regeneracja / zrozumienie planu i nie pojawiają się w krótkich seriach.
 - [ ] Pytanie pominięte 3 razy → dłuższy cooldown (90 dni).
 
 #### Zależności
@@ -848,12 +872,12 @@ Iteracje 4, 5, 6.
 ROLA: Full-stack + AI engineer. Budujesz weekly check-in + adaptive layer 2.
 
 KONTEKST:
-- Schema: grupa 11 (checkins), grupa 13 (question_library, user_question_asks), grupa 17 (notifications).
+- Schema: grupa 11 (`checkin_sessions`), grupa 13 (question_library, user_question_asks), grupa 17 (notifications).
 - Szablon check-inu z /06 Szablony/ jako struktura pól.
 - Product Principles §9: trendy, nie pojedyncze dni. Zmiana nie częściej niż co 2-3 tygodnie.
 
 ZADANIE:
-1. Migracje: checkins + enums, user_question_asks rozszerzenie.
+1. Migracje: `checkin_sessions` + enums, user_question_asks rozszerzenie.
 2. Seed question_library warstwy 2: ~30 pytań per obszar (trening, dieta, sen, życie). Każde z: field_key, applicable_segments, priority_base, why_we_ask, how_to_measure, phrasing_options.
 3. packages/core/analyzers/checkin.ts:
    - computeAggregates(userId, weekOf): pola z workout_logs, meal_logs, body_measurements.
@@ -921,7 +945,7 @@ DELIVERABLES:
 
 #### Kryteria akceptacji
 - [ ] Tap w bąbelek → otwiera chat.
-- [ ] „Jak zrobić martwy ciąg?" dla segmentu `zero` → odpowiedź ludzka, bez akronimów.
+- [ ] „Jak zrobić martwy ciąg?" dla segmentu `beginner_zero` → odpowiedź ludzka, bez akronimów.
 - [ ] „Czy mogę jeść masło orzechowe na redukcji?" → konkret + kontekst planu.
 - [ ] „Boli mnie bark przy wyciskaniu" → wyzwala guardrail pain → referral do fizjoterapeuty + NIE kontynuuje z rekomendacją.
 - [ ] „Alternatywa dla ławki" → lista 3 zamienników z katalogu + komentarz.
@@ -1275,4 +1299,5 @@ Po realizacji PRD: pisanie v2 (natywne iOS/Android, segmenty 4-8, content market
 
 ## Historia wersji
 
+- **1.1** (2026-04-18) — aktualizacja pod `beginner_zero`, neutralny onboarding L1, guided path, mini check-in po treningu i jakościową progresję.
 - **1.0** (2026-04-15) — inicjalna wersja. Autor: Bartek + Claude.

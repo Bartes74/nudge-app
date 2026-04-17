@@ -1,7 +1,7 @@
 // ============================================================
 // Nudge App — Database Schema (DBML)
-// Wersja: 0.1 (MVP v1)
-// Data: 2026-04-15
+// Wersja: 0.2 (MVP v1 + guided beginner path)
+// Data: 2026-04-18
 // Podgląd: https://dbdiagram.io (wklej cały plik)
 // ============================================================
 //
@@ -85,6 +85,14 @@ Table user_profile {
   last_plan_generated_at timestamptz
   tone_preset tone_preset [note: 'Z segmentu; można overridować']
   nutrition_mode nutrition_mode [note: 'simple | ranges | exact']
+  entry_path entry_path
+  adaptation_phase adaptation_phase
+  needs_guided_mode boolean [default: false]
+  inferred_beginner_status boolean [default: false]
+  inferred_beginner_reason_codes text[]
+  trainer_consultation_recommended_at timestamptz
+  trainer_consultation_completed_at timestamptz
+  trainer_feedback_notes text
   updated_at timestamptz
 }
 
@@ -103,9 +111,9 @@ Enum age_bucket {
 }
 
 Enum experience_level {
-  zero
+  beginner_zero
   beginner
-  amateur
+  intermediate
   advanced
 }
 
@@ -120,6 +128,18 @@ Enum tone_preset {
   warm_encouraging
   partnering
   factual_technical
+  calm_guided
+}
+
+Enum entry_path {
+  guided_beginner
+  standard_training
+}
+
+Enum adaptation_phase {
+  phase_0_familiarization
+  phase_1_adaptation
+  phase_2_foundations
 }
 
 Enum nutrition_mode {
@@ -216,77 +236,23 @@ Table user_training_preferences {
   user_id uuid [pk, ref: > users.id]
   days_per_week integer
   session_duration_min integer
-  preferred_days text[] [note: 'mon, tue, ...']
-  preferred_time_of_day text [note: 'morning, noon, evening']
-  preferred_split preferred_split
-  volume_preference volume_preference
   liked_exercises text[]
   disliked_exercises text[]
   avoid_exercises text[] [note: 'Hard block — np. z powodu bólu']
-  prefers_free_weights boolean
-  wants_cardio boolean
-  intensity_style intensity_style
-  notes text
+  preferred_location location_type
+  prefers_guided_mode boolean [default: false]
   updated_at timestamptz
-}
-
-Enum preferred_split {
-  fbw
-  upper_lower
-  ppl
-  split_body_part
-  no_preference
-}
-
-Enum volume_preference {
-  low
-  moderate
-  high
-}
-
-Enum intensity_style {
-  short_intense
-  moderate_balanced
-  long_relaxed
 }
 
 Table user_nutrition_preferences {
   user_id uuid [pk, ref: > users.id]
-  meals_per_day integer
-  eats_breakfast boolean
-  snacks_between_meals boolean
-  prefers_larger_meals boolean
-  liked_foods text[]
-  disliked_foods text[]
-  cuisines_liked text[]
-  allergies text[]
-  intolerances text[]
-  religious_ethical text[]
-  cooks_at_home cook_frequency
-  eats_out_frequency cook_frequency
-  needs_meal_at_work boolean
-  budget_level budget_level
-  coffee_intake text
-  alcohol_intake text
-  biggest_food_problem text
-  weekend_derails boolean
-  notes text
+  nutrition_mode nutrition_mode
+  prioritize_regular_meals boolean [default: true]
+  prioritize_protein boolean [default: true]
+  prioritize_hydration boolean [default: true]
+  preferred_meal_count integer
+  avoid_foods text[]
   updated_at timestamptz
-}
-
-Enum cook_frequency {
-  never
-  rarely
-  sometimes
-  often
-  always
-}
-
-Enum budget_level {
-  low
-  medium
-  high
-  no_limit
 }
 
 Table user_health {
@@ -419,7 +385,9 @@ Table user_segment_snapshots {
   gender gender
   age_bucket age_bucket
   life_context text[]
-  segment_key text [note: 'np. "beginner_weight_loss" — scalone do 8 priorytetowych']
+  segment_key text [note: 'np. "beginner_zero_weight_loss"']
+  entry_path entry_path
+  adaptation_phase adaptation_phase
   computed_at timestamptz [default: `now()`]
 
   indexes {
@@ -435,6 +403,8 @@ Table exercises {
   slug text [unique, not null]
   name_pl text [not null]
   name_en text
+  plain_language_name text
+  simple_goal_description text
   category exercise_category
   primary_muscles text[]
   secondary_muscles text[]
@@ -443,6 +413,15 @@ Table exercises {
   is_compound boolean
   technique_notes text
   common_mistakes text
+  setup_instructions text
+  execution_steps text[]
+  tempo_hint text
+  breathing_hint text
+  safety_notes text
+  easy_substitution_slugs text[]
+  machine_busy_substitution_slugs text[]
+  stop_conditions text[]
+  starting_load_guidance text
   video_url text
   alternatives_slugs text[] [note: 'Domyślne zamienniki']
   tags text[]
@@ -497,6 +476,9 @@ Table training_plan_versions {
   week_structure jsonb [note: 'np. {"mon":"upper","wed":"lower","fri":"full"}']
   additional_notes text
   llm_call_id uuid [ref: > llm_calls.id]
+  guided_mode boolean [default: false]
+  adaptation_phase adaptation_phase
+  view_mode plan_view_mode [default: 'standard_training_view']
 
   indexes {
     (plan_id, version_number) [unique]
@@ -511,8 +493,14 @@ Table plan_workouts {
   order_in_week integer
   name text
   duration_min_estimated integer
+  confidence_goal text
   warmup_notes text
   cooldown_notes text
+}
+
+Enum plan_view_mode {
+  guided_beginner_view
+  standard_training_view
 }
 
 // Ćwiczenia w konkretnym treningu — rozpiska.
@@ -532,6 +520,36 @@ Table plan_exercises {
   substitute_exercise_ids uuid[]
 }
 
+Enum guided_step_type {
+  arrival_prep
+  warmup
+  main_block
+  cooldown
+  post_workout_summary
+}
+
+Table plan_workout_steps {
+  id uuid [pk]
+  plan_workout_id uuid [ref: > plan_workouts.id, not null]
+  step_type guided_step_type
+  order_num integer
+  title text
+  duration_min integer
+  exercise_id uuid [ref: > exercises.id]
+  instruction_text text
+  setup_instructions text
+  execution_steps text[]
+  tempo_hint text
+  breathing_hint text
+  safety_notes text
+  common_mistakes text
+  stop_conditions text[]
+  machine_settings text
+  substitution_policy jsonb
+  starting_load_guidance text
+  is_new_skill boolean [default: false]
+}
+
 
 // ---------- GRUPA 8: LOG TRENINGU ----------
 
@@ -545,6 +563,15 @@ Table workout_logs {
   pre_mood pre_mood
   pre_energy energy_level
   overall_rating integer [note: '1-5 po treningu']
+  clarity_score integer
+  confidence_score integer
+  felt_safe boolean
+  exercise_confusion_flag boolean [default: false]
+  machine_confusion_flag boolean [default: false]
+  too_hard_flag boolean [default: false]
+  pain_flag boolean [default: false]
+  ready_for_next_workout boolean
+  tempo_feedback text
   went_well text
   went_poorly text
   what_to_improve text
@@ -719,7 +746,7 @@ Table nutrition_daily_totals {
 
 // ---------- GRUPA 11: CHECK-INY TYGODNIOWE ----------
 
-Table checkins {
+Table checkin_sessions {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
   week_of date [not null, note: 'Monday of week']
@@ -788,6 +815,12 @@ Table behavior_signals {
   days_since_last_workout_log integer
   workout_completion_rate_7d numeric(3,2)
   workout_completion_rate_30d numeric(3,2)
+  clarity_score_avg_7d numeric(3,2)
+  clarity_score_avg_14d numeric(3,2)
+  clarity_score_avg_30d numeric(3,2)
+  confidence_score_avg_7d numeric(3,2)
+  confidence_score_avg_14d numeric(3,2)
+  confidence_score_avg_30d numeric(3,2)
   meal_logs_per_day_7d numeric(4,2)
   photo_vs_text_ratio numeric(3,2)
   onboarding_fields_skipped integer
@@ -795,6 +828,18 @@ Table behavior_signals {
   avg_session_length_sec integer
   last_question_answered_at timestamptz
   coach_messages_sent_7d integer
+  exercise_confusion_count_7d integer
+  exercise_confusion_count_14d integer
+  exercise_confusion_count_30d integer
+  machine_confusion_count_7d integer
+  substitution_count_7d integer
+  substitution_count_14d integer
+  substitution_count_30d integer
+  aborted_exercise_count_7d integer
+  pain_flag_count_7d integer
+  pain_flag_count_14d integer
+  pain_flag_count_30d integer
+  too_hard_flag_count_7d integer
   updated_at timestamptz
 }
 
@@ -1123,7 +1168,7 @@ Table product_events {
 // training_plan_versions 1—* plan_workouts 1—* plan_exercises
 // users 1—* workout_logs (mogą być ad-hoc, bez plan_workout_id)
 // users 1—* meal_logs 1—* meal_log_items, 1—* meal_images
-// users 1—* checkins (unique per week_of)
+// users 1—* checkin_sessions (unique per week_of)
 // users 1—* user_safety_flags
 // users 1—* ai_tasks / ai_decisions / llm_calls
 // users 1—1 behavior_signals (rolling counters)
