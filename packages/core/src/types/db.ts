@@ -34,6 +34,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      coach_conversations: {
+        Row: {
+          id: string
+          user_id: string
+          entry_point: Database["public"]["Enums"]["entry_point"]
+          context_entity_type: string | null
+          context_entity_id: string | null
+          started_at: string
+          last_message_at: string | null
+          closed: boolean
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          entry_point?: Database["public"]["Enums"]["entry_point"]
+          context_entity_type?: string | null
+          context_entity_id?: string | null
+          started_at?: string
+          last_message_at?: string | null
+          closed?: boolean
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          entry_point?: Database["public"]["Enums"]["entry_point"]
+          context_entity_type?: string | null
+          context_entity_id?: string | null
+          started_at?: string
+          last_message_at?: string | null
+          closed?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          role: Database["public"]["Enums"]["message_role"]
+          content: string
+          intent: Database["public"]["Enums"]["coach_intent"] | null
+          tokens_in: number | null
+          tokens_out: number | null
+          llm_call_id: string | null
+          guardrail_flagged: boolean
+          guardrail_reasons: string[] | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          role: Database["public"]["Enums"]["message_role"]
+          content: string
+          intent?: Database["public"]["Enums"]["coach_intent"] | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          llm_call_id?: string | null
+          guardrail_flagged?: boolean
+          guardrail_reasons?: string[] | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          role?: Database["public"]["Enums"]["message_role"]
+          content?: string
+          intent?: Database["public"]["Enums"]["coach_intent"] | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          llm_call_id?: string | null
+          guardrail_flagged?: boolean
+          guardrail_reasons?: string[] | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "coach_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_messages_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_tasks: {
         Row: {
           completed_at: string | null
@@ -1498,6 +1596,22 @@ export type Database = {
         | "active"
         | "very_active"
       age_bucket: "under_25" | "age_25_40" | "age_40_55" | "age_55_plus"
+      coach_intent:
+        | "technical_exercise"
+        | "diet"
+        | "motivation"
+        | "pain"
+        | "goal_extreme"
+        | "greeting"
+        | "other"
+      entry_point:
+        | "global_bubble"
+        | "exercise_shortcut"
+        | "meal_shortcut"
+        | "checkin_shortcut"
+        | "proactive_coach"
+        | "onboarding"
+      message_role: "user" | "assistant" | "system" | "tool"
       ai_task_status:
         | "queued"
         | "running"

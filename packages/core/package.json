@@ -24,7 +24,12 @@
     "./signals/updateBehaviorSignals": "./src/signals/updateBehaviorSignals.ts",
     "./planners/nutrition/types": "./src/planners/nutrition/types.ts",
     "./planners/nutrition/calculateNutritionTargets": "./src/planners/nutrition/calculateNutritionTargets.ts",
-    "./planners/nutrition/generateNutritionPlan": "./src/planners/nutrition/generateNutritionPlan.ts"
+    "./planners/nutrition/generateNutritionPlan": "./src/planners/nutrition/generateNutritionPlan.ts",
+    "./coach/types": "./src/coach/types.ts",
+    "./coach/classifyIntent": "./src/coach/classifyIntent.ts",
+    "./coach/routeToPrompt": "./src/coach/routeToPrompt.ts",
+    "./coach/applyGuardrails": "./src/coach/applyGuardrails.ts",
+    "./coach/callCoach": "./src/coach/callCoach.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

@@ -1,0 +1,142 @@
+import OpenAI from 'openai'
+import { fastClassifyIntent, classifyIntent } from './classifyIntent'
+import { routeToPrompt } from './routeToPrompt'
+import { applyGuardrails } from './applyGuardrails'
+import type { CoachContext, CoachIntent } from './types'
+
+export interface CoachPromptRow {
+  id: string | null
+  slug: string
+  system_template: string | null
+  user_template: string | null
+}
+
+export interface CoachCallOptions {
+  apiKey: string
+  model: string
+  userMessage: string
+  context: CoachContext
+  prompt: CoachPromptRow
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>
+  userSafetyFlags?: string[]
+}
+
+export interface CoachStreamResult {
+  intent: CoachIntent
+  promptSlug: string
+  guardrailFlags: string[]
+  guardrailModified: boolean
+  /** Async generator yielding text chunks from the LLM */
+  stream: AsyncGenerator<string, void, unknown>
+  /** Resolved after stream finishes — contains final assembled text */
+  fullText: Promise<string>
+  tokensIn: number
+  tokensOut: number
+}
+
+function interpolateTemplate(template: string, context: CoachContext & { user_message: string }): string {
+  return template
+    .replace('{{user_message}}', context.user_message)
+    .replace('{{segment}}', context.segment ?? 'unknown')
+    .replace('{{primary_goal}}', context.primary_goal ?? 'brak danych')
+    .replace('{{exercise_name}}', context.exercise_name ?? '')
+    .replace('{{exercise_slug}}', context.exercise_slug ?? '')
+    .replace('{{exercise_description}}', context.exercise_description ?? '')
+    .replace('{{kcal}}', String(context.kcal ?? '?'))
+    .replace('{{protein_g}}', String(context.protein_g ?? '?'))
+    .replace('{{carbs_g}}', String(context.carbs_g ?? '?'))
+    .replace('{{fat_g}}', String(context.fat_g ?? '?'))
+    .replace('{{strategy_notes}}', context.strategy_notes ?? 'brak')
+    .replace('{{workouts_7d}}', String(context.workouts_7d ?? 0))
+    .replace('{{weight_trend}}', context.weight_trend ?? 'brak danych')
+}
+
+export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResult> {
+  const { apiKey, model, userMessage, context, prompt, conversationHistory, userSafetyFlags } = opts
+
+  // Fast-path intent classification (avoids LLM call for obvious cases)
+  const fastIntent = fastClassifyIntent(userMessage)
+  let intent: CoachIntent
+  let tokensIn = 0
+  let tokensOut = 0
+
+  if (fastIntent !== null) {
+    intent = fastIntent
+  } else {
+    const { result, meta } = await classifyIntent(userMessage, context, apiKey)
+    intent = result.intent
+    tokensIn += meta.tokens_in
+    tokensOut += meta.tokens_out
+  }
+
+  const promptSlug = routeToPrompt(intent)
+
+  const systemPrompt = interpolateTemplate(
+    prompt.system_template ?? '',
+    { ...context, user_message: userMessage },
+  )
+  const userPrompt = interpolateTemplate(
+    prompt.user_template ?? '{{user_message}}',
+    { ...context, user_message: userMessage },
+  )
+
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+    { role: 'system', content: systemPrompt },
+    ...conversationHistory.map((m) => ({ role: m.role, content: m.content }) as OpenAI.Chat.ChatCompletionMessageParam),
+    { role: 'user', content: userPrompt },
+  ]
+
+  const client = new OpenAI({ apiKey })
+
+  const streamResponse = await client.chat.completions.create({
+    model,
+    messages,
+    stream: true,
+    stream_options: { include_usage: true },
+  })
+
+  let resolveFullText!: (text: string) => void
+  const fullText = new Promise<string>((resolve) => { resolveFullText = resolve })
+
+  const guardrailFlags: string[] = []
+  let guardrailModified = false
+
+  async function* generateChunks(): AsyncGenerator<string, void, unknown> {
+    const chunks: string[] = []
+
+    for await (const chunk of streamResponse) {
+      const delta = chunk.choices[0]?.delta?.content
+      if (delta) {
+        chunks.push(delta)
+        yield delta
+      }
+      if (chunk.usage) {
+        tokensIn += chunk.usage.prompt_tokens
+        tokensOut += chunk.usage.completion_tokens
+      }
+    }
+
+    const assembled = chunks.join('')
+    const guardrailResult = applyGuardrails(assembled, userSafetyFlags)
+
+    if (!guardrailResult.safe) {
+      guardrailFlags.push(...guardrailResult.flags)
+      guardrailModified = true
+    }
+
+    resolveFullText(guardrailResult.modified_text)
+  }
+
+  const stream = generateChunks()
+
+  return {
+    intent,
+    promptSlug,
+    guardrailFlags,
+    guardrailModified,
+    stream,
+    fullText,
+    tokensIn,
+    tokensOut,
+  }
+}
