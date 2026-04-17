@@ -34,100 +34,100 @@ export type Database = {
   }
   public: {
     Tables: {
-      coach_conversations: {
+      checkin_sessions: {
         Row: {
           id: string
           user_id: string
-          entry_point: Database["public"]["Enums"]["entry_point"]
-          context_entity_type: string | null
-          context_entity_id: string | null
-          started_at: string
-          last_message_at: string | null
-          closed: boolean
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          entry_point?: Database["public"]["Enums"]["entry_point"]
-          context_entity_type?: string | null
-          context_entity_id?: string | null
-          started_at?: string
-          last_message_at?: string | null
-          closed?: boolean
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          entry_point?: Database["public"]["Enums"]["entry_point"]
-          context_entity_type?: string | null
-          context_entity_id?: string | null
-          started_at?: string
-          last_message_at?: string | null
-          closed?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "coach_conversations_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      coach_messages: {
-        Row: {
-          id: string
-          conversation_id: string
-          role: Database["public"]["Enums"]["message_role"]
-          content: string
-          intent: Database["public"]["Enums"]["coach_intent"] | null
-          tokens_in: number | null
-          tokens_out: number | null
+          week_of: string
+          workouts_completed: number | null
+          workouts_planned: number | null
+          avg_workout_rating: number | null
+          weight_measurements: number | null
+          weight_start_kg: number | null
+          weight_end_kg: number | null
+          weight_delta_kg: number | null
+          subjective_energy: number | null
+          subjective_recovery: number | null
+          subjective_motivation: number | null
+          subjective_stress: number | null
+          subjective_sleep: number | null
+          wins_text: string | null
+          struggles_text: string | null
+          focus_next_week: string | null
+          verdict: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary: string | null
+          recommended_action: string | null
+          plan_change_needed: boolean
+          plan_change_details: Json | null
+          submitted_at: string | null
+          analysis_at: string | null
           llm_call_id: string | null
-          guardrail_flagged: boolean
-          guardrail_reasons: string[] | null
           created_at: string
         }
         Insert: {
           id?: string
-          conversation_id: string
-          role: Database["public"]["Enums"]["message_role"]
-          content: string
-          intent?: Database["public"]["Enums"]["coach_intent"] | null
-          tokens_in?: number | null
-          tokens_out?: number | null
+          user_id: string
+          week_of: string
+          workouts_completed?: number | null
+          workouts_planned?: number | null
+          avg_workout_rating?: number | null
+          weight_measurements?: number | null
+          weight_start_kg?: number | null
+          weight_end_kg?: number | null
+          weight_delta_kg?: number | null
+          subjective_energy?: number | null
+          subjective_recovery?: number | null
+          subjective_motivation?: number | null
+          subjective_stress?: number | null
+          subjective_sleep?: number | null
+          wins_text?: string | null
+          struggles_text?: string | null
+          focus_next_week?: string | null
+          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary?: string | null
+          recommended_action?: string | null
+          plan_change_needed?: boolean
+          plan_change_details?: Json | null
+          submitted_at?: string | null
+          analysis_at?: string | null
           llm_call_id?: string | null
-          guardrail_flagged?: boolean
-          guardrail_reasons?: string[] | null
           created_at?: string
         }
         Update: {
           id?: string
-          conversation_id?: string
-          role?: Database["public"]["Enums"]["message_role"]
-          content?: string
-          intent?: Database["public"]["Enums"]["coach_intent"] | null
-          tokens_in?: number | null
-          tokens_out?: number | null
+          user_id?: string
+          week_of?: string
+          workouts_completed?: number | null
+          workouts_planned?: number | null
+          avg_workout_rating?: number | null
+          weight_measurements?: number | null
+          weight_start_kg?: number | null
+          weight_end_kg?: number | null
+          weight_delta_kg?: number | null
+          subjective_energy?: number | null
+          subjective_recovery?: number | null
+          subjective_motivation?: number | null
+          subjective_stress?: number | null
+          subjective_sleep?: number | null
+          wins_text?: string | null
+          struggles_text?: string | null
+          focus_next_week?: string | null
+          verdict?: Database["public"]["Enums"]["checkin_verdict"] | null
+          verdict_summary?: string | null
+          recommended_action?: string | null
+          plan_change_needed?: boolean
+          plan_change_details?: Json | null
+          submitted_at?: string | null
+          analysis_at?: string | null
           llm_call_id?: string | null
-          guardrail_flagged?: boolean
-          guardrail_reasons?: string[] | null
           created_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "coach_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
+            foreignKeyName: "checkin_sessions_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "coach_conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "coach_messages_llm_call_id_fkey"
-            columns: ["llm_call_id"]
-            isOneToOne: false
-            referencedRelation: "llm_calls"
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -184,8 +184,11 @@ export type Database = {
           avg_session_length_sec: number | null
           coach_messages_sent_7d: number
           days_since_last_workout_log: number | null
+          days_since_registration: number
+          last_proactive_coach_at: string | null
           last_question_answered_at: string | null
           meal_logs_per_day_7d: number | null
+          missed_workouts_7d: number
           onboarding_fields_skipped: number
           photo_vs_text_ratio: number | null
           updated_at: string
@@ -198,8 +201,11 @@ export type Database = {
           avg_session_length_sec?: number | null
           coach_messages_sent_7d?: number
           days_since_last_workout_log?: number | null
+          days_since_registration?: number
+          last_proactive_coach_at?: string | null
           last_question_answered_at?: string | null
           meal_logs_per_day_7d?: number | null
+          missed_workouts_7d?: number
           onboarding_fields_skipped?: number
           photo_vs_text_ratio?: number | null
           updated_at?: string
@@ -212,8 +218,11 @@ export type Database = {
           avg_session_length_sec?: number | null
           coach_messages_sent_7d?: number
           days_since_last_workout_log?: number | null
+          days_since_registration?: number
+          last_proactive_coach_at?: string | null
           last_question_answered_at?: string | null
           meal_logs_per_day_7d?: number | null
+          missed_workouts_7d?: number
           onboarding_fields_skipped?: number
           photo_vs_text_ratio?: number | null
           updated_at?: string
@@ -287,6 +296,104 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_conversations: {
+        Row: {
+          closed: boolean
+          context_entity_id: string | null
+          context_entity_type: string | null
+          entry_point: Database["public"]["Enums"]["entry_point"]
+          id: string
+          last_message_at: string | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          closed?: boolean
+          context_entity_id?: string | null
+          context_entity_type?: string | null
+          entry_point?: Database["public"]["Enums"]["entry_point"]
+          id?: string
+          last_message_at?: string | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          closed?: boolean
+          context_entity_id?: string | null
+          context_entity_type?: string | null
+          entry_point?: Database["public"]["Enums"]["entry_point"]
+          id?: string
+          last_message_at?: string | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_conversations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          guardrail_flagged: boolean
+          guardrail_reasons: string[] | null
+          id: string
+          intent: Database["public"]["Enums"]["coach_intent"] | null
+          llm_call_id: string | null
+          role: Database["public"]["Enums"]["message_role"]
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          guardrail_flagged?: boolean
+          guardrail_reasons?: string[] | null
+          id?: string
+          intent?: Database["public"]["Enums"]["coach_intent"] | null
+          llm_call_id?: string | null
+          role: Database["public"]["Enums"]["message_role"]
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          guardrail_flagged?: boolean
+          guardrail_reasons?: string[] | null
+          id?: string
+          intent?: Database["public"]["Enums"]["coach_intent"] | null
+          llm_call_id?: string | null
+          role?: Database["public"]["Enums"]["message_role"]
+          tokens_in?: number | null
+          tokens_out?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "coach_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coach_messages_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
             referencedColumns: ["id"]
           },
         ]
@@ -1232,11 +1339,13 @@ export type Database = {
           answer_text: string | null
           answered_at: string | null
           asked_at: string | null
+          checkin_session_id: string | null
           context: string | null
           id: string
           priority_score: number | null
           question_id: string
           skipped_at: string | null
+          source: Database["public"]["Enums"]["question_source"] | null
           user_id: string
         }
         Insert: {
@@ -1245,11 +1354,13 @@ export type Database = {
           answer_text?: string | null
           answered_at?: string | null
           asked_at?: string | null
+          checkin_session_id?: string | null
           context?: string | null
           id?: string
           priority_score?: number | null
           question_id: string
           skipped_at?: string | null
+          source?: Database["public"]["Enums"]["question_source"] | null
           user_id: string
         }
         Update: {
@@ -1258,11 +1369,13 @@ export type Database = {
           answer_text?: string | null
           answered_at?: string | null
           asked_at?: string | null
+          checkin_session_id?: string | null
           context?: string | null
           id?: string
           priority_score?: number | null
           question_id?: string
           skipped_at?: string | null
+          source?: Database["public"]["Enums"]["question_source"] | null
           user_id?: string
         }
         Relationships: [
@@ -1278,6 +1391,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_question_asks_checkin_session_id_fkey"
+            columns: ["checkin_session_id"]
+            isOneToOne: false
+            referencedRelation: "checkin_sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -1596,22 +1716,6 @@ export type Database = {
         | "active"
         | "very_active"
       age_bucket: "under_25" | "age_25_40" | "age_40_55" | "age_55_plus"
-      coach_intent:
-        | "technical_exercise"
-        | "diet"
-        | "motivation"
-        | "pain"
-        | "goal_extreme"
-        | "greeting"
-        | "other"
-      entry_point:
-        | "global_bubble"
-        | "exercise_shortcut"
-        | "meal_shortcut"
-        | "checkin_shortcut"
-        | "proactive_coach"
-        | "onboarding"
-      message_role: "user" | "assistant" | "system" | "tool"
       ai_task_status:
         | "queued"
         | "running"
@@ -1627,6 +1731,15 @@ export type Database = {
         | "classify_intent"
         | "proactive_nudge"
         | "recalculate_targets"
+      checkin_verdict:
+        | "on_track"
+        | "needs_adjustment"
+        | "plan_change_recommended"
+      question_source:
+        | "contextual"
+        | "proactive"
+        | "checkin"
+        | "onboarding"
       answer_type:
         | "text_short"
         | "text_long"
@@ -1637,8 +1750,23 @@ export type Database = {
         | "scale"
         | "measurement"
         | "photo"
+      coach_intent:
+        | "technical_exercise"
+        | "diet"
+        | "motivation"
+        | "pain"
+        | "goal_extreme"
+        | "greeting"
+        | "other"
       difficulty: "beginner" | "intermediate" | "advanced"
       energy_level: "low" | "moderate" | "high" | "variable"
+      entry_point:
+        | "global_bubble"
+        | "exercise_shortcut"
+        | "meal_shortcut"
+        | "checkin_shortcut"
+        | "proactive_coach"
+        | "onboarding"
       exercise_category:
         | "push"
         | "pull"
@@ -1661,6 +1789,7 @@ export type Database = {
       flag_status: "active" | "monitoring" | "resolved" | "dismissed_by_user"
       gender: "female" | "male" | "other" | "prefer_not_to_say"
       location_type: "home" | "gym" | "mixed"
+      message_role: "user" | "assistant" | "system" | "tool"
       nutrition_mode: "simple" | "ranges" | "exact"
       pre_mood: "bad" | "ok" | "good" | "great"
       primary_goal:
@@ -1836,6 +1965,8 @@ export const Constants = {
         "proactive_nudge",
         "recalculate_targets",
       ],
+      checkin_verdict: ["on_track", "needs_adjustment", "plan_change_recommended"],
+      question_source: ["contextual", "proactive", "checkin", "onboarding"],
       answer_type: [
         "text_short",
         "text_long",
@@ -1847,8 +1978,25 @@ export const Constants = {
         "measurement",
         "photo",
       ],
+      coach_intent: [
+        "technical_exercise",
+        "diet",
+        "motivation",
+        "pain",
+        "goal_extreme",
+        "greeting",
+        "other",
+      ],
       difficulty: ["beginner", "intermediate", "advanced"],
       energy_level: ["low", "moderate", "high", "variable"],
+      entry_point: [
+        "global_bubble",
+        "exercise_shortcut",
+        "meal_shortcut",
+        "checkin_shortcut",
+        "proactive_coach",
+        "onboarding",
+      ],
       exercise_category: [
         "push",
         "pull",
@@ -1873,6 +2021,7 @@ export const Constants = {
       flag_status: ["active", "monitoring", "resolved", "dismissed_by_user"],
       gender: ["female", "male", "other", "prefer_not_to_say"],
       location_type: ["home", "gym", "mixed"],
+      message_role: ["user", "assistant", "system", "tool"],
       nutrition_mode: ["simple", "ranges", "exact"],
       pre_mood: ["bad", "ok", "good", "great"],
       primary_goal: [

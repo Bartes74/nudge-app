@@ -29,7 +29,9 @@
     "./coach/classifyIntent": "./src/coach/classifyIntent.ts",
     "./coach/routeToPrompt": "./src/coach/routeToPrompt.ts",
     "./coach/applyGuardrails": "./src/coach/applyGuardrails.ts",
-    "./coach/callCoach": "./src/coach/callCoach.ts"
+    "./coach/callCoach": "./src/coach/callCoach.ts",
+    "./analyzers/checkin": "./src/analyzers/checkin.ts",
+    "./questions/pickNext": "./src/questions/pickNext.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
