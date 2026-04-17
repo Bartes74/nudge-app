@@ -3,7 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    "./types/db": "./src/types/db.ts"
+    "./types/db": "./src/types/db.ts",
+    "./domain/profile": "./src/domain/profile.ts",
+    "./domain/segment": "./src/domain/segment.ts",
+    "./domain/fact": "./src/domain/fact.ts",
+    "./rules/calculateAgeBucket": "./src/rules/calculateAgeBucket.ts",
+    "./rules/classifySegment": "./src/rules/classifySegment.ts",
+    "./rules/generateFactsFromOnboarding": "./src/rules/generateFactsFromOnboarding.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

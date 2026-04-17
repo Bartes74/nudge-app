@@ -1,0 +1,10 @@
+# Server
+PORT=3001
+NODE_ENV=development
+
+# Supabase — https://supabase.com/dashboard/project/<id>/settings/api
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Sentry — https://sentry.io/<org>/<project>/settings/keys/
+SENTRY_DSN=
