@@ -5,6 +5,7 @@ import { generateNutritionPlanJob } from '@/inngest/jobs/generateNutritionPlan'
 import { updateBehaviorSignalsJob } from '@/inngest/jobs/updateBehaviorSignals'
 import { proactiveCoachCheckJob } from '@/inngest/jobs/proactiveCoachCheck'
 import { weeklyCheckinNotificationJob } from '@/inngest/jobs/weeklyCheckinNotification'
+import { analyzeMealPhotoJob } from '@/inngest/jobs/analyzeMealPhoto'
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -14,5 +15,6 @@ export const { GET, POST, PUT } = serve({
     updateBehaviorSignalsJob,
     proactiveCoachCheckJob,
     weeklyCheckinNotificationJob,
+    analyzeMealPhotoJob,
   ],
 })

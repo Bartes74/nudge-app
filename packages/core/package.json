@@ -31,7 +31,10 @@
     "./coach/applyGuardrails": "./src/coach/applyGuardrails.ts",
     "./coach/callCoach": "./src/coach/callCoach.ts",
     "./analyzers/checkin": "./src/analyzers/checkin.ts",
-    "./questions/pickNext": "./src/questions/pickNext.ts"
+    "./questions/pickNext": "./src/questions/pickNext.ts",
+    "./vision/types": "./src/vision/types.ts",
+    "./vision/mealVisionSchema": "./src/vision/mealVisionSchema.ts",
+    "./vision/analyzeMealPhoto": "./src/vision/analyzeMealPhoto.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

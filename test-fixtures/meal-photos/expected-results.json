@@ -1,0 +1,131 @@
+[
+  {
+    "file": "01-chicken-rice.jpg",
+    "description": "Grillowany kurczak z białym ryżem i brokułami",
+    "expected": {
+      "meal_type_guess": "lunch",
+      "kcal_estimate_min": 450,
+      "kcal_estimate_max": 650,
+      "protein_g_min": 35,
+      "protein_g_max": 55,
+      "confidence_score_min": 0.6,
+      "expected_ingredients": ["kurczak", "ryż", "brokuły"]
+    }
+  },
+  {
+    "file": "02-oatmeal.jpg",
+    "description": "Owsianka z bananem i orzechami",
+    "expected": {
+      "meal_type_guess": "breakfast",
+      "kcal_estimate_min": 300,
+      "kcal_estimate_max": 500,
+      "protein_g_min": 8,
+      "protein_g_max": 20,
+      "confidence_score_min": 0.55,
+      "expected_ingredients": ["owsianka", "banan"]
+    }
+  },
+  {
+    "file": "03-pizza.jpg",
+    "description": "Kawałek pizzy margherita",
+    "expected": {
+      "meal_type_guess": "snack",
+      "kcal_estimate_min": 200,
+      "kcal_estimate_max": 400,
+      "protein_g_min": 8,
+      "protein_g_max": 20,
+      "confidence_score_min": 0.5,
+      "expected_ingredients": ["ciasto", "ser", "sos pomidorowy"]
+    }
+  },
+  {
+    "file": "04-salad.jpg",
+    "description": "Sałatka grecka z fetą i oliwkami",
+    "expected": {
+      "meal_type_guess": "lunch",
+      "kcal_estimate_min": 150,
+      "kcal_estimate_max": 350,
+      "protein_g_min": 5,
+      "protein_g_max": 20,
+      "confidence_score_min": 0.55,
+      "expected_ingredients": ["sałata", "feta", "oliwki", "pomidor"]
+    }
+  },
+  {
+    "file": "05-protein-shake.jpg",
+    "description": "Shake proteinowy w szklance",
+    "expected": {
+      "meal_type_guess": "drink",
+      "kcal_estimate_min": 100,
+      "kcal_estimate_max": 300,
+      "protein_g_min": 15,
+      "protein_g_max": 40,
+      "confidence_score_min": 0.4,
+      "expected_ingredients": ["shake", "białko"]
+    }
+  },
+  {
+    "file": "06-eggs-toast.jpg",
+    "description": "Jajka sadzone na tostach z masłem",
+    "expected": {
+      "meal_type_guess": "breakfast",
+      "kcal_estimate_min": 300,
+      "kcal_estimate_max": 550,
+      "protein_g_min": 15,
+      "protein_g_max": 30,
+      "confidence_score_min": 0.65,
+      "expected_ingredients": ["jajka", "chleb tostowy", "masło"]
+    }
+  },
+  {
+    "file": "07-pasta.jpg",
+    "description": "Makaron spaghetti bolognese",
+    "expected": {
+      "meal_type_guess": "dinner",
+      "kcal_estimate_min": 400,
+      "kcal_estimate_max": 700,
+      "protein_g_min": 20,
+      "protein_g_max": 40,
+      "confidence_score_min": 0.6,
+      "expected_ingredients": ["makaron", "mięso mielone", "sos pomidorowy"]
+    }
+  },
+  {
+    "file": "08-dark-bowl.jpg",
+    "description": "Niewyraźne zdjęcie — ciemna miska z zupą",
+    "expected": {
+      "meal_type_guess": "lunch",
+      "kcal_estimate_min": 100,
+      "kcal_estimate_max": 400,
+      "confidence_score_min": 0.0,
+      "confidence_score_max": 0.45,
+      "expected_warnings_count_min": 1
+    }
+  },
+  {
+    "file": "09-yogurt-granola.jpg",
+    "description": "Jogurt grecki z granolą i truskawkami",
+    "expected": {
+      "meal_type_guess": "breakfast",
+      "kcal_estimate_min": 200,
+      "kcal_estimate_max": 450,
+      "protein_g_min": 10,
+      "protein_g_max": 25,
+      "confidence_score_min": 0.55,
+      "expected_ingredients": ["jogurt", "granola", "truskawki"]
+    }
+  },
+  {
+    "file": "10-steak-potato.jpg",
+    "description": "Stek z ziemniakami i sałatą",
+    "expected": {
+      "meal_type_guess": "dinner",
+      "kcal_estimate_min": 500,
+      "kcal_estimate_max": 900,
+      "protein_g_min": 35,
+      "protein_g_max": 65,
+      "confidence_score_min": 0.6,
+      "expected_ingredients": ["stek", "ziemniaki", "sałata"]
+    }
+  }
+]

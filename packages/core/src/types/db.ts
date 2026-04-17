@@ -577,6 +577,186 @@ export type Database = {
           },
         ]
       }
+      meal_images: {
+        Row: {
+          id: string
+          meal_log_id: string
+          storage_path: string
+          uploaded_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          meal_log_id: string
+          storage_path: string
+          uploaded_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          meal_log_id?: string
+          storage_path?: string
+          uploaded_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_images_meal_log_id_fkey"
+            columns: ["meal_log_id"]
+            isOneToOne: false
+            referencedRelation: "meal_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_images_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_log_items: {
+        Row: {
+          carbs_g: number | null
+          created_at: string
+          fat_g: number | null
+          grams_estimate: number | null
+          id: string
+          is_user_corrected: boolean
+          kcal_estimate: number | null
+          label: string
+          meal_log_id: string
+          portion_estimate: string | null
+          protein_g: number | null
+          user_id: string
+        }
+        Insert: {
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          grams_estimate?: number | null
+          id?: string
+          is_user_corrected?: boolean
+          kcal_estimate?: number | null
+          label: string
+          meal_log_id: string
+          portion_estimate?: string | null
+          protein_g?: number | null
+          user_id: string
+        }
+        Update: {
+          carbs_g?: number | null
+          created_at?: string
+          fat_g?: number | null
+          grams_estimate?: number | null
+          id?: string
+          is_user_corrected?: boolean
+          kcal_estimate?: number | null
+          label?: string
+          meal_log_id?: string
+          portion_estimate?: string | null
+          protein_g?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_log_items_meal_log_id_fkey"
+            columns: ["meal_log_id"]
+            isOneToOne: false
+            referencedRelation: "meal_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_log_items_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meal_logs: {
+        Row: {
+          carbs_g_max: number | null
+          carbs_g_min: number | null
+          confidence_score: number | null
+          created_at: string
+          fat_g_max: number | null
+          fat_g_min: number | null
+          id: string
+          kcal_estimate_max: number | null
+          kcal_estimate_min: number | null
+          llm_call_id: string | null
+          logged_at: string
+          meal_type: Database["public"]["Enums"]["meal_type"] | null
+          note: string | null
+          protein_g_max: number | null
+          protein_g_min: number | null
+          source: Database["public"]["Enums"]["meal_source"]
+          status: Database["public"]["Enums"]["meal_log_status"]
+          user_id: string
+          user_warnings: Json | null
+        }
+        Insert: {
+          carbs_g_max?: number | null
+          carbs_g_min?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          fat_g_max?: number | null
+          fat_g_min?: number | null
+          id?: string
+          kcal_estimate_max?: number | null
+          kcal_estimate_min?: number | null
+          llm_call_id?: string | null
+          logged_at?: string
+          meal_type?: Database["public"]["Enums"]["meal_type"] | null
+          note?: string | null
+          protein_g_max?: number | null
+          protein_g_min?: number | null
+          source: Database["public"]["Enums"]["meal_source"]
+          status?: Database["public"]["Enums"]["meal_log_status"]
+          user_id: string
+          user_warnings?: Json | null
+        }
+        Update: {
+          carbs_g_max?: number | null
+          carbs_g_min?: number | null
+          confidence_score?: number | null
+          created_at?: string
+          fat_g_max?: number | null
+          fat_g_min?: number | null
+          id?: string
+          kcal_estimate_max?: number | null
+          kcal_estimate_min?: number | null
+          llm_call_id?: string | null
+          logged_at?: string
+          meal_type?: Database["public"]["Enums"]["meal_type"] | null
+          note?: string | null
+          protein_g_max?: number | null
+          protein_g_min?: number | null
+          source?: Database["public"]["Enums"]["meal_source"]
+          status?: Database["public"]["Enums"]["meal_log_status"]
+          user_id?: string
+          user_warnings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_logs_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nutrition_plan_versions: {
         Row: {
           calories_target: number | null
@@ -700,6 +880,50 @@ export type Database = {
           },
           {
             foreignKeyName: "nutrition_plans_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_daily_totals: {
+        Row: {
+          carbs_g_total: number
+          date: string
+          fat_g_total: number
+          id: string
+          kcal_total: number
+          meal_count: number
+          protein_g_total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carbs_g_total?: number
+          date: string
+          fat_g_total?: number
+          id?: string
+          kcal_total?: number
+          meal_count?: number
+          protein_g_total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carbs_g_total?: number
+          date?: string
+          fat_g_total?: number
+          id?: string
+          kcal_total?: number
+          meal_count?: number
+          protein_g_total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_daily_totals_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1791,6 +2015,15 @@ export type Database = {
       flag_status: "active" | "monitoring" | "resolved" | "dismissed_by_user"
       gender: "female" | "male" | "other" | "prefer_not_to_say"
       location_type: "home" | "gym" | "mixed"
+      meal_log_status: "pending_analysis" | "analyzed" | "failed" | "manual"
+      meal_source: "photo" | "manual"
+      meal_type:
+        | "breakfast"
+        | "lunch"
+        | "dinner"
+        | "snack"
+        | "drink"
+        | "dessert"
       message_role: "user" | "assistant" | "system" | "tool"
       nutrition_mode: "simple" | "ranges" | "exact"
       pre_mood: "bad" | "ok" | "good" | "great"
