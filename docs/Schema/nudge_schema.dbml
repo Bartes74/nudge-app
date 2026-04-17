@@ -1,9 +1,14 @@
 // ============================================================
 // Nudge App — Database Schema (DBML)
-// Wersja: 0.2 (MVP v1 + guided beginner path)
+// Wersja: 0.3 (odzwierciedla stan migracji po iter10: beginner_zero, monetyzacja, meal logger)
 // Data: 2026-04-18
 // Podgląd: https://dbdiagram.io (wklej cały plik)
 // ============================================================
+//
+// Zasada: MIGRACJE SĄ ŹRÓDŁEM PRAWDY. Ten plik odtwarza stan
+// zbudowany przez kolejne pliki w `supabase/migrations/`. Jeśli
+// znajdziesz rozbieżność — najpierw sprawdź w migracji, potem
+// popraw DBML. Nowe pola dodajemy migracją, nie edycją DBML.
 //
 // Konwencje:
 // - Wszystkie id: uuid (Supabase generuje domyślnie)
@@ -31,20 +36,26 @@ Table users {
 Table subscriptions {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  status subscription_status [not null]
-  plan subscription_plan [not null]
+  status subscription_status [not null, default: 'trial']
+  plan subscription_plan [note: 'NULL do momentu checkoutu']
   provider text [note: 'stripe | revenuecat']
   provider_subscription_id text
+  provider_customer_id text
   trial_started_at timestamptz
   trial_ends_at timestamptz
   current_period_start timestamptz
   current_period_end timestamptz
   paused_until timestamptz
   cancelled_at timestamptz
-  price_amount integer [note: 'Grosze/cents']
-  price_currency text
-  created_at timestamptz [default: `now()`]
-  updated_at timestamptz
+  price_amount integer [note: 'Grosze/cents (np. 4900 = 49,00 PLN)']
+  price_currency text [not null, default: 'PLN']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    user_id [unique]
+    status
+  }
 }
 
 Enum subscription_status {
@@ -87,9 +98,9 @@ Table user_profile {
   nutrition_mode nutrition_mode [note: 'simple | ranges | exact']
   entry_path entry_path
   adaptation_phase adaptation_phase
-  needs_guided_mode boolean [default: false]
-  inferred_beginner_status boolean [default: false]
-  inferred_beginner_reason_codes text[]
+  needs_guided_mode boolean [not null, default: false]
+  inferred_beginner_status boolean [not null, default: false]
+  inferred_beginner_reason_codes text[] [not null, default: `'{}'`]
   trainer_consultation_recommended_at timestamptz
   trainer_consultation_completed_at timestamptz
   trainer_feedback_notes text
@@ -164,7 +175,7 @@ Table user_profile_facts {
   inferred_from text [note: 'id encji, z której zinferowano fakt']
   supersedes_id uuid [ref: > user_profile_facts.id]
   observed_at timestamptz [not null, default: `now()`]
-  note: 'Source of truth. user_profile to zdenormalizowany cache.'
+  note: 'Source of truth. user_profile to zdenormalizowany cache. APPEND-ONLY (brak UPDATE/DELETE policy).'
 
   indexes {
     (user_id, field_key, observed_at)
@@ -199,8 +210,8 @@ Table body_measurements {
   neck_cm numeric(5,2)
   body_fat_pct numeric(4,2) [note: 'Zgadywane lub z urządzenia']
   notes text
-  source fact_source
-  created_at timestamptz [default: `now()`]
+  source fact_source [not null, default: 'user_input']
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, measured_at)
@@ -236,63 +247,36 @@ Table user_training_preferences {
   user_id uuid [pk, ref: > users.id]
   days_per_week integer
   session_duration_min integer
-  liked_exercises text[]
-  disliked_exercises text[]
-  avoid_exercises text[] [note: 'Hard block — np. z powodu bólu']
+  liked_exercises text[] [not null, default: `'{}'`]
+  disliked_exercises text[] [not null, default: `'{}'`]
+  avoid_exercises text[] [not null, default: `'{}'`, note: 'Hard block — np. z powodu bólu']
   preferred_location location_type
-  prefers_guided_mode boolean [default: false]
-  updated_at timestamptz
+  prefers_guided_mode boolean [not null, default: false]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
 Table user_nutrition_preferences {
   user_id uuid [pk, ref: > users.id]
   nutrition_mode nutrition_mode
-  prioritize_regular_meals boolean [default: true]
-  prioritize_protein boolean [default: true]
-  prioritize_hydration boolean [default: true]
+  prioritize_regular_meals boolean [not null, default: true]
+  prioritize_protein boolean [not null, default: true]
+  prioritize_hydration boolean [not null, default: true]
   preferred_meal_count integer
-  avoid_foods text[]
-  updated_at timestamptz
+  avoid_foods text[] [not null, default: `'{}'`]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
+// Minimalny zestaw w migracji; pola rozszerzone (past_injuries, sleep_*,
+// stress_level, energy_level, work_type, steps_per_day) zostaną dodane
+// w przyszłych iteracjach — sygnalizowane przez question_library.
 Table user_health {
   user_id uuid [pk, ref: > users.id]
   injuries text[]
   chronic_pain text[]
-  past_injuries text[]
-  forbidden_exercises text[]
   medical_conditions text[]
-  medications text[]
-  sleep_hours_avg numeric(3,1)
-  sleep_quality sleep_quality
-  stress_level stress_level
-  energy_level energy_level
   activity_level activity_level
-  work_type work_type
-  steps_per_day integer
   notes text
   updated_at timestamptz
-}
-
-Enum sleep_quality {
-  poor
-  fair
-  good
-  excellent
-}
-
-Enum stress_level {
-  low
-  moderate
-  high
-  very_high
-}
-
-Enum energy_level {
-  low
-  moderate
-  high
-  variable
 }
 
 Enum activity_level {
@@ -301,12 +285,6 @@ Enum activity_level {
   moderate
   active
   very_active
-}
-
-Enum work_type {
-  sedentary
-  mixed
-  physical
 }
 
 // Flagi guardrails (z ADR-002). Mogą być user-deklarowane lub automatyczne.
@@ -406,27 +384,27 @@ Table exercises {
   plain_language_name text
   simple_goal_description text
   category exercise_category
-  primary_muscles text[]
-  secondary_muscles text[]
-  equipment_required text[]
+  primary_muscles text[] [not null, default: `'{}'`]
+  secondary_muscles text[] [not null, default: `'{}'`]
+  equipment_required text[] [not null, default: `'{}'`]
   difficulty difficulty
-  is_compound boolean
+  is_compound boolean [not null, default: false]
   technique_notes text
   common_mistakes text
   setup_instructions text
-  execution_steps text[]
+  execution_steps text[] [not null, default: `'{}'`]
   tempo_hint text
   breathing_hint text
   safety_notes text
-  easy_substitution_slugs text[]
-  machine_busy_substitution_slugs text[]
-  stop_conditions text[]
+  easy_substitution_slugs text[] [not null, default: `'{}'`]
+  machine_busy_substitution_slugs text[] [not null, default: `'{}'`]
+  stop_conditions text[] [not null, default: `'{}'`]
   starting_load_guidance text
   video_url text
-  alternatives_slugs text[] [note: 'Domyślne zamienniki']
-  tags text[]
-  created_at timestamptz [default: `now()`]
-  deprecated boolean [default: false]
+  alternatives_slugs text[] [not null, default: `'{}'`, note: 'Domyślne zamienniki']
+  tags text[] [not null, default: `'{}'`]
+  created_at timestamptz [not null, default: `now()`]
+  deprecated boolean [not null, default: false]
 }
 
 Enum exercise_category {
@@ -453,10 +431,10 @@ Table training_plans {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
   name text
-  current_version_id uuid [ref: > training_plan_versions.id]
-  started_at timestamptz [default: `now()`]
+  current_version_id uuid [ref: > training_plan_versions.id, note: 'FK DEFERRABLE INITIALLY DEFERRED']
+  started_at timestamptz [not null, default: `now()`]
   ended_at timestamptz
-  is_active boolean [default: true]
+  is_active boolean [not null, default: true]
 
   indexes {
     (user_id, is_active)
@@ -467,7 +445,7 @@ Table training_plan_versions {
   id uuid [pk]
   plan_id uuid [ref: > training_plans.id, not null]
   version_number integer [not null]
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
   created_by_ai_task_id uuid [ref: > ai_tasks.id]
   change_reason text [note: 'np. "user zgłosił ból barku", "plateau 3 tygodnie"']
   goal_snapshot jsonb [note: 'cel aktualny przy generacji']
@@ -476,9 +454,9 @@ Table training_plan_versions {
   week_structure jsonb [note: 'np. {"mon":"upper","wed":"lower","fri":"full"}']
   additional_notes text
   llm_call_id uuid [ref: > llm_calls.id]
-  guided_mode boolean [default: false]
+  guided_mode boolean [not null, default: false]
   adaptation_phase adaptation_phase
-  view_mode plan_view_mode [default: 'standard_training_view']
+  view_mode plan_view_mode [not null, default: 'standard_training_view']
 
   indexes {
     (plan_id, version_number) [unique]
@@ -490,7 +468,7 @@ Table plan_workouts {
   id uuid [pk]
   plan_version_id uuid [ref: > training_plan_versions.id, not null]
   day_label text [note: 'np. "mon", "upper_a"']
-  order_in_week integer
+  order_in_week integer [not null, default: 1]
   name text
   duration_min_estimated integer
   confidence_goal text
@@ -508,7 +486,7 @@ Table plan_exercises {
   id uuid [pk]
   plan_workout_id uuid [ref: > plan_workouts.id, not null]
   exercise_id uuid [ref: > exercises.id]
-  order_num integer
+  order_num integer [not null, default: 1]
   sets integer
   reps_min integer
   reps_max integer
@@ -517,7 +495,7 @@ Table plan_exercises {
   rest_seconds integer
   tempo text [note: 'np. "3-0-1-0"']
   technique_notes text
-  substitute_exercise_ids uuid[]
+  substitute_exercise_ids uuid[] [not null, default: `'{}'`]
 }
 
 Enum guided_step_type {
@@ -531,23 +509,30 @@ Enum guided_step_type {
 Table plan_workout_steps {
   id uuid [pk]
   plan_workout_id uuid [ref: > plan_workouts.id, not null]
-  step_type guided_step_type
-  order_num integer
-  title text
+  step_type guided_step_type [not null]
+  order_num integer [not null, default: 1]
+  title text [not null]
   duration_min integer
   exercise_id uuid [ref: > exercises.id]
-  instruction_text text
+  instruction_text text [not null]
   setup_instructions text
-  execution_steps text[]
+  execution_steps text[] [not null, default: `'{}'`]
   tempo_hint text
   breathing_hint text
   safety_notes text
   common_mistakes text
-  stop_conditions text[]
+  stop_conditions text[] [not null, default: `'{}'`]
   machine_settings text
   substitution_policy jsonb
   starting_load_guidance text
-  is_new_skill boolean [default: false]
+  is_new_skill boolean [not null, default: false]
+}
+
+Enum substitution_reason {
+  machine_busy
+  unclear
+  discomfort
+  too_hard
 }
 
 
@@ -557,26 +542,26 @@ Table workout_logs {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
   plan_workout_id uuid [ref: > plan_workouts.id, note: 'NULL jeśli ad-hoc trening']
-  started_at timestamptz
+  started_at timestamptz [not null, default: `now()`]
   ended_at timestamptz
   duration_min integer
   pre_mood pre_mood
   pre_energy energy_level
-  overall_rating integer [note: '1-5 po treningu']
-  clarity_score integer
-  confidence_score integer
+  overall_rating integer [note: 'CHECK 1-5 po treningu']
+  clarity_score integer [note: 'CHECK 1-5 — jasność instrukcji']
+  confidence_score integer [note: 'CHECK 1-5 — pewność wykonania']
   felt_safe boolean
-  exercise_confusion_flag boolean [default: false]
-  machine_confusion_flag boolean [default: false]
-  too_hard_flag boolean [default: false]
-  pain_flag boolean [default: false]
+  exercise_confusion_flag boolean [not null, default: false]
+  machine_confusion_flag boolean [not null, default: false]
+  too_hard_flag boolean [not null, default: false]
+  pain_flag boolean [not null, default: false]
   ready_for_next_workout boolean
   tempo_feedback text
   went_well text
   went_poorly text
   what_to_improve text
   notes text
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, started_at)
@@ -590,26 +575,34 @@ Enum pre_mood {
   great
 }
 
+Enum energy_level {
+  low
+  moderate
+  high
+  variable
+}
+
 Table workout_log_exercises {
   id uuid [pk]
   workout_log_id uuid [ref: > workout_logs.id, not null]
   exercise_id uuid [ref: > exercises.id]
   plan_exercise_id uuid [ref: > plan_exercises.id]
-  order_num integer
+  order_num integer [not null, default: 1]
   notes text
-  was_substituted boolean [default: false]
+  was_substituted boolean [not null, default: false]
   original_exercise_id uuid [ref: > exercises.id]
 }
 
 Table workout_log_sets {
   id uuid [pk]
   workout_log_exercise_id uuid [ref: > workout_log_exercises.id, not null]
-  set_number integer
+  set_number integer [not null]
   weight_kg numeric(5,2)
   reps integer
   rir numeric(3,1)
-  to_failure boolean [default: false]
+  to_failure boolean [not null, default: false]
   duration_sec integer [note: 'dla planku, cardio itp.']
+  created_at timestamptz [not null, default: `now()`]
 }
 
 
@@ -618,20 +611,20 @@ Table workout_log_sets {
 Table nutrition_plans {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  current_version_id uuid [ref: > nutrition_plan_versions.id]
-  started_at timestamptz [default: `now()`]
+  current_version_id uuid [ref: > nutrition_plan_versions.id, note: 'FK DEFERRABLE INITIALLY DEFERRED']
+  started_at timestamptz [not null, default: `now()`]
   ended_at timestamptz
-  is_active boolean [default: true]
+  is_active boolean [not null, default: true]
 }
 
 Table nutrition_plan_versions {
   id uuid [pk]
   plan_id uuid [ref: > nutrition_plans.id, not null]
   version_number integer [not null]
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
   created_by_ai_task_id uuid [ref: > ai_tasks.id]
   change_reason text
-  mode nutrition_mode
+  mode nutrition_mode [not null, default: 'simple']
   calories_target integer
   protein_g_target integer
   fat_g_target integer
@@ -653,30 +646,36 @@ Table nutrition_plan_versions {
 
 // ---------- GRUPA 10: LOG ŻYWIENIA (ZDJĘCIA + WPISY) ----------
 
+// UWAGA: migracja nie ma `logged_at timestamptz`, tylko `date` — posiłek jest
+// agregowany per dzień, a nie konkretna godzina. Timestamp jest w `created_at`.
 Table meal_logs {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  logged_at timestamptz [not null]
-  corrected_timestamp timestamptz
+  logged_at date [not null, default: `CURRENT_DATE`]
   meal_type meal_type
-  input_mode meal_input_mode [note: 'photo | text | photo_plus_text | manual_entry']
-  user_description text
+  source meal_source [not null]
+  status meal_log_status [not null, default: 'pending_analysis']
+  note text [note: 'User-provided context for the photo (opcjonalne)']
+
+  // Range estimates populated by vision analyzer; NULL for manual entries
   kcal_estimate_min integer
   kcal_estimate_max integer
-  kcal_estimate_point integer [note: 'po korekcie usera']
-  protein_g_min integer
-  protein_g_max integer
-  carbs_g_min integer
-  carbs_g_max integer
-  fat_g_min integer
-  fat_g_max integer
-  confidence_score numeric(3,2)
-  user_corrected boolean [default: false]
+  protein_g_min numeric(6,1)
+  protein_g_max numeric(6,1)
+  carbs_g_min numeric(6,1)
+  carbs_g_max numeric(6,1)
+  fat_g_min numeric(6,1)
+  fat_g_max numeric(6,1)
+
+  confidence_score numeric(3,2) [note: 'CHECK BETWEEN 0 AND 1']
+  user_warnings jsonb [note: 'array<string> ostrzeżeń z analyzera']
+
   llm_call_id uuid [ref: > llm_calls.id]
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, logged_at)
+    status [note: 'partial: WHERE status = pending_analysis']
   }
 }
 
@@ -687,59 +686,67 @@ Enum meal_type {
   snack
   drink
   dessert
-  other
 }
 
-Enum meal_input_mode {
+Enum meal_source {
   photo
-  text
-  photo_plus_text
-  manual_entry
+  manual
+}
+
+Enum meal_log_status {
+  pending_analysis
+  analyzed
+  failed
+  manual
 }
 
 Table meal_log_items {
   id uuid [pk]
   meal_log_id uuid [ref: > meal_logs.id, not null]
-  ingredient_label text [not null]
+  user_id uuid [ref: > users.id, not null, note: 'Denormalizacja dla prostszego RLS — match z meal_logs.user_id']
+  label text [not null]
   portion_estimate text
-  grams_estimate numeric
+  grams_estimate numeric(7,1)
   kcal_estimate integer
-  protein_g numeric(5,2)
-  carbs_g numeric(5,2)
-  fat_g numeric(5,2)
-  corrected_by_user boolean [default: false]
+  protein_g numeric(6,1)
+  carbs_g numeric(6,1)
+  fat_g numeric(6,1)
+  is_user_corrected boolean [not null, default: false]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    meal_log_id
+    user_id
+  }
 }
 
 Table meal_images {
   id uuid [pk]
   meal_log_id uuid [ref: > meal_logs.id, not null]
-  storage_path text [not null, note: 'Supabase Storage']
-  width_px integer
-  height_px integer
-  original_size_bytes integer
-  compressed_size_bytes integer
-  uploaded_at timestamptz [default: `now()`]
+  user_id uuid [ref: > users.id, not null]
+  storage_path text [not null, note: 'Supabase Storage bucket meal_photos, prefix = auth.uid()']
+  uploaded_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    meal_log_id
+  }
 }
 
-// Dzienne podliczenia (widok/materialized view z cache'm).
-// Tabelę trzymamy dla szybkich raportów; triggerowana z meal_logs.
+// Dzienne podliczenia. Aktualizowane triggerem po INSERT/UPDATE/DELETE
+// na meal_logs i meal_log_items (funkcja recalculate_nutrition_daily_totals).
 Table nutrition_daily_totals {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  day date [not null]
-  kcal_total integer
-  protein_g integer
-  carbs_g integer
-  fat_g integer
-  fiber_g integer
-  water_ml integer
-  meals_count integer
-  photos_count integer
-  is_complete boolean [default: false]
-  updated_at timestamptz
+  date date [not null]
+  kcal_total integer [not null, default: 0]
+  protein_g_total numeric(7,1) [not null, default: 0]
+  carbs_g_total numeric(7,1) [not null, default: 0]
+  fat_g_total numeric(7,1) [not null, default: 0]
+  meal_count integer [not null, default: 0]
+  updated_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (user_id, day) [unique]
+    (user_id, date) [unique]
   }
 }
 
@@ -749,67 +756,60 @@ Table nutrition_daily_totals {
 Table checkin_sessions {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  week_of date [not null, note: 'Monday of week']
-  submitted_at timestamptz
-  status checkin_status [default: 'scheduled']
+  week_of date [not null, note: 'Poniedziałek tygodnia']
 
-  // Agregaty liczone z danych + subiektywne z formularza:
-  avg_weight_kg numeric(5,2)
-  min_weight_kg numeric(5,2)
-  max_weight_kg numeric(5,2)
-  waist_cm numeric(5,2)
+  // Auto-agregaty z workout_logs (liczone przy GET /checkin/current)
   workouts_completed integer
   workouts_planned integer
-  avg_steps integer
-  diet_adherence_estimate numeric(3,2) [note: 'Liczone z logów, nie samoocena']
+  avg_workout_rating numeric(3,1)
 
-  // Subiektywne — z formularza:
-  sleep_avg_hours numeric(3,1)
-  sleep_quality sleep_quality
-  stress_level stress_level
-  energy_level energy_level
-  hunger_level text
-  recovery_quality text
-  strength_trend trend_direction
-  best_workout text
-  worst_workout text
-  problem_exercises text[]
-  pain_or_discomfort text
-  went_well text
-  went_poorly text
-  biggest_challenge text
-  improvement_target text
+  // Auto-agregaty z body_measurements
+  weight_measurements integer
+  weight_start_kg numeric(5,2)
+  weight_end_kg numeric(5,2)
+  weight_delta_kg numeric(5,2)
 
-  // Decyzja coacha:
-  ai_verdict text [note: 'Plan działa / koreta X / większa zmiana']
-  ai_recommended_action text
-  plan_changed_this_week boolean [default: false]
+  // Subjective sliders 1-5 (CHECK BETWEEN 1 AND 5)
+  subjective_energy integer
+  subjective_recovery integer
+  subjective_motivation integer
+  subjective_stress integer
+  subjective_sleep integer
 
-  created_at timestamptz [default: `now()`]
+  // Free text — 3 pola
+  wins_text text
+  struggles_text text
+  focus_next_week text
+
+  // LLM verdict
+  verdict checkin_verdict
+  verdict_summary text
+  recommended_action text
+  plan_change_needed boolean [not null, default: false]
+  plan_change_details jsonb
+
+  // Meta
+  submitted_at timestamptz
+  analysis_at timestamptz
+  llm_call_id uuid [ref: > llm_calls.id]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, week_of) [unique]
   }
 }
 
-Enum checkin_status {
-  scheduled
-  in_progress
-  submitted
-  skipped
-}
-
-Enum trend_direction {
-  growing
-  stable
-  declining
-  unclear
+Enum checkin_verdict {
+  on_track
+  needs_adjustment
+  plan_change_recommended
 }
 
 
 // ---------- GRUPA 12: SYGNAŁY BEHAWIORALNE (z ADR-003) ----------
 
 // "Silnik monitoringu" w wersji prostej: liczniki.
+// Writes tylko przez service role (brak RLS INSERT/UPDATE policy).
 Table behavior_signals {
   user_id uuid [pk, ref: > users.id]
   days_since_last_workout_log integer
@@ -823,24 +823,27 @@ Table behavior_signals {
   confidence_score_avg_30d numeric(3,2)
   meal_logs_per_day_7d numeric(4,2)
   photo_vs_text_ratio numeric(3,2)
-  onboarding_fields_skipped integer
+  onboarding_fields_skipped integer [not null, default: 0]
   weight_log_regularity_score numeric(3,2)
   avg_session_length_sec integer
   last_question_answered_at timestamptz
-  coach_messages_sent_7d integer
-  exercise_confusion_count_7d integer
-  exercise_confusion_count_14d integer
-  exercise_confusion_count_30d integer
-  machine_confusion_count_7d integer
-  substitution_count_7d integer
-  substitution_count_14d integer
-  substitution_count_30d integer
-  aborted_exercise_count_7d integer
-  pain_flag_count_7d integer
-  pain_flag_count_14d integer
-  pain_flag_count_30d integer
-  too_hard_flag_count_7d integer
-  updated_at timestamptz
+  coach_messages_sent_7d integer [not null, default: 0]
+  exercise_confusion_count_7d integer [not null, default: 0]
+  exercise_confusion_count_14d integer [not null, default: 0]
+  exercise_confusion_count_30d integer [not null, default: 0]
+  machine_confusion_count_7d integer [not null, default: 0]
+  substitution_count_7d integer [not null, default: 0]
+  substitution_count_14d integer [not null, default: 0]
+  substitution_count_30d integer [not null, default: 0]
+  aborted_exercise_count_7d integer [not null, default: 0]
+  pain_flag_count_7d integer [not null, default: 0]
+  pain_flag_count_14d integer [not null, default: 0]
+  pain_flag_count_30d integer [not null, default: 0]
+  too_hard_flag_count_7d integer [not null, default: 0]
+  last_proactive_coach_at timestamptz
+  missed_workouts_7d integer [not null, default: 0]
+  days_since_registration integer [not null, default: 0]
+  updated_at timestamptz [not null, default: `now()`]
 }
 
 
@@ -895,12 +898,22 @@ Table user_question_asks {
   answer_text text
   answer_numeric numeric
   answer_json jsonb
-  context text [note: 'onboarding | checkin | coach_chat | proactive']
+  context text [note: 'onboarding | checkin | coach_chat | proactive (legacy string)']
+  source question_source [note: 'Ustrukturyzowany ekwiwalent context — dodany w iter9']
+  checkin_session_id uuid [ref: > checkin_sessions.id]
   priority_score numeric(5,2) [note: 'Wyliczony w momencie zadania']
 
   indexes {
     (user_id, asked_at)
+    checkin_session_id [note: 'partial: WHERE checkin_session_id IS NOT NULL']
   }
+}
+
+Enum question_source {
+  contextual
+  proactive
+  checkin
+  onboarding
 }
 
 
@@ -909,12 +922,16 @@ Table user_question_asks {
 Table coach_conversations {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  entry_point entry_point [note: 'Z jakiego miejsca w apce']
-  context_entity_type text [note: 'exercise | meal | plan | checkin']
+  entry_point entry_point [not null, default: 'global_bubble', note: 'Z jakiego miejsca w apce']
+  context_entity_type text [note: 'CHECK IN (exercise | meal | plan | checkin)']
   context_entity_id uuid
-  started_at timestamptz [default: `now()`]
+  started_at timestamptz [not null, default: `now()`]
   last_message_at timestamptz
-  closed boolean [default: false]
+  closed boolean [not null, default: false]
+
+  indexes {
+    (user_id, started_at)
+  }
 }
 
 Enum entry_point {
@@ -931,13 +948,13 @@ Table coach_messages {
   conversation_id uuid [ref: > coach_conversations.id, not null]
   role message_role [not null]
   content text [not null]
-  intent text [note: 'klasyfikacja: pytanie_techniczne | dieta | motywacja | ból | inne']
+  intent coach_intent [note: 'Klasyfikacja intencji wiadomości usera']
   tokens_in integer
   tokens_out integer
   llm_call_id uuid [ref: > llm_calls.id]
-  guardrail_flagged boolean [default: false]
+  guardrail_flagged boolean [not null, default: false]
   guardrail_reasons text[]
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (conversation_id, created_at)
@@ -951,6 +968,16 @@ Enum message_role {
   tool
 }
 
+Enum coach_intent {
+  technical_exercise
+  diet
+  motivation
+  pain
+  goal_extreme
+  greeting
+  other
+}
+
 
 // ---------- GRUPA 15: AI TASKS, DECYZJE, KOSZTY ----------
 
@@ -962,13 +989,13 @@ Table ai_tasks {
   input_payload jsonb
   output_payload jsonb
   error text
-  queued_at timestamptz [default: `now()`]
+  queued_at timestamptz [not null, default: `now()`]
   started_at timestamptz
   completed_at timestamptz
 
   indexes {
     (user_id, task_type, queued_at)
-    (status)
+    status
   }
 }
 
@@ -991,39 +1018,51 @@ Enum ai_task_status {
   cancelled
 }
 
-// Decyzje podjęte przez warstwę reguł/coacha — pełen audyt.
+// Decyzje podjęte przez warstwę reguł/coacha — pełen audyt (iter10 beginner_zero).
 Table ai_decisions {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  decision_type text [not null, note: 'plan_adjustment | calorie_change | flag_escalation | ...']
+  ai_task_id uuid [ref: > ai_tasks.id]
+  llm_call_id uuid [ref: > llm_calls.id]
+  recommendation_type recommendation_type [not null]
+  entry_path entry_path
+  adaptation_phase adaptation_phase
+  input_snapshot jsonb [note: 'Stan sygnałów i profilu w momencie decyzji']
+  decision_payload jsonb [note: 'Konkretna rekomendacja (np. slow_down, repeat_session)']
   rationale text
-  rule_ids_applied text[] [note: 'Które reguły zadecydowały']
-  profile_snapshot jsonb [note: 'Hash / diff profilu w momencie decyzji']
-  recommended_action jsonb
-  executed boolean [default: false]
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, created_at)
   }
 }
 
+Enum recommendation_type {
+  slow_down
+  repeat_similar_session
+  show_more_guidance
+  trainer_consultation
+  simplify_plan
+  introduce_new_machine
+  introduce_strength_basics
+}
+
 Table llm_calls {
   id uuid [pk]
   user_id uuid [ref: > users.id]
   ai_task_id uuid [ref: > ai_tasks.id]
-  provider text [note: 'openai | anthropic | google']
-  model text [note: 'gpt-4o-mini | gpt-4o | ...']
+  provider text [not null, note: 'openai | anthropic | google']
+  model text [not null, note: 'gpt-4o-mini | gpt-4o | ...']
   prompt_id uuid [ref: > prompts.id]
   prompt_version integer
   tokens_in integer
   tokens_out integer
   cost_usd numeric(10,6)
   latency_ms integer
-  used_structured_output boolean [default: false]
-  output_valid boolean [default: true]
-  retries integer [default: 0]
-  created_at timestamptz [default: `now()`]
+  used_structured_output boolean [not null, default: false]
+  output_valid boolean [not null, default: true]
+  retries integer [not null, default: 0]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
     (user_id, created_at)
@@ -1033,31 +1072,34 @@ Table llm_calls {
 
 Table prompts {
   id uuid [pk]
-  slug text [not null, note: 'np. meal_analysis, pick_next_question']
+  slug text [not null, note: 'np. meal_vision_analysis, training_plan_fill, coach_*']
   version integer [not null]
   purpose text
   system_template text
   user_template text
   output_schema jsonb
   tone_preset tone_preset
-  created_at timestamptz [default: `now()`]
-  deprecated boolean [default: false]
+  created_at timestamptz [not null, default: `now()`]
+  deprecated boolean [not null, default: false]
 
   indexes {
     (slug, version) [unique]
   }
 }
 
+// Ostrzeżenia/zablokowane progresje z warstwy safety (iter10).
 Table safety_escalations {
   id uuid [pk]
   user_id uuid [ref: > users.id, not null]
-  trigger_flag safety_flag
   source text [note: 'coach_chat | rule_engine | user_report']
-  severity severity_level
-  action_taken text [note: 'plan_paused | referral_shown | coach_declined | ...']
-  user_acknowledged boolean [default: false]
+  symptom_codes text[] [not null, default: `'{}'`]
+  severity severity_level [not null, default: 'warning']
+  status text [not null, default: 'open', note: 'open | acknowledged | resolved']
+  blocked_progression boolean [not null, default: true]
+  recommended_action text
+  notes text
+  created_at timestamptz [not null, default: `now()`]
   resolved_at timestamptz
-  created_at timestamptz [default: `now()`]
 
   indexes {
     (user_id, created_at)
@@ -1066,18 +1108,19 @@ Table safety_escalations {
 
 // Rate limiting i budżety per user.
 Table user_ai_usage {
-  user_id uuid [pk, ref: > users.id]
-  month_key text [pk, note: 'YYYY-MM']
-  llm_calls_count integer [default: 0]
-  photo_analysis_count integer [default: 0]
-  tokens_in_total integer [default: 0]
-  tokens_out_total integer [default: 0]
-  cost_usd_total numeric(10,4) [default: 0]
-  over_limit boolean [default: false]
-  updated_at timestamptz
+  user_id uuid [ref: > users.id, note: 'Część kompozytowego PK (user_id, month_key)']
+  month_key text [note: 'YYYY-MM, np. "2026-04"']
+  llm_calls_count integer [not null, default: 0]
+  photo_analysis_count integer [not null, default: 0]
+  tokens_in_total integer [not null, default: 0]
+  tokens_out_total integer [not null, default: 0]
+  cost_usd_total numeric(10,4) [not null, default: 0]
+  over_limit boolean [not null, default: false]
+  updated_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (month_key)
+    (user_id, month_key) [pk]
+    month_key
   }
 }
 
@@ -1117,10 +1160,11 @@ Table notifications {
   read_at timestamptz
   dismissed_at timestamptz
   data jsonb
-  created_at timestamptz [default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
 
   indexes {
-    (user_id, scheduled_for)
+    (user_id, scheduled_for) [note: 'partial: WHERE sent_at IS NULL']
+    scheduled_for [note: 'partial: WHERE sent_at IS NULL — dla workera']
   }
 }
 
@@ -1166,11 +1210,13 @@ Table product_events {
 // users 1—* training_plans (1 active na raz)
 // training_plans 1—* training_plan_versions
 // training_plan_versions 1—* plan_workouts 1—* plan_exercises
+// plan_workouts 1—* plan_workout_steps (guided_beginner mode)
 // users 1—* workout_logs (mogą być ad-hoc, bez plan_workout_id)
 // users 1—* meal_logs 1—* meal_log_items, 1—* meal_images
 // users 1—* checkin_sessions (unique per week_of)
-// users 1—* user_safety_flags
+// users 1—* user_safety_flags, safety_escalations
 // users 1—* ai_tasks / ai_decisions / llm_calls
 // users 1—1 behavior_signals (rolling counters)
+// users 1—1 subscriptions (unique index na user_id)
 // users 1—* coach_conversations 1—* coach_messages
 // ============================================================
