@@ -1,0 +1,22 @@
+{
+  "_comment": "Snapshot fixture for Ania — simple mode, general_health, female, 34y, 68kg, 165cm, light activity",
+  "profile": {
+    "user_id": "ania-uuid",
+    "gender": "female",
+    "age": 34,
+    "weight_kg": 68,
+    "height_cm": 165,
+    "activity_level": "light",
+    "primary_goal": "general_health",
+    "nutrition_mode": "simple",
+    "dietary_constraints": [],
+    "life_context": ["parent_young_kids"],
+    "experience_level": "zero"
+  },
+  "expected_targets": {
+    "calories_range": [1500, 2100],
+    "protein_min_g": 109,
+    "fiber_per_1000kcal": 14,
+    "water_ml_min": 2000
+  }
+}

@@ -81,6 +81,118 @@ export type Database = {
           },
         ]
       }
+      behavior_signals: {
+        Row: {
+          avg_session_length_sec: number | null
+          coach_messages_sent_7d: number
+          days_since_last_workout_log: number | null
+          last_question_answered_at: string | null
+          meal_logs_per_day_7d: number | null
+          onboarding_fields_skipped: number
+          photo_vs_text_ratio: number | null
+          updated_at: string
+          user_id: string
+          weight_log_regularity_score: number | null
+          workout_completion_rate_30d: number | null
+          workout_completion_rate_7d: number | null
+        }
+        Insert: {
+          avg_session_length_sec?: number | null
+          coach_messages_sent_7d?: number
+          days_since_last_workout_log?: number | null
+          last_question_answered_at?: string | null
+          meal_logs_per_day_7d?: number | null
+          onboarding_fields_skipped?: number
+          photo_vs_text_ratio?: number | null
+          updated_at?: string
+          user_id: string
+          weight_log_regularity_score?: number | null
+          workout_completion_rate_30d?: number | null
+          workout_completion_rate_7d?: number | null
+        }
+        Update: {
+          avg_session_length_sec?: number | null
+          coach_messages_sent_7d?: number
+          days_since_last_workout_log?: number | null
+          last_question_answered_at?: string | null
+          meal_logs_per_day_7d?: number | null
+          onboarding_fields_skipped?: number
+          photo_vs_text_ratio?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_log_regularity_score?: number | null
+          workout_completion_rate_30d?: number | null
+          workout_completion_rate_7d?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "behavior_signals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      body_measurements: {
+        Row: {
+          arm_cm: number | null
+          body_fat_pct: number | null
+          chest_cm: number | null
+          created_at: string
+          hips_cm: number | null
+          id: string
+          measured_at: string
+          neck_cm: number | null
+          notes: string | null
+          source: Database["public"]["Enums"]["fact_source"]
+          thigh_cm: number | null
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          arm_cm?: number | null
+          body_fat_pct?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hips_cm?: number | null
+          id?: string
+          measured_at: string
+          neck_cm?: number | null
+          notes?: string | null
+          source?: Database["public"]["Enums"]["fact_source"]
+          thigh_cm?: number | null
+          user_id: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          arm_cm?: number | null
+          body_fat_pct?: number | null
+          chest_cm?: number | null
+          created_at?: string
+          hips_cm?: number | null
+          id?: string
+          measured_at?: string
+          neck_cm?: number | null
+          notes?: string | null
+          source?: Database["public"]["Enums"]["fact_source"]
+          thigh_cm?: number | null
+          user_id?: string
+          waist_cm?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "body_measurements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercises: {
         Row: {
           alternatives_slugs: string[]
@@ -246,6 +358,136 @@ export type Database = {
           },
           {
             foreignKeyName: "llm_calls_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_plan_versions: {
+        Row: {
+          calories_target: number | null
+          carbs_g_target: number | null
+          change_reason: string | null
+          created_at: string
+          created_by_ai_task_id: string | null
+          emergency_plan: Json | null
+          fat_g_target: number | null
+          fiber_g_target: number | null
+          id: string
+          llm_call_id: string | null
+          meal_distribution: Json | null
+          mode: Database["public"]["Enums"]["nutrition_mode"]
+          plan_id: string
+          practical_guidelines: Json | null
+          protein_g_target: number | null
+          strategy_notes: string | null
+          supplement_recommendations: Json | null
+          version_number: number
+          water_ml_target: number | null
+        }
+        Insert: {
+          calories_target?: number | null
+          carbs_g_target?: number | null
+          change_reason?: string | null
+          created_at?: string
+          created_by_ai_task_id?: string | null
+          emergency_plan?: Json | null
+          fat_g_target?: number | null
+          fiber_g_target?: number | null
+          id?: string
+          llm_call_id?: string | null
+          meal_distribution?: Json | null
+          mode?: Database["public"]["Enums"]["nutrition_mode"]
+          plan_id: string
+          practical_guidelines?: Json | null
+          protein_g_target?: number | null
+          strategy_notes?: string | null
+          supplement_recommendations?: Json | null
+          version_number: number
+          water_ml_target?: number | null
+        }
+        Update: {
+          calories_target?: number | null
+          carbs_g_target?: number | null
+          change_reason?: string | null
+          created_at?: string
+          created_by_ai_task_id?: string | null
+          emergency_plan?: Json | null
+          fat_g_target?: number | null
+          fiber_g_target?: number | null
+          id?: string
+          llm_call_id?: string | null
+          meal_distribution?: Json | null
+          mode?: Database["public"]["Enums"]["nutrition_mode"]
+          plan_id?: string
+          practical_guidelines?: Json | null
+          protein_g_target?: number | null
+          strategy_notes?: string | null
+          supplement_recommendations?: Json | null
+          version_number?: number
+          water_ml_target?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_plan_versions_created_by_ai_task_id_fkey"
+            columns: ["created_by_ai_task_id"]
+            isOneToOne: false
+            referencedRelation: "ai_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrition_plan_versions_llm_call_id_fkey"
+            columns: ["llm_call_id"]
+            isOneToOne: false
+            referencedRelation: "llm_calls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrition_plan_versions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "nutrition_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nutrition_plans: {
+        Row: {
+          current_version_id: string | null
+          ended_at: string | null
+          id: string
+          is_active: boolean
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          current_version_id?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          current_version_id?: string | null
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nutrition_plans_current_version_fk"
+            columns: ["current_version_id"]
+            isOneToOne: false
+            referencedRelation: "nutrition_plan_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nutrition_plans_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1069,164 +1311,38 @@ export type Database = {
         }
         Relationships: []
       }
-      behavior_signals: {
-        Row: {
-          user_id: string
-          days_since_last_workout_log: number | null
-          workout_completion_rate_7d: number | null
-          workout_completion_rate_30d: number | null
-          meal_logs_per_day_7d: number | null
-          photo_vs_text_ratio: number | null
-          onboarding_fields_skipped: number
-          weight_log_regularity_score: number | null
-          avg_session_length_sec: number | null
-          last_question_answered_at: string | null
-          coach_messages_sent_7d: number
-          updated_at: string
-        }
-        Insert: {
-          user_id: string
-          days_since_last_workout_log?: number | null
-          workout_completion_rate_7d?: number | null
-          workout_completion_rate_30d?: number | null
-          meal_logs_per_day_7d?: number | null
-          photo_vs_text_ratio?: number | null
-          onboarding_fields_skipped?: number
-          weight_log_regularity_score?: number | null
-          avg_session_length_sec?: number | null
-          last_question_answered_at?: string | null
-          coach_messages_sent_7d?: number
-          updated_at?: string
-        }
-        Update: {
-          user_id?: string
-          days_since_last_workout_log?: number | null
-          workout_completion_rate_7d?: number | null
-          workout_completion_rate_30d?: number | null
-          meal_logs_per_day_7d?: number | null
-          photo_vs_text_ratio?: number | null
-          onboarding_fields_skipped?: number
-          weight_log_regularity_score?: number | null
-          avg_session_length_sec?: number | null
-          last_question_answered_at?: string | null
-          coach_messages_sent_7d?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "behavior_signals_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      workout_logs: {
-        Row: {
-          id: string
-          user_id: string
-          plan_workout_id: string | null
-          started_at: string
-          ended_at: string | null
-          duration_min: number | null
-          pre_mood: Database["public"]["Enums"]["pre_mood"] | null
-          pre_energy: Database["public"]["Enums"]["energy_level"] | null
-          overall_rating: number | null
-          went_well: string | null
-          went_poorly: string | null
-          what_to_improve: string | null
-          notes: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          plan_workout_id?: string | null
-          started_at?: string
-          ended_at?: string | null
-          duration_min?: number | null
-          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
-          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
-          overall_rating?: number | null
-          went_well?: string | null
-          went_poorly?: string | null
-          what_to_improve?: string | null
-          notes?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          plan_workout_id?: string | null
-          started_at?: string
-          ended_at?: string | null
-          duration_min?: number | null
-          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
-          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
-          overall_rating?: number | null
-          went_well?: string | null
-          went_poorly?: string | null
-          what_to_improve?: string | null
-          notes?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "workout_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "workout_logs_plan_workout_id_fkey"
-            columns: ["plan_workout_id"]
-            isOneToOne: false
-            referencedRelation: "plan_workouts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       workout_log_exercises: {
         Row: {
-          id: string
-          workout_log_id: string
           exercise_id: string | null
-          plan_exercise_id: string | null
-          order_num: number
+          id: string
           notes: string | null
-          was_substituted: boolean
+          order_num: number
           original_exercise_id: string | null
+          plan_exercise_id: string | null
+          was_substituted: boolean
+          workout_log_id: string
         }
         Insert: {
-          id?: string
-          workout_log_id: string
           exercise_id?: string | null
-          plan_exercise_id?: string | null
-          order_num?: number
+          id?: string
           notes?: string | null
-          was_substituted?: boolean
+          order_num?: number
           original_exercise_id?: string | null
+          plan_exercise_id?: string | null
+          was_substituted?: boolean
+          workout_log_id: string
         }
         Update: {
-          id?: string
-          workout_log_id?: string
           exercise_id?: string | null
-          plan_exercise_id?: string | null
-          order_num?: number
+          id?: string
           notes?: string | null
-          was_substituted?: boolean
+          order_num?: number
           original_exercise_id?: string | null
+          plan_exercise_id?: string | null
+          was_substituted?: boolean
+          workout_log_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "workout_log_exercises_workout_log_id_fkey"
-            columns: ["workout_log_id"]
-            isOneToOne: false
-            referencedRelation: "workout_logs"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "workout_log_exercises_exercise_id_fkey"
             columns: ["exercise_id"]
@@ -1234,41 +1350,62 @@ export type Database = {
             referencedRelation: "exercises"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "workout_log_exercises_original_exercise_id_fkey"
+            columns: ["original_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_log_exercises_plan_exercise_id_fkey"
+            columns: ["plan_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "plan_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_log_exercises_workout_log_id_fkey"
+            columns: ["workout_log_id"]
+            isOneToOne: false
+            referencedRelation: "workout_logs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workout_log_sets: {
         Row: {
+          created_at: string
+          duration_sec: number | null
           id: string
-          workout_log_exercise_id: string
-          set_number: number
-          weight_kg: number | null
           reps: number | null
           rir: number | null
+          set_number: number
           to_failure: boolean
-          duration_sec: number | null
-          created_at: string
+          weight_kg: number | null
+          workout_log_exercise_id: string
         }
         Insert: {
+          created_at?: string
+          duration_sec?: number | null
           id?: string
-          workout_log_exercise_id: string
-          set_number: number
-          weight_kg?: number | null
           reps?: number | null
           rir?: number | null
+          set_number: number
           to_failure?: boolean
-          duration_sec?: number | null
-          created_at?: string
+          weight_kg?: number | null
+          workout_log_exercise_id: string
         }
         Update: {
+          created_at?: string
+          duration_sec?: number | null
           id?: string
-          workout_log_exercise_id?: string
-          set_number?: number
-          weight_kg?: number | null
           reps?: number | null
           rir?: number | null
+          set_number?: number
           to_failure?: boolean
-          duration_sec?: number | null
-          created_at?: string
+          weight_kg?: number | null
+          workout_log_exercise_id?: string
         }
         Relationships: [
           {
@@ -1276,6 +1413,72 @@ export type Database = {
             columns: ["workout_log_exercise_id"]
             isOneToOne: false
             referencedRelation: "workout_log_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workout_logs: {
+        Row: {
+          created_at: string
+          duration_min: number | null
+          ended_at: string | null
+          id: string
+          notes: string | null
+          overall_rating: number | null
+          plan_workout_id: string | null
+          pre_energy: Database["public"]["Enums"]["energy_level"] | null
+          pre_mood: Database["public"]["Enums"]["pre_mood"] | null
+          started_at: string
+          user_id: string
+          went_poorly: string | null
+          went_well: string | null
+          what_to_improve: string | null
+        }
+        Insert: {
+          created_at?: string
+          duration_min?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          overall_rating?: number | null
+          plan_workout_id?: string | null
+          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
+          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
+          started_at?: string
+          user_id: string
+          went_poorly?: string | null
+          went_well?: string | null
+          what_to_improve?: string | null
+        }
+        Update: {
+          created_at?: string
+          duration_min?: number | null
+          ended_at?: string | null
+          id?: string
+          notes?: string | null
+          overall_rating?: number | null
+          plan_workout_id?: string | null
+          pre_energy?: Database["public"]["Enums"]["energy_level"] | null
+          pre_mood?: Database["public"]["Enums"]["pre_mood"] | null
+          started_at?: string
+          user_id?: string
+          went_poorly?: string | null
+          went_well?: string | null
+          what_to_improve?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_logs_plan_workout_id_fkey"
+            columns: ["plan_workout_id"]
+            isOneToOne: false
+            referencedRelation: "plan_workouts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1321,6 +1524,7 @@ export type Database = {
         | "measurement"
         | "photo"
       difficulty: "beginner" | "intermediate" | "advanced"
+      energy_level: "low" | "moderate" | "high" | "variable"
       exercise_category:
         | "push"
         | "pull"
@@ -1344,6 +1548,7 @@ export type Database = {
       gender: "female" | "male" | "other" | "prefer_not_to_say"
       location_type: "home" | "gym" | "mixed"
       nutrition_mode: "simple" | "ranges" | "exact"
+      pre_mood: "bad" | "ok" | "good" | "great"
       primary_goal:
         | "weight_loss"
         | "muscle_building"
@@ -1368,8 +1573,6 @@ export type Database = {
         | "overtraining_signs"
       severity_level: "info" | "warning" | "critical"
       tone_preset: "warm_encouraging" | "partnering" | "factual_technical"
-      pre_mood: "bad" | "ok" | "good" | "great"
-      energy_level: "low" | "moderate" | "high" | "variable"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1531,6 +1734,7 @@ export const Constants = {
         "photo",
       ],
       difficulty: ["beginner", "intermediate", "advanced"],
+      energy_level: ["low", "moderate", "high", "variable"],
       exercise_category: [
         "push",
         "pull",
@@ -1556,6 +1760,7 @@ export const Constants = {
       gender: ["female", "male", "other", "prefer_not_to_say"],
       location_type: ["home", "gym", "mixed"],
       nutrition_mode: ["simple", "ranges", "exact"],
+      pre_mood: ["bad", "ok", "good", "great"],
       primary_goal: [
         "weight_loss",
         "muscle_building",
@@ -1583,8 +1788,6 @@ export const Constants = {
       ],
       severity_level: ["info", "warning", "critical"],
       tone_preset: ["warm_encouraging", "partnering", "factual_technical"],
-      pre_mood: ["bad", "ok", "good", "great"],
-      energy_level: ["low", "moderate", "high", "variable"],
     },
   },
 } as const

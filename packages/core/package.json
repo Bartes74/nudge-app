@@ -21,7 +21,10 @@
     "./planners/training/selectTemplate": "./src/planners/training/selectTemplate.ts",
     "./planners/training/fillTemplate": "./src/planners/training/fillTemplate.ts",
     "./planners/training/substituteExercise": "./src/planners/training/substituteExercise.ts",
-    "./signals/updateBehaviorSignals": "./src/signals/updateBehaviorSignals.ts"
+    "./signals/updateBehaviorSignals": "./src/signals/updateBehaviorSignals.ts",
+    "./planners/nutrition/types": "./src/planners/nutrition/types.ts",
+    "./planners/nutrition/calculateNutritionTargets": "./src/planners/nutrition/calculateNutritionTargets.ts",
+    "./planners/nutrition/generateNutritionPlan": "./src/planners/nutrition/generateNutritionPlan.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
