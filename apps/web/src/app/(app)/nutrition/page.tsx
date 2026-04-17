@@ -11,6 +11,9 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { GenerateNutritionButton } from './GenerateNutritionButton'
+import { AskCoachButton } from '@/components/coach/AskCoachButton'
+
+const PLACEHOLDER_NUTRITION_ID = '00000000-0000-0000-0000-000000000000'
 
 export const metadata: Metadata = { title: 'Jedzenie' }
 
@@ -368,6 +371,15 @@ export default async function NutritionPage() {
         </div>
         <ChevronRight className="h-4 w-4 text-muted-foreground" />
       </Link>
+
+      {/* Ask coach about diet */}
+      <AskCoachButton
+        entryPoint="meal_shortcut"
+        contextEntityType="meal"
+        contextEntityId={PLACEHOLDER_NUTRITION_ID}
+        prefillMessage="Mam pytanie o swój plan żywieniowy."
+        label="Spytaj o produkt lub makro"
+      />
 
       {/* Regenerate */}
       <div className="pb-4">

@@ -6,6 +6,7 @@ import { ChevronLeft, Dumbbell, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { SubstituteButton } from './SubstituteButton'
+import { AskCoachButton } from '@/components/coach/AskCoachButton'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
@@ -159,6 +160,14 @@ export default async function ExercisePage({
       )}
 
       <SubstituteButton exerciseSlug={slug} exerciseName={exercise.name_pl} />
+
+      <AskCoachButton
+        entryPoint="exercise_shortcut"
+        contextEntityType="exercise"
+        contextEntityId={exercise.id}
+        prefillMessage={`Jak prawidłowo wykonać ćwiczenie ${exercise.name_pl}?`}
+        label="Spytaj o technikę"
+      />
     </div>
   )
 }
