@@ -25,7 +25,7 @@ Przed każdą zmianą kodu upewnij się, że rozumiesz zawartość:
 3. **`docs/Principles/nudge_product_principles.md`** — zasady produktu. Każda funkcja musi być z nimi zgodna. Jeśli prosię Cię o coś, co łamie Principles — zapytaj mnie przed implementacją.
 4. **`docs/Schema/nudge_schema.dbml`** + **`docs/Schema/nudge_schema_documentation.md`** — schemat bazy i uzasadnienia. ~40 tabel, 18 grup.
 
-## Stack (nieNegocjowalny bez nowego ADR)
+## Stack (nienegocjowalny bez nowego ADR)
 
 - **Monorepo:** Turborepo + pnpm workspaces
 - **Web:** Next.js 14 App Router + TypeScript strict + Tailwind + shadcn/ui + Next-PWA
@@ -50,10 +50,11 @@ nudge-app/
 │   ├── core/             # Logika domeny — WSPÓLNA między apps
 │   │   ├── domain/       # Typy: Profile, Plan, Meal, CheckIn
 │   │   ├── rules/        # BMR, TDEE, progresja, guardrails
-│   │   ├── prompts/      # Wersjonowane prompty + JSON schemas
 │   │   ├── llm/          # Klient LLM z abstrakcją dostawcy
 │   │   ├── planners/     # Training/Nutrition planner
-│   │   ├── analyzers/    # Check-in analyzer, meal vision
+│   │   ├── analyzers/    # Check-in analyzer
+│   │   ├── vision/       # Meal photo analyzer (gpt-4o Vision)
+│   │   ├── coach/        # AI Coach: intent classification, prompts routing, guardrails
 │   │   ├── signals/      # Behavior signals update
 │   │   ├── questions/    # Progressive profiling scoring
 │   │   └── billing/      # Subskrypcje, trial, dostęp
@@ -71,6 +72,8 @@ nudge-app/
 ```
 
 **Zasada krytyczna:** cała logika domeny siedzi w `packages/core`. `apps/web` i `apps/api` to cieńkie warstwy prezentacji/transportu. Nigdy nie duplikuj kalkulatora BMR w komponencie React.
+
+**Prompty LLM** żyją w tabeli `prompts` (kolumny: `slug`, `version`, `system_template`, `user_template`, `output_schema`). Zmiana promptu = migracja SQL wstawiająca nową wersję; kod referuje po `slug`. JSON schemas dla structured outputs siedzą koło wywołania (np. `packages/core/src/vision/mealVisionSchema.ts`).
 
 ## Zasady kodu — nie do negocjacji
 
@@ -146,7 +149,7 @@ pnpm build --filter web
 - Nie dodawaj feature flags "na wszelki wypadek". Flagi tylko gdy realnie potrzebne.
 - Nie pomijaj RLS, "bo to tylko test".
 - Nie commituj secretów. Używaj `.env.local` i `.env.example`.
-- Nie robirefaktoringu "przy okazji". Osobny PR, osobna dyskusja.
+- Nie rób refaktoringu "przy okazji". Osobny PR, osobna dyskusja.
 - Nie używaj `localStorage` dla wrażliwych danych (tokenów, profilu). Tylko Supabase session.
 - Nie mieszaj angielskiego i polskiego w UI copy. Polski konsekwentnie.
 
@@ -165,12 +168,28 @@ pnpm build --filter web
 
 ## Bieżący stan (aktualizuj po każdej iteracji)
 
-- **Ostatnia ukończona iteracja:** Iteracja 9 — Weekly Check-in + Adaptive Layer (2026-04-17)
-- **Aktywne migracje:** 20260418000000_training_plan_tables, 20260418100000_catalog_rls, 20260419000000_workout_logs, 20260420000000_nutrition_plan_tables, 20260421000000_coach_tables, 20260422000000_checkin_tables
-- **Otwarte feature flags:** NEXT_PUBLIC_DEV_MODE (sandbox kalkulatorów)
+- **Ostatnie zamknięte iteracje (commit-numbering):** iter10 — meal photo analyzer (Vision) + E2E seed (2026-04-17)
+- **WIP w checkpoint commit `1c509a3`:** monetyzacja (Stripe + trial + paywall + admin dashboard + emaile Resend + Inngest jobs), beginner_zero guided path (qualifyEntryPath + guided plan + first-gym-visit/how-to-use-gym UI), trainer-consultation flow. Do rozbicia na logiczne commity w osobnej sesji.
+- **Aktywne migracje:**
+  - `20260415000000_init` (extensions, enums)
+  - `20260416000000_users_table`
+  - `20260417000000_onboarding_tables`
+  - `20260418000000_training_plan_tables` (+ prompts, llm_calls)
+  - `20260418100000_catalog_rls`
+  - `20260419000000_workout_logs`
+  - `20260420000000_nutrition_plan_tables`
+  - `20260421000000_coach_tables`
+  - `20260422000000_checkin_tables`
+  - `20260423000000_meal_logs_tables` (meal_logs, meal_log_items, meal_images, nutrition_daily_totals)
+  - `20260424000000_subscriptions_tables` (subscriptions, user_ai_usage, notifications, product_events)
+  - `20260424100000_increment_ai_usage_fn`
+  - `20260424200000_admin_rpc_fns`
+  - `20260425000000_beginner_zero_guided_path` (user_training_preferences, user_nutrition_preferences, ai_decisions, safety_escalations, plan_workout_steps)
+- **Otwarte feature flags:** `NEXT_PUBLIC_DEV_MODE` (sandbox kalkulatorów)
 - **Znane bugi w produkcji:** —
+- **Znany dług dokumentacyjny:** kolumnowa rozbieżność między DBML a migracjami (np. `meal_logs` — kolumny w migracji: `source`, `status`, `note`, `user_warnings`; w DBML: `input_mode`, `user_description`, `kcal_estimate_point`, `user_corrected`). Source of truth = migracja. Wymaga dedykowanego przejścia przez DBML.
 
 ---
 
-*Wersja: 1.0 — 2026-04-15*
+*Wersja: 1.1 — 2026-04-18*
 *Aktualizuj po każdej iteracji (sekcja "Bieżący stan").*
