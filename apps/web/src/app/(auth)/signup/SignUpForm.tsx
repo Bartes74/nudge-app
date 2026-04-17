@@ -1,13 +1,13 @@
 'use client'
 
-import { useActionState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useFormState } from 'react-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { oauthAction, signUpAction, type AuthActionState } from '@/app/(auth)/actions'
+import { AuthSubmitButton } from '@/app/(auth)/AuthSubmitButton'
 
 export function SignUpForm() {
-  const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
+  const [state, formAction] = useFormState<AuthActionState, FormData>(
     signUpAction,
     null,
   )
@@ -44,9 +44,9 @@ export function SignUpForm() {
           </p>
         )}
 
-        <Button type="submit" className="w-full" isLoading={isPending}>
+        <AuthSubmitButton className="w-full">
           Utwórz konto
-        </Button>
+        </AuthSubmitButton>
       </form>
 
       <div className="relative">
@@ -60,16 +60,16 @@ export function SignUpForm() {
 
       <div className="grid grid-cols-2 gap-2">
         <form action={async () => { await oauthAction('google') }}>
-          <Button type="submit" variant="outline" className="w-full gap-2">
+          <AuthSubmitButton variant="outline" className="w-full gap-2">
             <GoogleIcon />
             Google
-          </Button>
+          </AuthSubmitButton>
         </form>
         <form action={async () => { await oauthAction('apple') }}>
-          <Button type="submit" variant="outline" className="w-full gap-2">
+          <AuthSubmitButton variant="outline" className="w-full gap-2">
             <AppleIcon />
             Apple
-          </Button>
+          </AuthSubmitButton>
         </form>
       </div>
     </div>

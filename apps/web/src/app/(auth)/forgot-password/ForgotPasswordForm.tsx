@@ -1,13 +1,13 @@
 'use client'
 
-import { useActionState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useFormState } from 'react-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { forgotPasswordAction, type AuthActionState } from '@/app/(auth)/actions'
+import { AuthSubmitButton } from '@/app/(auth)/AuthSubmitButton'
 
 export function ForgotPasswordForm() {
-  const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(
+  const [state, formAction] = useFormState<AuthActionState, FormData>(
     forgotPasswordAction,
     null,
   )
@@ -41,9 +41,9 @@ export function ForgotPasswordForm() {
         </p>
       )}
 
-      <Button type="submit" className="w-full" isLoading={isPending}>
+      <AuthSubmitButton className="w-full">
         Wyślij link do resetu
-      </Button>
+      </AuthSubmitButton>
     </form>
   )
 }

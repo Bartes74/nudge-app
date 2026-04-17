@@ -1,8 +1,7 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useFormState } from 'react-dom'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -11,16 +10,17 @@ import {
   oauthAction,
   type AuthActionState,
 } from '@/app/(auth)/actions'
+import { AuthSubmitButton } from '@/app/(auth)/AuthSubmitButton'
 
 type Props = {
   searchParams: Promise<{ redirectTo?: string; deleted?: string }>
 }
 
 function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
-  const [emailPasswordState, emailPasswordFormAction, isPending] =
-    useActionState<AuthActionState, FormData>(signInAction, null)
-  const [magicState, magicFormAction, isMagicPending] =
-    useActionState<AuthActionState, FormData>(magicLinkAction, null)
+  const [emailPasswordState, emailPasswordFormAction] =
+    useFormState<AuthActionState, FormData>(signInAction, null)
+  const [magicState, magicFormAction] =
+    useFormState<AuthActionState, FormData>(magicLinkAction, null)
 
   return (
     <div className="space-y-4">
@@ -66,9 +66,9 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
           </p>
         )}
 
-        <Button type="submit" className="w-full" isLoading={isPending}>
+        <AuthSubmitButton className="w-full">
           Zaloguj się
-        </Button>
+        </AuthSubmitButton>
       </form>
 
       {/* Divider */}
@@ -104,14 +104,9 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
                 {magicState.error}
               </p>
             )}
-            <Button
-              type="submit"
-              variant="outline"
-              className="w-full"
-              isLoading={isMagicPending}
-            >
+            <AuthSubmitButton variant="outline" className="w-full">
               Wyślij magic link
-            </Button>
+            </AuthSubmitButton>
           </>
         )}
       </form>
@@ -119,16 +114,16 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
       {/* OAuth */}
       <div className="grid grid-cols-2 gap-2">
         <form action={async () => { await oauthAction('google') }}>
-          <Button type="submit" variant="outline" className="w-full gap-2">
+          <AuthSubmitButton variant="outline" className="w-full gap-2">
             <GoogleIcon />
             Google
-          </Button>
+          </AuthSubmitButton>
         </form>
         <form action={async () => { await oauthAction('apple') }}>
-          <Button type="submit" variant="outline" className="w-full gap-2">
+          <AuthSubmitButton variant="outline" className="w-full gap-2">
             <AppleIcon />
             Apple
-          </Button>
+          </AuthSubmitButton>
         </form>
       </div>
     </div>
