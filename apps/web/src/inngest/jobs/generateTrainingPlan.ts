@@ -18,7 +18,6 @@ export const generateTrainingPlanJob = inngest.createFunction(
     name: 'Generate Training Plan',
     triggers: [{ event: 'nudge/plan.training.generate' }],
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async ({ event, step }: { event: { data: Record<string, unknown> }; step: any }) => {
     const { task_id, user_id } = event.data as { task_id: string; user_id: string }
 

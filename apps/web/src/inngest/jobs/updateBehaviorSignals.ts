@@ -13,7 +13,6 @@ export const updateBehaviorSignalsJob = inngest.createFunction(
     name: 'Update Behavior Signals',
     triggers: [{ event: 'nudge/workout.finished' }],
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async ({ event, step }: { event: { data: Record<string, unknown> }; step: any }) => {
     const { user_id } = event.data as { user_id: string; workout_log_id: string }
 

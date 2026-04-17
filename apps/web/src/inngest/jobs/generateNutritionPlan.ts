@@ -26,7 +26,6 @@ export const generateNutritionPlanJob = inngest.createFunction(
     name: 'Generate Nutrition Plan',
     triggers: [{ event: 'nudge/plan.nutrition.generate' }],
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async ({ event, step }: { event: { data: Record<string, unknown> }; step: any }) => {
     const { task_id, user_id } = event.data as { task_id: string; user_id: string }
 
