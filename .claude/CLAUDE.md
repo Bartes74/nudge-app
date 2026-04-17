@@ -165,8 +165,8 @@ pnpm build --filter web
 
 ## Bieżący stan (aktualizuj po każdej iteracji)
 
-- **Ostatnia ukończona iteracja:** Iteracja 8 — AI Coach (2026-04-17)
-- **Aktywne migracje:** 20260418000000_training_plan_tables, 20260418100000_catalog_rls, 20260419000000_workout_logs, 20260420000000_nutrition_plan_tables, 20260421000000_coach_tables
+- **Ostatnia ukończona iteracja:** Iteracja 9 — Weekly Check-in + Adaptive Layer (2026-04-17)
+- **Aktywne migracje:** 20260418000000_training_plan_tables, 20260418100000_catalog_rls, 20260419000000_workout_logs, 20260420000000_nutrition_plan_tables, 20260421000000_coach_tables, 20260422000000_checkin_tables
 - **Otwarte feature flags:** NEXT_PUBLIC_DEV_MODE (sandbox kalkulatorów)
 - **Znane bugi w produkcji:** —
 
