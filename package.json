@@ -17,7 +17,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "supabase:migrate": "supabase db push",
+    "supabase:migrate": "supabase migration up",
     "supabase:reset": "supabase db reset",
     "supabase:gen-types": "supabase gen types typescript --local 2>/dev/null > packages/core/src/types/db.ts",
     "supabase:status": "supabase status"

@@ -34,482 +34,600 @@ export type Database = {
   }
   public: {
     Tables: {
-      users: {
-        Row: {
-          id: string
-          email: string
-          created_at: string
-          last_active_at: string | null
-          deleted_at: string | null
-          timezone: string
-          locale: string
-        }
-        Insert: {
-          id: string
-          email: string
-          created_at?: string
-          last_active_at?: string | null
-          deleted_at?: string | null
-          timezone?: string
-          locale?: string
-        }
-        Update: {
-          id?: string
-          email?: string
-          created_at?: string
-          last_active_at?: string | null
-          deleted_at?: string | null
-          timezone?: string
-          locale?: string
-        }
-        Relationships: []
-      }
-      user_profile: {
-        Row: {
-          user_id: string
-          display_name: string | null
-          birth_date: string | null
-          age_bucket: Database['public']['Enums']['age_bucket'] | null
-          gender: Database['public']['Enums']['gender'] | null
-          height_cm: number | null
-          current_weight_kg: number | null
-          experience_level: Database['public']['Enums']['experience_level'] | null
-          primary_goal: Database['public']['Enums']['primary_goal'] | null
-          dietary_constraints: string[] | null
-          life_context: string[] | null
-          onboarding_completed_at: string | null
-          onboarding_layer_1_done: boolean
-          onboarding_layer_2_done: boolean
-          last_plan_generated_at: string | null
-          tone_preset: Database['public']['Enums']['tone_preset'] | null
-          nutrition_mode: Database['public']['Enums']['nutrition_mode'] | null
-          updated_at: string | null
-        }
-        Insert: {
-          user_id: string
-          display_name?: string | null
-          birth_date?: string | null
-          age_bucket?: Database['public']['Enums']['age_bucket'] | null
-          gender?: Database['public']['Enums']['gender'] | null
-          height_cm?: number | null
-          current_weight_kg?: number | null
-          experience_level?: Database['public']['Enums']['experience_level'] | null
-          primary_goal?: Database['public']['Enums']['primary_goal'] | null
-          dietary_constraints?: string[] | null
-          life_context?: string[] | null
-          onboarding_completed_at?: string | null
-          onboarding_layer_1_done?: boolean
-          onboarding_layer_2_done?: boolean
-          last_plan_generated_at?: string | null
-          tone_preset?: Database['public']['Enums']['tone_preset'] | null
-          nutrition_mode?: Database['public']['Enums']['nutrition_mode'] | null
-          updated_at?: string | null
-        }
-        Update: {
-          user_id?: string
-          display_name?: string | null
-          birth_date?: string | null
-          age_bucket?: Database['public']['Enums']['age_bucket'] | null
-          gender?: Database['public']['Enums']['gender'] | null
-          height_cm?: number | null
-          current_weight_kg?: number | null
-          experience_level?: Database['public']['Enums']['experience_level'] | null
-          primary_goal?: Database['public']['Enums']['primary_goal'] | null
-          dietary_constraints?: string[] | null
-          life_context?: string[] | null
-          onboarding_completed_at?: string | null
-          onboarding_layer_1_done?: boolean
-          onboarding_layer_2_done?: boolean
-          last_plan_generated_at?: string | null
-          tone_preset?: Database['public']['Enums']['tone_preset'] | null
-          nutrition_mode?: Database['public']['Enums']['nutrition_mode'] | null
-          updated_at?: string | null
-        }
-        Relationships: [{ foreignKeyName: 'user_profile_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_profile_facts: {
-        Row: {
-          id: string
-          user_id: string
-          field_key: string
-          value_text: string | null
-          value_numeric: number | null
-          value_bool: boolean | null
-          value_json: Json | null
-          unit: string | null
-          source: Database['public']['Enums']['fact_source']
-          confidence: number | null
-          inferred_from: string | null
-          supersedes_id: string | null
-          observed_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          field_key: string
-          value_text?: string | null
-          value_numeric?: number | null
-          value_bool?: boolean | null
-          value_json?: Json | null
-          unit?: string | null
-          source: Database['public']['Enums']['fact_source']
-          confidence?: number | null
-          inferred_from?: string | null
-          supersedes_id?: string | null
-          observed_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          field_key?: string
-          value_text?: string | null
-          value_numeric?: number | null
-          value_bool?: boolean | null
-          value_json?: Json | null
-          unit?: string | null
-          source?: Database['public']['Enums']['fact_source']
-          confidence?: number | null
-          inferred_from?: string | null
-          supersedes_id?: string | null
-          observed_at?: string
-        }
-        Relationships: [{ foreignKeyName: 'user_profile_facts_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_equipment: {
-        Row: {
-          user_id: string
-          location_type: Database['public']['Enums']['location_type'] | null
-          has_barbell: boolean
-          has_dumbbells: boolean
-          has_kettlebells: boolean
-          has_machines: boolean
-          has_cables: boolean
-          has_cardio: boolean
-          has_pullup_bar: boolean
-          has_bench: boolean
-          dumbbell_max_kg: number | null
-          other_equipment: string[] | null
-          updated_at: string | null
-        }
-        Insert: {
-          user_id: string
-          location_type?: Database['public']['Enums']['location_type'] | null
-          has_barbell?: boolean
-          has_dumbbells?: boolean
-          has_kettlebells?: boolean
-          has_machines?: boolean
-          has_cables?: boolean
-          has_cardio?: boolean
-          has_pullup_bar?: boolean
-          has_bench?: boolean
-          dumbbell_max_kg?: number | null
-          other_equipment?: string[] | null
-          updated_at?: string | null
-        }
-        Update: {
-          user_id?: string
-          location_type?: Database['public']['Enums']['location_type'] | null
-          has_barbell?: boolean
-          has_dumbbells?: boolean
-          has_kettlebells?: boolean
-          has_machines?: boolean
-          has_cables?: boolean
-          has_cardio?: boolean
-          has_pullup_bar?: boolean
-          has_bench?: boolean
-          dumbbell_max_kg?: number | null
-          other_equipment?: string[] | null
-          updated_at?: string | null
-        }
-        Relationships: [{ foreignKeyName: 'user_equipment_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_health: {
-        Row: {
-          user_id: string
-          injuries: string[] | null
-          chronic_pain: string[] | null
-          medical_conditions: string[] | null
-          activity_level: Database['public']['Enums']['activity_level'] | null
-          notes: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          user_id: string
-          injuries?: string[] | null
-          chronic_pain?: string[] | null
-          medical_conditions?: string[] | null
-          activity_level?: Database['public']['Enums']['activity_level'] | null
-          notes?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          user_id?: string
-          injuries?: string[] | null
-          chronic_pain?: string[] | null
-          medical_conditions?: string[] | null
-          activity_level?: Database['public']['Enums']['activity_level'] | null
-          notes?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [{ foreignKeyName: 'user_health_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_safety_flags: {
-        Row: {
-          id: string
-          user_id: string
-          flag: Database['public']['Enums']['safety_flag']
-          status: Database['public']['Enums']['flag_status']
-          source: string | null
-          severity: Database['public']['Enums']['severity_level']
-          detected_at: string
-          resolved_at: string | null
-          notes: string | null
-          restrictions_applied: Json | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          flag: Database['public']['Enums']['safety_flag']
-          status?: Database['public']['Enums']['flag_status']
-          source?: string | null
-          severity: Database['public']['Enums']['severity_level']
-          detected_at?: string
-          resolved_at?: string | null
-          notes?: string | null
-          restrictions_applied?: Json | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          flag?: Database['public']['Enums']['safety_flag']
-          status?: Database['public']['Enums']['flag_status']
-          source?: string | null
-          severity?: Database['public']['Enums']['severity_level']
-          detected_at?: string
-          resolved_at?: string | null
-          notes?: string | null
-          restrictions_applied?: Json | null
-        }
-        Relationships: [{ foreignKeyName: 'user_safety_flags_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_goals: {
-        Row: {
-          id: string
-          user_id: string
-          goal_type: Database['public']['Enums']['primary_goal']
-          target_value: number | null
-          target_unit: string | null
-          secondary_goal: string | null
-          horizon_weeks: number | null
-          rationale: string | null
-          started_at: string
-          ended_at: string | null
-          is_current: boolean
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          goal_type: Database['public']['Enums']['primary_goal']
-          target_value?: number | null
-          target_unit?: string | null
-          secondary_goal?: string | null
-          horizon_weeks?: number | null
-          rationale?: string | null
-          started_at?: string
-          ended_at?: string | null
-          is_current?: boolean
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          goal_type?: Database['public']['Enums']['primary_goal']
-          target_value?: number | null
-          target_unit?: string | null
-          secondary_goal?: string | null
-          horizon_weeks?: number | null
-          rationale?: string | null
-          started_at?: string
-          ended_at?: string | null
-          is_current?: boolean
-        }
-        Relationships: [{ foreignKeyName: 'user_goals_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      user_segment_snapshots: {
-        Row: {
-          id: string
-          user_id: string
-          experience_level: Database['public']['Enums']['experience_level'] | null
-          primary_goal: Database['public']['Enums']['primary_goal'] | null
-          gender: Database['public']['Enums']['gender'] | null
-          age_bucket: Database['public']['Enums']['age_bucket'] | null
-          life_context: string[] | null
-          segment_key: string | null
-          computed_at: string
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          experience_level?: Database['public']['Enums']['experience_level'] | null
-          primary_goal?: Database['public']['Enums']['primary_goal'] | null
-          gender?: Database['public']['Enums']['gender'] | null
-          age_bucket?: Database['public']['Enums']['age_bucket'] | null
-          life_context?: string[] | null
-          segment_key?: string | null
-          computed_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          experience_level?: Database['public']['Enums']['experience_level'] | null
-          primary_goal?: Database['public']['Enums']['primary_goal'] | null
-          gender?: Database['public']['Enums']['gender'] | null
-          age_bucket?: Database['public']['Enums']['age_bucket'] | null
-          life_context?: string[] | null
-          segment_key?: string | null
-          computed_at?: string
-        }
-        Relationships: [{ foreignKeyName: 'user_segment_snapshots_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
-      question_library: {
-        Row: {
-          id: string
-          field_key: string
-          layer: Database['public']['Enums']['question_layer']
-          applicable_segments: string[] | null
-          applicable_goals: Database['public']['Enums']['primary_goal'][] | null
-          priority_base: number | null
-          why_we_ask: string
-          how_to_measure: string | null
-          phrasing_options: Json | null
-          answer_type: Database['public']['Enums']['answer_type']
-          answer_options: Json | null
-          blocks_if_unanswered: boolean
-          expected_time_seconds: number | null
-          prerequisites: Json | null
-          is_active: boolean
-        }
-        Insert: {
-          id?: string
-          field_key: string
-          layer: Database['public']['Enums']['question_layer']
-          applicable_segments?: string[] | null
-          applicable_goals?: Database['public']['Enums']['primary_goal'][] | null
-          priority_base?: number | null
-          why_we_ask: string
-          how_to_measure?: string | null
-          phrasing_options?: Json | null
-          answer_type: Database['public']['Enums']['answer_type']
-          answer_options?: Json | null
-          blocks_if_unanswered?: boolean
-          expected_time_seconds?: number | null
-          prerequisites?: Json | null
-          is_active?: boolean
-        }
-        Update: Record<string, never>
-        Relationships: []
-      }
-      user_question_asks: {
-        Row: {
-          id: string
-          user_id: string
-          question_id: string
-          asked_at: string
-          answered_at: string | null
-          skipped_at: string | null
-          answer_text: string | null
-          answer_numeric: number | null
-          answer_json: Json | null
-          context: string | null
-          priority_score: number | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          question_id: string
-          asked_at?: string
-          answered_at?: string | null
-          skipped_at?: string | null
-          answer_text?: string | null
-          answer_numeric?: number | null
-          answer_json?: Json | null
-          context?: string | null
-          priority_score?: number | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          question_id?: string
-          asked_at?: string
-          answered_at?: string | null
-          skipped_at?: string | null
-          answer_text?: string | null
-          answer_numeric?: number | null
-          answer_json?: Json | null
-          context?: string | null
-          priority_score?: number | null
-        }
-        Relationships: [{ foreignKeyName: 'user_question_asks_user_id_fkey'; columns: ['user_id']; referencedRelation: 'users'; referencedColumns: ['id'] }]
-      }
       field_explanations: {
         Row: {
-          id: string
-          field_key: string
-          locale: string
-          why_we_ask: string
-          how_to_measure: string | null
-          example: string | null
           estimated_time_seconds: number | null
+          example: string | null
+          field_key: string
+          how_to_measure: string | null
+          id: string
+          locale: string
           show_in_contexts: string[] | null
           updated_at: string | null
+          why_we_ask: string
         }
         Insert: {
-          id?: string
-          field_key: string
-          locale?: string
-          why_we_ask: string
-          how_to_measure?: string | null
-          example?: string | null
           estimated_time_seconds?: number | null
+          example?: string | null
+          field_key: string
+          how_to_measure?: string | null
+          id?: string
+          locale?: string
           show_in_contexts?: string[] | null
           updated_at?: string | null
+          why_we_ask: string
         }
         Update: {
-          id?: string
-          field_key?: string
-          locale?: string
-          why_we_ask?: string
-          how_to_measure?: string | null
-          example?: string | null
           estimated_time_seconds?: number | null
+          example?: string | null
+          field_key?: string
+          how_to_measure?: string | null
+          id?: string
+          locale?: string
           show_in_contexts?: string[] | null
           updated_at?: string | null
+          why_we_ask?: string
         }
         Relationships: []
       }
       product_events: {
         Row: {
-          id: string
-          user_id: string | null
           event_name: string
+          id: string
+          occurred_at: string
           properties: Json | null
           session_id: string | null
-          occurred_at: string
+          user_id: string | null
         }
         Insert: {
-          id?: string
-          user_id?: string | null
           event_name: string
+          id?: string
+          occurred_at?: string
           properties?: Json | null
           session_id?: string | null
-          occurred_at?: string
+          user_id?: string | null
         }
         Update: {
-          id?: string
-          user_id?: string | null
           event_name?: string
+          id?: string
+          occurred_at?: string
           properties?: Json | null
           session_id?: string | null
-          occurred_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_library: {
+        Row: {
+          answer_options: Json | null
+          answer_type: Database["public"]["Enums"]["answer_type"]
+          applicable_goals: Database["public"]["Enums"]["primary_goal"][] | null
+          applicable_segments: string[] | null
+          blocks_if_unanswered: boolean | null
+          expected_time_seconds: number | null
+          field_key: string
+          how_to_measure: string | null
+          id: string
+          is_active: boolean | null
+          layer: Database["public"]["Enums"]["question_layer"]
+          phrasing_options: Json | null
+          prerequisites: Json | null
+          priority_base: number | null
+          why_we_ask: string
+        }
+        Insert: {
+          answer_options?: Json | null
+          answer_type: Database["public"]["Enums"]["answer_type"]
+          applicable_goals?:
+            | Database["public"]["Enums"]["primary_goal"][]
+            | null
+          applicable_segments?: string[] | null
+          blocks_if_unanswered?: boolean | null
+          expected_time_seconds?: number | null
+          field_key: string
+          how_to_measure?: string | null
+          id?: string
+          is_active?: boolean | null
+          layer: Database["public"]["Enums"]["question_layer"]
+          phrasing_options?: Json | null
+          prerequisites?: Json | null
+          priority_base?: number | null
+          why_we_ask: string
+        }
+        Update: {
+          answer_options?: Json | null
+          answer_type?: Database["public"]["Enums"]["answer_type"]
+          applicable_goals?:
+            | Database["public"]["Enums"]["primary_goal"][]
+            | null
+          applicable_segments?: string[] | null
+          blocks_if_unanswered?: boolean | null
+          expected_time_seconds?: number | null
+          field_key?: string
+          how_to_measure?: string | null
+          id?: string
+          is_active?: boolean | null
+          layer?: Database["public"]["Enums"]["question_layer"]
+          phrasing_options?: Json | null
+          prerequisites?: Json | null
+          priority_base?: number | null
+          why_we_ask?: string
+        }
+        Relationships: []
+      }
+      user_equipment: {
+        Row: {
+          dumbbell_max_kg: number | null
+          has_barbell: boolean | null
+          has_bench: boolean | null
+          has_cables: boolean | null
+          has_cardio: boolean | null
+          has_dumbbells: boolean | null
+          has_kettlebells: boolean | null
+          has_machines: boolean | null
+          has_pullup_bar: boolean | null
+          location_type: Database["public"]["Enums"]["location_type"] | null
+          other_equipment: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          dumbbell_max_kg?: number | null
+          has_barbell?: boolean | null
+          has_bench?: boolean | null
+          has_cables?: boolean | null
+          has_cardio?: boolean | null
+          has_dumbbells?: boolean | null
+          has_kettlebells?: boolean | null
+          has_machines?: boolean | null
+          has_pullup_bar?: boolean | null
+          location_type?: Database["public"]["Enums"]["location_type"] | null
+          other_equipment?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          dumbbell_max_kg?: number | null
+          has_barbell?: boolean | null
+          has_bench?: boolean | null
+          has_cables?: boolean | null
+          has_cardio?: boolean | null
+          has_dumbbells?: boolean | null
+          has_kettlebells?: boolean | null
+          has_machines?: boolean | null
+          has_pullup_bar?: boolean | null
+          location_type?: Database["public"]["Enums"]["location_type"] | null
+          other_equipment?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_equipment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_goals: {
+        Row: {
+          ended_at: string | null
+          goal_type: Database["public"]["Enums"]["primary_goal"]
+          horizon_weeks: number | null
+          id: string
+          is_current: boolean | null
+          rationale: string | null
+          secondary_goal: string | null
+          started_at: string | null
+          target_unit: string | null
+          target_value: number | null
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          goal_type: Database["public"]["Enums"]["primary_goal"]
+          horizon_weeks?: number | null
+          id?: string
+          is_current?: boolean | null
+          rationale?: string | null
+          secondary_goal?: string | null
+          started_at?: string | null
+          target_unit?: string | null
+          target_value?: number | null
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          goal_type?: Database["public"]["Enums"]["primary_goal"]
+          horizon_weeks?: number | null
+          id?: string
+          is_current?: boolean | null
+          rationale?: string | null
+          secondary_goal?: string | null
+          started_at?: string | null
+          target_unit?: string | null
+          target_value?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_goals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_health: {
+        Row: {
+          activity_level: Database["public"]["Enums"]["activity_level"] | null
+          chronic_pain: string[] | null
+          injuries: string[] | null
+          medical_conditions: string[] | null
+          notes: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_level?: Database["public"]["Enums"]["activity_level"] | null
+          chronic_pain?: string[] | null
+          injuries?: string[] | null
+          medical_conditions?: string[] | null
+          notes?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_level?: Database["public"]["Enums"]["activity_level"] | null
+          chronic_pain?: string[] | null
+          injuries?: string[] | null
+          medical_conditions?: string[] | null
+          notes?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_health_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profile: {
+        Row: {
+          age_bucket: Database["public"]["Enums"]["age_bucket"] | null
+          birth_date: string | null
+          current_weight_kg: number | null
+          dietary_constraints: string[] | null
+          display_name: string | null
+          experience_level:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender: Database["public"]["Enums"]["gender"] | null
+          height_cm: number | null
+          last_plan_generated_at: string | null
+          life_context: string[] | null
+          nutrition_mode: Database["public"]["Enums"]["nutrition_mode"] | null
+          onboarding_completed_at: string | null
+          onboarding_layer_1_done: boolean | null
+          onboarding_layer_2_done: boolean | null
+          primary_goal: Database["public"]["Enums"]["primary_goal"] | null
+          tone_preset: Database["public"]["Enums"]["tone_preset"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          age_bucket?: Database["public"]["Enums"]["age_bucket"] | null
+          birth_date?: string | null
+          current_weight_kg?: number | null
+          dietary_constraints?: string[] | null
+          display_name?: string | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender?: Database["public"]["Enums"]["gender"] | null
+          height_cm?: number | null
+          last_plan_generated_at?: string | null
+          life_context?: string[] | null
+          nutrition_mode?: Database["public"]["Enums"]["nutrition_mode"] | null
+          onboarding_completed_at?: string | null
+          onboarding_layer_1_done?: boolean | null
+          onboarding_layer_2_done?: boolean | null
+          primary_goal?: Database["public"]["Enums"]["primary_goal"] | null
+          tone_preset?: Database["public"]["Enums"]["tone_preset"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          age_bucket?: Database["public"]["Enums"]["age_bucket"] | null
+          birth_date?: string | null
+          current_weight_kg?: number | null
+          dietary_constraints?: string[] | null
+          display_name?: string | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender?: Database["public"]["Enums"]["gender"] | null
+          height_cm?: number | null
+          last_plan_generated_at?: string | null
+          life_context?: string[] | null
+          nutrition_mode?: Database["public"]["Enums"]["nutrition_mode"] | null
+          onboarding_completed_at?: string | null
+          onboarding_layer_1_done?: boolean | null
+          onboarding_layer_2_done?: boolean | null
+          primary_goal?: Database["public"]["Enums"]["primary_goal"] | null
+          tone_preset?: Database["public"]["Enums"]["tone_preset"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profile_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profile_facts: {
+        Row: {
+          confidence: number | null
+          field_key: string
+          id: string
+          inferred_from: string | null
+          observed_at: string
+          source: Database["public"]["Enums"]["fact_source"]
+          supersedes_id: string | null
+          unit: string | null
+          user_id: string
+          value_bool: boolean | null
+          value_json: Json | null
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          field_key: string
+          id?: string
+          inferred_from?: string | null
+          observed_at?: string
+          source: Database["public"]["Enums"]["fact_source"]
+          supersedes_id?: string | null
+          unit?: string | null
+          user_id: string
+          value_bool?: boolean | null
+          value_json?: Json | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          field_key?: string
+          id?: string
+          inferred_from?: string | null
+          observed_at?: string
+          source?: Database["public"]["Enums"]["fact_source"]
+          supersedes_id?: string | null
+          unit?: string | null
+          user_id?: string
+          value_bool?: boolean | null
+          value_json?: Json | null
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profile_facts_supersedes_id_fkey"
+            columns: ["supersedes_id"]
+            isOneToOne: false
+            referencedRelation: "user_profile_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_profile_facts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_question_asks: {
+        Row: {
+          answer_json: Json | null
+          answer_numeric: number | null
+          answer_text: string | null
+          answered_at: string | null
+          asked_at: string | null
+          context: string | null
+          id: string
+          priority_score: number | null
+          question_id: string
+          skipped_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answer_json?: Json | null
+          answer_numeric?: number | null
+          answer_text?: string | null
+          answered_at?: string | null
+          asked_at?: string | null
+          context?: string | null
+          id?: string
+          priority_score?: number | null
+          question_id: string
+          skipped_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answer_json?: Json | null
+          answer_numeric?: number | null
+          answer_text?: string | null
+          answered_at?: string | null
+          asked_at?: string | null
+          context?: string | null
+          id?: string
+          priority_score?: number | null
+          question_id?: string
+          skipped_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_question_asks_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "question_library"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_question_asks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_safety_flags: {
+        Row: {
+          detected_at: string | null
+          flag: Database["public"]["Enums"]["safety_flag"]
+          id: string
+          notes: string | null
+          resolved_at: string | null
+          restrictions_applied: Json | null
+          severity: Database["public"]["Enums"]["severity_level"]
+          source: string | null
+          status: Database["public"]["Enums"]["flag_status"]
+          user_id: string
+        }
+        Insert: {
+          detected_at?: string | null
+          flag: Database["public"]["Enums"]["safety_flag"]
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          restrictions_applied?: Json | null
+          severity: Database["public"]["Enums"]["severity_level"]
+          source?: string | null
+          status?: Database["public"]["Enums"]["flag_status"]
+          user_id: string
+        }
+        Update: {
+          detected_at?: string | null
+          flag?: Database["public"]["Enums"]["safety_flag"]
+          id?: string
+          notes?: string | null
+          resolved_at?: string | null
+          restrictions_applied?: Json | null
+          severity?: Database["public"]["Enums"]["severity_level"]
+          source?: string | null
+          status?: Database["public"]["Enums"]["flag_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_safety_flags_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_segment_snapshots: {
+        Row: {
+          age_bucket: Database["public"]["Enums"]["age_bucket"] | null
+          computed_at: string | null
+          experience_level:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender: Database["public"]["Enums"]["gender"] | null
+          id: string
+          life_context: string[] | null
+          primary_goal: Database["public"]["Enums"]["primary_goal"] | null
+          segment_key: string | null
+          user_id: string
+        }
+        Insert: {
+          age_bucket?: Database["public"]["Enums"]["age_bucket"] | null
+          computed_at?: string | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender?: Database["public"]["Enums"]["gender"] | null
+          id?: string
+          life_context?: string[] | null
+          primary_goal?: Database["public"]["Enums"]["primary_goal"] | null
+          segment_key?: string | null
+          user_id: string
+        }
+        Update: {
+          age_bucket?: Database["public"]["Enums"]["age_bucket"] | null
+          computed_at?: string | null
+          experience_level?:
+            | Database["public"]["Enums"]["experience_level"]
+            | null
+          gender?: Database["public"]["Enums"]["gender"] | null
+          id?: string
+          life_context?: string[] | null
+          primary_goal?: Database["public"]["Enums"]["primary_goal"] | null
+          segment_key?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_segment_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          email: string
+          id: string
+          last_active_at: string | null
+          locale: string
+          timezone: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          email: string
+          id: string
+          last_active_at?: string | null
+          locale?: string
+          timezone?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          email?: string
+          id?: string
+          last_active_at?: string | null
+          locale?: string
+          timezone?: string
         }
         Relationships: []
       }
@@ -521,53 +639,62 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      gender: 'female' | 'male' | 'other' | 'prefer_not_to_say'
-      age_bucket: 'under_25' | 'age_25_40' | 'age_40_55' | 'age_55_plus'
-      experience_level: 'zero' | 'beginner' | 'amateur' | 'advanced'
-      primary_goal: 'weight_loss' | 'muscle_building' | 'strength_performance' | 'general_health'
-      tone_preset: 'warm_encouraging' | 'partnering' | 'factual_technical'
-      nutrition_mode: 'simple' | 'ranges' | 'exact'
-      fact_source:
-        | 'onboarding'
-        | 'user_input'
-        | 'user_correction'
-        | 'ai_inferred'
-        | 'behavioral_signal'
-        | 'measurement_device'
-        | 'photo_analysis'
-        | 'checkin'
-        | 'coach_chat'
-      location_type: 'home' | 'gym' | 'mixed'
-      activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
-      safety_flag:
-        | 'underage'
-        | 'pregnancy'
-        | 'postpartum'
-        | 'ed_risk'
-        | 'low_calorie_intake'
-        | 'rapid_weight_loss'
-        | 'injury_reported'
-        | 'acute_pain'
-        | 'medical_condition'
-        | 'medication_interaction'
-        | 'overtraining_signs'
-      flag_status: 'active' | 'monitoring' | 'resolved' | 'dismissed_by_user'
-      severity_level: 'info' | 'warning' | 'critical'
-      question_layer:
-        | 'layer_1_minimum'
-        | 'layer_2_segment'
-        | 'layer_3_behavioral'
-        | 'layer_4_advanced'
+      activity_level:
+        | "sedentary"
+        | "light"
+        | "moderate"
+        | "active"
+        | "very_active"
+      age_bucket: "under_25" | "age_25_40" | "age_40_55" | "age_55_plus"
       answer_type:
-        | 'text_short'
-        | 'text_long'
-        | 'numeric'
-        | 'single_select'
-        | 'multi_select'
-        | 'boolean'
-        | 'scale'
-        | 'measurement'
-        | 'photo'
+        | "text_short"
+        | "text_long"
+        | "numeric"
+        | "single_select"
+        | "multi_select"
+        | "boolean"
+        | "scale"
+        | "measurement"
+        | "photo"
+      experience_level: "zero" | "beginner" | "amateur" | "advanced"
+      fact_source:
+        | "onboarding"
+        | "user_input"
+        | "user_correction"
+        | "ai_inferred"
+        | "behavioral_signal"
+        | "measurement_device"
+        | "photo_analysis"
+        | "checkin"
+        | "coach_chat"
+      flag_status: "active" | "monitoring" | "resolved" | "dismissed_by_user"
+      gender: "female" | "male" | "other" | "prefer_not_to_say"
+      location_type: "home" | "gym" | "mixed"
+      nutrition_mode: "simple" | "ranges" | "exact"
+      primary_goal:
+        | "weight_loss"
+        | "muscle_building"
+        | "strength_performance"
+        | "general_health"
+      question_layer:
+        | "layer_1_minimum"
+        | "layer_2_segment"
+        | "layer_3_behavioral"
+        | "layer_4_advanced"
+      safety_flag:
+        | "underage"
+        | "pregnancy"
+        | "postpartum"
+        | "ed_risk"
+        | "low_calorie_intake"
+        | "rapid_weight_loss"
+        | "injury_reported"
+        | "acute_pain"
+        | "medical_condition"
+        | "medication_interaction"
+        | "overtraining_signs"
+      severity_level: "info" | "warning" | "critical"
+      tone_preset: "warm_encouraging" | "partnering" | "factual_technical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -698,51 +825,68 @@ export const Constants = {
   },
   public: {
     Enums: {
-      gender: ['female', 'male', 'other', 'prefer_not_to_say'] as const,
-      age_bucket: ['under_25', 'age_25_40', 'age_40_55', 'age_55_plus'] as const,
-      experience_level: ['zero', 'beginner', 'amateur', 'advanced'] as const,
-      primary_goal: [
-        'weight_loss',
-        'muscle_building',
-        'strength_performance',
-        'general_health',
-      ] as const,
-      tone_preset: ['warm_encouraging', 'partnering', 'factual_technical'] as const,
-      nutrition_mode: ['simple', 'ranges', 'exact'] as const,
-      location_type: ['home', 'gym', 'mixed'] as const,
-      activity_level: ['sedentary', 'light', 'moderate', 'active', 'very_active'] as const,
-      safety_flag: [
-        'underage',
-        'pregnancy',
-        'postpartum',
-        'ed_risk',
-        'low_calorie_intake',
-        'rapid_weight_loss',
-        'injury_reported',
-        'acute_pain',
-        'medical_condition',
-        'medication_interaction',
-        'overtraining_signs',
-      ] as const,
-      flag_status: ['active', 'monitoring', 'resolved', 'dismissed_by_user'] as const,
-      severity_level: ['info', 'warning', 'critical'] as const,
-      question_layer: [
-        'layer_1_minimum',
-        'layer_2_segment',
-        'layer_3_behavioral',
-        'layer_4_advanced',
-      ] as const,
+      activity_level: [
+        "sedentary",
+        "light",
+        "moderate",
+        "active",
+        "very_active",
+      ],
+      age_bucket: ["under_25", "age_25_40", "age_40_55", "age_55_plus"],
       answer_type: [
-        'text_short',
-        'text_long',
-        'numeric',
-        'single_select',
-        'multi_select',
-        'boolean',
-        'scale',
-        'measurement',
-        'photo',
-      ] as const,
+        "text_short",
+        "text_long",
+        "numeric",
+        "single_select",
+        "multi_select",
+        "boolean",
+        "scale",
+        "measurement",
+        "photo",
+      ],
+      experience_level: ["zero", "beginner", "amateur", "advanced"],
+      fact_source: [
+        "onboarding",
+        "user_input",
+        "user_correction",
+        "ai_inferred",
+        "behavioral_signal",
+        "measurement_device",
+        "photo_analysis",
+        "checkin",
+        "coach_chat",
+      ],
+      flag_status: ["active", "monitoring", "resolved", "dismissed_by_user"],
+      gender: ["female", "male", "other", "prefer_not_to_say"],
+      location_type: ["home", "gym", "mixed"],
+      nutrition_mode: ["simple", "ranges", "exact"],
+      primary_goal: [
+        "weight_loss",
+        "muscle_building",
+        "strength_performance",
+        "general_health",
+      ],
+      question_layer: [
+        "layer_1_minimum",
+        "layer_2_segment",
+        "layer_3_behavioral",
+        "layer_4_advanced",
+      ],
+      safety_flag: [
+        "underage",
+        "pregnancy",
+        "postpartum",
+        "ed_risk",
+        "low_calorie_intake",
+        "rapid_weight_loss",
+        "injury_reported",
+        "acute_pain",
+        "medical_condition",
+        "medication_interaction",
+        "overtraining_signs",
+      ],
+      severity_level: ["info", "warning", "critical"],
+      tone_preset: ["warm_encouraging", "partnering", "factual_technical"],
     },
   },
 } as const
