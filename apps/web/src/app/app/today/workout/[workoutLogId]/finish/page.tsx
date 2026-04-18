@@ -4,6 +4,9 @@ import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardEyebrow } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 
 const SESSION_KEY_PREFIX = 'guided_workout_state_'
 
@@ -148,13 +151,20 @@ export default function FinishWorkoutPage({
 
   if (isGuidedMode) {
     return (
-      <div className="flex min-h-[100dvh] flex-col p-6">
-        <h1 className="text-2xl font-bold">Krótki check-in po treningu</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Chcemy wiedzieć, czy wszystko było jasne, spokojne i bezpieczne.
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+        <header className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Po treningu</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Krótki</span>
+            <br />
+            <span className="font-sans font-semibold">check-in.</span>
+          </h1>
+          <p className="text-body-m text-muted-foreground">
+            Chcemy wiedzieć, czy wszystko było jasne, spokojne i bezpieczne.
+          </p>
+        </header>
 
-        <div className="mt-8 space-y-6">
+        <div className="flex flex-col gap-5">
           <ScaleQuestion
             title="Czy wiedziałeś/aś, co robić?"
             value={clarityScore}
@@ -162,7 +172,7 @@ export default function FinishWorkoutPage({
           />
 
           <ScaleQuestion
-            title="Na ile pewnie czułeś/aś się w czasie treningu?"
+            title="Na ile pewnie się czułeś/aś?"
             value={confidenceScore}
             onChange={setConfidenceScore}
           />
@@ -173,26 +183,21 @@ export default function FinishWorkoutPage({
             onChange={setFeltSafe}
           />
 
-          <div>
-            <p className="mb-3 text-sm font-semibold">Jakie było tempo?</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-label uppercase text-muted-foreground">Jakie było tempo?</p>
             <div className="grid gap-2 sm:grid-cols-3">
               {[
                 { value: 'too_light', label: 'Za lekkie' },
                 { value: 'just_right', label: 'W sam raz' },
                 { value: 'too_hard', label: 'Za mocne' },
               ].map((option) => (
-                <button
+                <OptionButton
                   key={option.value}
-                  type="button"
+                  active={tempoFeedback === option.value}
                   onClick={() => setTempoFeedback(option.value as TempoFeedback)}
-                  className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-                    tempoFeedback === option.value
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background'
-                  }`}
                 >
                   {option.label}
-                </button>
+                </OptionButton>
               ))}
             </div>
           </div>
@@ -204,17 +209,22 @@ export default function FinishWorkoutPage({
           />
 
           {painFlag && (
-            <div>
-              <p className="mb-3 text-sm font-semibold">Czy pojawił się któryś z tych sygnałów ostrzegawczych?</p>
-              <div className="space-y-2">
-                {([
-                  ['chest_pain', 'Ból w klatce piersiowej'],
-                  ['dizziness', 'Zawroty głowy'],
-                  ['unusual_shortness_of_breath', 'Nietypowa duszność'],
-                  ['radiating_pain', 'Promieniujący ból'],
-                  ['sharp_joint_pain', 'Ostry ból stawu'],
-                ] as const).map(([value, label]) => (
-                  <label key={value} className="flex items-center gap-3 rounded-xl border p-4 text-sm">
+            <Card variant="destructive" padding="md">
+              <CardEyebrow className="text-destructive">Sygnały ostrzegawcze</CardEyebrow>
+              <div className="mt-3 flex flex-col gap-2">
+                {(
+                  [
+                    ['chest_pain', 'Ból w klatce piersiowej'],
+                    ['dizziness', 'Zawroty głowy'],
+                    ['unusual_shortness_of_breath', 'Nietypowa duszność'],
+                    ['radiating_pain', 'Promieniujący ból'],
+                    ['sharp_joint_pain', 'Ostry ból stawu'],
+                  ] as const
+                ).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-surface-1 p-3 text-body-m font-medium tracking-tight"
+                  >
                     <input
                       type="checkbox"
                       checked={redFlagSymptoms.includes(value)}
@@ -225,31 +235,32 @@ export default function FinishWorkoutPage({
                             : current.filter((item) => item !== value),
                         )
                       }}
+                      className="h-4 w-4 accent-destructive"
                     />
                     {label}
                   </label>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
 
           <BooleanQuestion
-            title="Czy czujesz się gotowy/a wrócić na kolejny trening?"
+            title="Gotowy/a na kolejny trening?"
             value={readyForNextWorkout}
             onChange={setReadyForNextWorkout}
           />
         </div>
 
-        <div className="mt-auto pt-8">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => void handleSubmit()}
-            className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90 disabled:opacity-60"
-          >
-            {loading ? 'Zapisuję...' : 'Zapisz podsumowanie'}
-          </button>
-        </div>
+        <Button
+          type="button"
+          size="hero"
+          disabled={loading}
+          isLoading={loading}
+          onClick={() => void handleSubmit()}
+          className="w-full"
+        >
+          Zapisz podsumowanie
+        </Button>
       </div>
     )
   }
@@ -257,77 +268,111 @@ export default function FinishWorkoutPage({
   const displayRating = hovered || rating
 
   return (
-    <div className="flex min-h-[100dvh] flex-col p-6">
-      <h1 className="text-2xl font-bold">Jak był trening?</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Podsumuj sesję — to pomoże nam ulepszyć Twój plan</p>
-
-      <div className="mt-8 flex justify-center gap-3">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <button
-            key={star}
-            type="button"
-            onPointerEnter={() => setHovered(star)}
-            onPointerLeave={() => setHovered(0)}
-            onClick={() => setRating(star)}
-            className="transition-transform active:scale-110"
-            aria-label={`${star} gwiazdki`}
-          >
-            <Star
-              className={`h-10 w-10 transition-colors ${
-                displayRating >= star
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-muted-foreground/30'
-              }`}
-            />
-          </button>
-        ))}
-      </div>
-
-      {rating > 0 && (
-        <p className="mt-3 text-center text-sm text-muted-foreground">
-          {rating === 1 && 'Ciężki dzień — dobra robota, że wyszedłeś'}
-          {rating === 2 && 'Poniżej oczekiwań, ale byłeś'}
-          {rating === 3 && 'Solidny trening'}
-          {rating === 4 && 'Dobry trening!'}
-          {rating === 5 && 'Fenomenalne!'}
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Po treningu</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Jak był</span>
+          <br />
+          <span className="font-sans font-semibold">trening?</span>
+        </h1>
+        <p className="text-body-m text-muted-foreground">
+          Podsumuj sesję — pomoże nam dopasować Twój plan.
         </p>
-      )}
+      </header>
 
-      <div className="mt-8 flex flex-col gap-4">
+      <Card variant="recessed" padding="md">
+        <div className="flex justify-center gap-2">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              type="button"
+              onPointerEnter={() => setHovered(star)}
+              onPointerLeave={() => setHovered(0)}
+              onClick={() => setRating(star)}
+              className="transition-transform active:scale-110"
+              aria-label={`${star} gwiazdki`}
+            >
+              <Star
+                className={`h-10 w-10 transition-colors duration-200 ease-premium ${
+                  displayRating >= star
+                    ? 'fill-brand text-brand'
+                    : 'text-muted-foreground/30'
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+        {rating > 0 && (
+          <p className="mt-4 text-center font-display text-body-m italic text-muted-foreground">
+            {rating === 1 && 'Ciężki dzień — dobra robota, że wyszedłeś.'}
+            {rating === 2 && 'Poniżej oczekiwań, ale byłeś.'}
+            {rating === 3 && 'Solidny trening.'}
+            {rating === 4 && 'Dobry trening.'}
+            {rating === 5 && 'Fenomenalne.'}
+          </p>
+        )}
+      </Card>
+
+      <div className="flex flex-col gap-3">
         <TextQuestion
           id="went-well"
           label="Co poszło dobrze?"
           value={wentWell}
           onChange={setWentWell}
-          placeholder="np. dobra forma na przysiadach, nowy rekord..."
+          placeholder="np. dobra forma na przysiadach, nowy rekord…"
         />
         <TextQuestion
           id="went-poorly"
           label="Co poszło słabo?"
           value={wentPoorly}
           onChange={setWentPoorly}
-          placeholder="np. brak energii, za mało czasu..."
+          placeholder="np. brak energii, za mało czasu…"
         />
         <TextQuestion
           id="what-to-improve"
           label="Co poprawię?"
           value={whatToImprove}
           onChange={setWhatToImprove}
-          placeholder="np. więcej snu przed treningiem, więcej wody..."
+          placeholder="np. więcej snu, więcej wody…"
         />
       </div>
 
-      <div className="mt-auto pt-8">
-        <button
-          type="button"
-          disabled={loading || rating === 0}
-          onClick={() => void handleSubmit()}
-          className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90 disabled:opacity-60"
-        >
-          {loading ? 'Zapisuję...' : 'Zakończ trening'}
-        </button>
-      </div>
+      <Button
+        type="button"
+        size="hero"
+        disabled={loading || rating === 0}
+        isLoading={loading}
+        onClick={() => void handleSubmit()}
+        className="w-full"
+      >
+        Zakończ trening
+      </Button>
     </div>
+  )
+}
+
+function OptionButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-xl border px-4 py-3 text-body-m font-medium tracking-tight transition-[background-color,border-color,color] duration-200 ease-premium ${
+        active
+          ? 'border-foreground bg-foreground text-background shadow-lift'
+          : 'border-border bg-surface-1 text-foreground hover:border-foreground/40'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -337,22 +382,17 @@ function ScaleQuestion(props: {
   onChange: (value: number) => void
 }) {
   return (
-    <div>
-      <p className="mb-3 text-sm font-semibold">{props.title}</p>
+    <div className="flex flex-col gap-2">
+      <p className="text-label uppercase text-muted-foreground">{props.title}</p>
       <div className="grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((value) => (
-          <button
+          <OptionButton
             key={value}
-            type="button"
+            active={props.value === value}
             onClick={() => props.onChange(value)}
-            className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-              props.value === value
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-background'
-            }`}
           >
-            {value}
-          </button>
+            <span className="font-mono tabular-nums">{value}</span>
+          </OptionButton>
         ))}
       </div>
     </div>
@@ -365,25 +405,20 @@ function BooleanQuestion(props: {
   onChange: (value: boolean) => void
 }) {
   return (
-    <div>
-      <p className="mb-3 text-sm font-semibold">{props.title}</p>
+    <div className="flex flex-col gap-2">
+      <p className="text-label uppercase text-muted-foreground">{props.title}</p>
       <div className="grid gap-2 sm:grid-cols-2">
         {[
           { value: true, label: 'Tak' },
           { value: false, label: 'Nie' },
         ].map((option) => (
-          <button
+          <OptionButton
             key={String(option.value)}
-            type="button"
+            active={props.value === option.value}
             onClick={() => props.onChange(option.value)}
-            className={`rounded-xl border px-4 py-3 text-sm font-medium ${
-              props.value === option.value
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'border-border bg-background'
-            }`}
           >
             {option.label}
-          </button>
+          </OptionButton>
         ))}
       </div>
     </div>
@@ -398,18 +433,18 @@ function TextQuestion(props: {
   placeholder: string
 }) {
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-semibold" htmlFor={props.id}>
+    <div className="flex flex-col gap-1.5">
+      <label className="text-label uppercase text-muted-foreground" htmlFor={props.id}>
         {props.label}
       </label>
-      <textarea
+      <Textarea
         id={props.id}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
         rows={2}
         maxLength={500}
         placeholder={props.placeholder}
-        className="w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="resize-none"
       />
     </div>
   )

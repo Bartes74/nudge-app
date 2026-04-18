@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Clock, Star, ChevronRight, Dumbbell } from 'lucide-react'
+import { Card } from '@/components/ui/card'
 
 interface WorkoutSet {
   id: string
@@ -90,45 +91,52 @@ export function HistoryList({ initialItems, initialNextCursor }: HistoryListProp
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/40 p-10 text-center">
+      <Card variant="outline" padding="xl" className="flex flex-col items-center gap-3 text-center">
         <Dumbbell className="h-8 w-8 text-muted-foreground/40" />
-        <p className="text-sm text-muted-foreground">Brak zapisanych treningów.</p>
-      </div>
+        <p className="text-body-m font-semibold tracking-tight">Brak zapisanych treningów</p>
+        <p className="text-body-s text-muted-foreground">
+          Ukończone sesje pojawią się tutaj.
+        </p>
+      </Card>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {items.map((log) => {
         const sets = totalSets(log.exercises)
         return (
-          <Link
-            key={log.id}
-            href={`/app/history/${log.id}`}
-            className="flex items-center justify-between rounded-xl border bg-card p-4 hover:bg-muted/50 transition-colors"
-          >
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">{formatDate(log.started_at)}</p>
-              <p className="mt-0.5 font-semibold">
-                {log.plan_workout?.name ?? 'Trening'}
-              </p>
-              <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                {log.duration_min != null && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatDuration(log.duration_min)}
-                  </span>
-                )}
-                <span>{sets} serii</span>
-                {log.overall_rating != null && (
-                  <span className="flex items-center gap-0.5">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    {log.overall_rating}
-                  </span>
-                )}
+          <Link key={log.id} href={`/app/history/${log.id}`} className="group">
+            <Card
+              variant="default"
+              padding="md"
+              className="flex items-center justify-between gap-3 transition-[border-color,background-color,transform] duration-200 ease-premium hover:border-foreground/30 hover:bg-surface-2/60 active:scale-[0.99]"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[11px] uppercase tabular-nums tracking-wider text-muted-foreground">
+                  {formatDate(log.started_at)}
+                </p>
+                <p className="mt-1 truncate text-body-m font-semibold tracking-tight">
+                  {log.plan_workout?.name ?? 'Trening'}
+                </p>
+                <div className="mt-1 flex items-center gap-3 font-mono text-body-s tabular-nums text-muted-foreground">
+                  {log.duration_min != null && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {formatDuration(log.duration_min)}
+                    </span>
+                  )}
+                  <span>{sets} serii</span>
+                  {log.overall_rating != null && (
+                    <span className="inline-flex items-center gap-0.5">
+                      <Star className="h-3 w-3 fill-brand text-brand" />
+                      {log.overall_rating}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+            </Card>
           </Link>
         )
       })}
@@ -136,12 +144,14 @@ export function HistoryList({ initialItems, initialNextCursor }: HistoryListProp
       <div ref={sentinelRef} className="h-4" />
 
       {loading && (
-        <p className="py-4 text-center text-sm text-muted-foreground">Ładuję...</p>
+        <p className="py-4 text-center font-mono text-body-s tabular-nums text-muted-foreground">
+          Ładuję…
+        </p>
       )}
 
       {!nextCursor && items.length > 0 && (
-        <p className="py-2 text-center text-xs text-muted-foreground">
-          To wszystkie treningi
+        <p className="py-2 text-center text-label uppercase text-muted-foreground">
+          Koniec historii
         </p>
       )}
     </div>
