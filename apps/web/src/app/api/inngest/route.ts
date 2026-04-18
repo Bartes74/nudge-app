@@ -7,6 +7,8 @@ import { proactiveCoachCheckJob } from '@/inngest/jobs/proactiveCoachCheck'
 import { weeklyCheckinNotificationJob } from '@/inngest/jobs/weeklyCheckinNotification'
 import { analyzeMealPhotoJob } from '@/inngest/jobs/analyzeMealPhoto'
 
+export const maxDuration = 300
+
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [

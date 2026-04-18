@@ -1,3 +1,8 @@
 import { Inngest } from 'inngest'
+import { resolveInngestEnvironment } from '@nudge/config/inngest'
 
-export const inngest = new Inngest({ id: 'nudge-api' })
+export const inngest = new Inngest({
+  id: 'nudge-api',
+  eventKey: process.env['INNGEST_EVENT_KEY'] ?? 'local',
+  env: resolveInngestEnvironment(process.env),
+})

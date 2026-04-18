@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { inngest } from '@/inngest/client'
+import { queueAiTask } from '@/lib/aiTasks.server'
+
+const START_ERROR_MESSAGE =
+  'Nie udało się uruchomić generowania planu treningowego. Spróbuj ponownie za chwilę.'
 
 export async function POST(): Promise<NextResponse> {
   const supabase = await createClient()
@@ -33,34 +36,17 @@ export async function POST(): Promise<NextResponse> {
     )
   }
 
-  // Cancel any pending tasks for this user
-  await supabase
-    .from('ai_tasks')
-    .update({ status: 'cancelled' })
-    .eq('user_id', user.id)
-    .eq('task_type', 'generate_training_plan')
-    .eq('status', 'queued')
-
-  // Create ai_task record
-  const { data: task, error: taskError } = await supabase
-    .from('ai_tasks')
-    .insert({
-      user_id: user.id,
-      task_type: 'generate_training_plan',
-      status: 'queued',
+  try {
+    const { taskId } = await queueAiTask({
+      supabase,
+      userId: user.id,
+      taskType: 'generate_training_plan',
+      eventName: 'nudge/plan.training.generate',
+      taskFailureMessage: START_ERROR_MESSAGE,
     })
-    .select('id')
-    .single()
 
-  if (taskError || !task) {
-    return NextResponse.json({ error: 'Failed to create task' }, { status: 500 })
+    return NextResponse.json({ task_id: taskId }, { status: 202 })
+  } catch {
+    return NextResponse.json({ error: START_ERROR_MESSAGE }, { status: 503 })
   }
-
-  // Enqueue Inngest event
-  await inngest.send({
-    name: 'nudge/plan.training.generate',
-    data: { task_id: task.id, user_id: user.id },
-  })
-
-  return NextResponse.json({ task_id: task.id }, { status: 202 })
 }

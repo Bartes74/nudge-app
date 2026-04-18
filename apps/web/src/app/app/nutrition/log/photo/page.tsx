@@ -58,7 +58,8 @@ export default function MealPhotoPage() {
       }
 
       if (!res.ok) {
-        toast.error('Nie udało się przesłać zdjęcia')
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        toast.error(data.error ?? 'Nie udało się przesłać zdjęcia')
         return
       }
 

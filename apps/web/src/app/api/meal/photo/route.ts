@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { inngest } from '@/inngest/client'
+import { dispatchInngestEvent } from '@/lib/inngest/dispatchEvent'
 import { env } from '@/lib/env'
 
 const RATE_LIMIT_PER_DAY = 6
+const MEAL_ANALYSIS_START_ERROR =
+  'Nie udało się uruchomić analizy zdjęcia. Spróbuj ponownie za chwilę.'
 
 export async function POST(request: Request): Promise<NextResponse> {
   const supabase = await createClient()
@@ -97,16 +99,30 @@ export async function POST(request: Request): Promise<NextResponse> {
     storage_path: storagePath,
   })
 
-  // Enqueue Inngest job
-  await inngest.send({
-    name: 'nudge/meal.photo.analyze',
-    data: {
-      meal_log_id: mealLog.id,
-      user_id: user.id,
-      storage_path: storagePath,
-      note: noteText,
-    },
-  })
+  try {
+    await dispatchInngestEvent({
+      name: 'nudge/meal.photo.analyze',
+      data: {
+        meal_log_id: mealLog.id,
+        user_id: user.id,
+        storage_path: storagePath,
+        note: noteText,
+      },
+    })
+  } catch {
+    await supabase
+      .from('meal_logs')
+      .update({
+        status: 'failed',
+        user_warnings: [MEAL_ANALYSIS_START_ERROR],
+      })
+      .eq('id', mealLog.id)
+
+    return NextResponse.json(
+      { error: MEAL_ANALYSIS_START_ERROR, meal_log_id: mealLog.id },
+      { status: 503 },
+    )
+  }
 
   return NextResponse.json({ meal_log_id: mealLog.id }, { status: 202 })
 }

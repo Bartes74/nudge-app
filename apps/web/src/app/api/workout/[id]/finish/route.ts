@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
-import { inngest } from '@/inngest/client'
+import { queueAiTask } from '@/lib/aiTasks.server'
+import { dispatchInngestEvent } from '@/lib/inngest/dispatchEvent'
 import { evaluateRedFlagSymptoms } from '@nudge/core/rules/guardrails'
 import { decideBeginnerZeroProgression } from '@nudge/core/rules/beginnerZeroProgression'
 import type { Json, TablesInsert, TablesUpdate } from '@nudge/core/types/db'
@@ -22,6 +23,9 @@ const bodySchema = z.object({
   ready_for_next_workout: z.boolean().optional(),
   red_flag_symptoms: z.array(z.string()).optional(),
 })
+
+const TRAINING_REGENERATION_START_ERROR =
+  'Nie udało się uruchomić aktualizacji planu treningowego po treningu.'
 
 export async function POST(
   request: Request,
@@ -203,40 +207,32 @@ export async function POST(
       progressionDecision.shouldAdvance ||
       progressionDecision.recommendationType === 'show_more_guidance'
     ) {
-      await supabase
-        .from('ai_tasks')
-        .update({ status: 'cancelled' })
-        .eq('user_id', user.id)
-        .eq('task_type', 'generate_training_plan')
-        .eq('status', 'queued')
-
-      const { data: task } = await supabase
-        .from('ai_tasks')
-        .insert({
-          user_id: user.id,
-          task_type: 'generate_training_plan',
-          status: 'queued',
+      try {
+        await queueAiTask({
+          supabase,
+          userId: user.id,
+          taskType: 'generate_training_plan',
+          eventName: 'nudge/plan.training.generate',
+          taskFailureMessage: TRAINING_REGENERATION_START_ERROR,
         })
-        .select('id')
-        .single()
-
-      if (task?.id) {
-        await inngest.send({
-          name: 'nudge/plan.training.generate',
-          data: { task_id: task.id, user_id: user.id },
-        })
+      } catch (error) {
+        console.error('Failed to queue training plan regeneration after workout finish.', error)
       }
     }
   }
 
-  await inngest.send({
-    name: 'nudge/workout.finished',
-    data: {
-      user_id: user.id,
-      workout_log_id: workoutLogId,
-      red_flag_symptoms: redFlagEvaluation.symptoms,
-    },
-  })
+  try {
+    await dispatchInngestEvent({
+      name: 'nudge/workout.finished',
+      data: {
+        user_id: user.id,
+        workout_log_id: workoutLogId,
+        red_flag_symptoms: redFlagEvaluation.symptoms,
+      },
+    })
+  } catch (error) {
+    console.error('Failed to dispatch workout.finished event.', error)
+  }
 
   return NextResponse.json({ ok: true })
 }

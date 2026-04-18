@@ -4,6 +4,7 @@
   "private": true,
   "exports": {
     "./env": "./src/env.ts",
+    "./inngest": "./src/inngest.ts",
     "./tailwind-preset": "./src/tailwind-preset.ts",
     "./tsconfig/base": "./tsconfig/base.json",
     "./tsconfig/nextjs": "./tsconfig/nextjs.json",
