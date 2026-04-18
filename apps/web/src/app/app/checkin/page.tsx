@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { ArrowLeft, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardEyebrow } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
 
 interface Aggregates {
   weekOf: string
@@ -28,9 +33,17 @@ interface CurrentCheckin {
 const SLIDER_LABELS: Record<string, [string, string]> = {
   subjective_energy: ['Brak energii', 'Pełna energia'],
   subjective_recovery: ['Słaba regeneracja', 'Doskonała regeneracja'],
-  subjective_motivation: ['Brak motywacji', 'Bardzo zmotywowany/a'],
+  subjective_motivation: ['Brak motywacji', 'Pełna motywacja'],
   subjective_stress: ['Brak stresu', 'Ekstremalny stres'],
   subjective_sleep: ['Tragiczny sen', 'Doskonały sen'],
+}
+
+const SLIDER_NAMES: Record<string, string> = {
+  subjective_energy: 'Energia',
+  subjective_recovery: 'Regeneracja',
+  subjective_motivation: 'Motywacja',
+  subjective_stress: 'Stres',
+  subjective_sleep: 'Sen',
 }
 
 type SliderKey = keyof typeof SLIDER_LABELS
@@ -82,7 +95,7 @@ export default function CheckinPage() {
         }),
       })
       if (!res.ok) throw new Error('Submit failed')
-      toast.success('Check-in zapisany!')
+      toast.success('Check-in zapisany')
       router.push('/app/checkin/result')
     } catch {
       toast.error('Nie udało się zapisać check-inu')
@@ -92,164 +105,186 @@ export default function CheckinPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center">
-        <p className="text-sm text-muted-foreground">Ładowanie...</p>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     )
   }
 
   const agg = current?.aggregates
+  const weightDelta = agg?.weightDeltaKg
 
   return (
-    <div className="flex min-h-[100dvh] flex-col p-6 pb-24">
-      <button
-        type="button"
-        onClick={() => router.back()}
-        className="mb-4 self-start text-sm text-muted-foreground"
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-32 animate-stagger">
+      <Link
+        href="/app"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← Wróć
-      </button>
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Dzisiaj
+      </Link>
 
-      <h1 className="text-2xl font-bold">Cotygodniowy check-in</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Tydzień od {current?.weekOf ?? '...'} — zajmie ~2 minuty
-      </p>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Check-in</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Twój</span>
+          <br />
+          <span className="font-sans font-semibold">tydzień.</span>
+        </h1>
+        <p className="text-body-m text-muted-foreground">
+          Tydzień od{' '}
+          <span className="font-mono tabular-nums text-foreground">{current?.weekOf ?? '…'}</span> —
+          ~2 minuty.
+        </p>
+      </header>
 
-      {/* Section 1: Auto-aggregates */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-base font-semibold">📊 Twój tydzień — dane automatyczne</h2>
-        <div className="rounded-2xl border bg-muted/30 p-4 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Treningi</span>
-            <span className="font-medium">
+      <Card variant="recessed" padding="md">
+        <CardEyebrow>Dane automatyczne</CardEyebrow>
+        <div className="mt-3 flex flex-col divide-y divide-border/60">
+          <div className="flex items-center justify-between py-2.5 first:pt-0">
+            <span className="text-body-m text-muted-foreground">Treningi</span>
+            <span className="font-mono text-body-m tabular-nums font-medium">
               {agg?.workoutsCompleted ?? 0} / {agg?.workoutsPlanned ?? '?'}
             </span>
           </div>
-          {agg?.avgWorkoutRating !== null && agg?.avgWorkoutRating !== undefined && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Średnia ocena treningu</span>
-              <span className="font-medium">{agg.avgWorkoutRating} / 5</span>
+          {agg?.avgWorkoutRating != null && (
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-body-m text-muted-foreground">Średnia ocena</span>
+              <span className="font-mono text-body-m tabular-nums font-medium">
+                {agg.avgWorkoutRating} / 5
+              </span>
             </div>
           )}
-          {agg?.weightDeltaKg !== null && agg?.weightDeltaKg !== undefined ? (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Zmiana wagi</span>
+          {weightDelta != null ? (
+            <div className="flex items-center justify-between py-2.5 last:pb-0">
+              <span className="text-body-m text-muted-foreground">Zmiana wagi</span>
               <span
-                className={`font-medium ${
-                  agg.weightDeltaKg < 0 ? 'text-green-600' : 'text-orange-500'
+                className={`font-mono text-body-m tabular-nums font-medium ${
+                  weightDelta < 0 ? 'text-success' : 'text-warning'
                 }`}
               >
-                {agg.weightDeltaKg > 0 ? '+' : ''}
-                {agg.weightDeltaKg} kg
+                {weightDelta > 0 ? '+' : ''}
+                {weightDelta} kg
               </span>
             </div>
           ) : (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Pomiary wagi</span>
-              <span className="font-medium text-muted-foreground">{agg?.weightMeasurements ?? 0}x</span>
+            <div className="flex items-center justify-between py-2.5 last:pb-0">
+              <span className="text-body-m text-muted-foreground">Pomiary wagi</span>
+              <span className="font-mono text-body-m tabular-nums text-muted-foreground">
+                {agg?.weightMeasurements ?? 0}×
+              </span>
             </div>
           )}
         </div>
+      </Card>
+
+      <section className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Samopoczucie</p>
+        <Card variant="default" padding="md">
+          <div className="flex flex-col gap-6">
+            {(Object.keys(sliders) as SliderKey[]).map((key) => {
+              const [low, high] = SLIDER_LABELS[key]!
+              return (
+                <div key={key} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-body-m font-medium tracking-tight">{SLIDER_NAMES[key]}</span>
+                    <span className="font-mono text-body-s tabular-nums text-brand">
+                      {sliders[key]} / 5
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={1}
+                    value={sliders[key]}
+                    onChange={(e) =>
+                      setSliders((prev) => ({ ...prev, [key]: Number(e.target.value) }))
+                    }
+                    className="w-full accent-brand"
+                  />
+                  <div className="flex justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <span>{low}</span>
+                    <span>{high}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </Card>
       </section>
 
-      {/* Section 2: Subjective sliders */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-base font-semibold">🎚️ Jak się czułeś/aś?</h2>
-        <div className="space-y-6">
-          {(Object.keys(sliders) as SliderKey[]).map((key) => {
-            const [low, high] = SLIDER_LABELS[key]!
-            const labels: Record<SliderKey, string> = {
-              subjective_energy: 'Energia',
-              subjective_recovery: 'Regeneracja',
-              subjective_motivation: 'Motywacja',
-              subjective_stress: 'Stres',
-              subjective_sleep: 'Sen',
-            }
-            return (
-              <div key={key}>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium">{labels[key]}</span>
-                  <span className="text-sm font-bold text-primary">{sliders[key]} / 5</span>
-                </div>
-                <input
-                  type="range"
-                  min={1}
-                  max={5}
-                  step={1}
-                  value={sliders[key]}
-                  onChange={(e) =>
-                    setSliders((prev) => ({ ...prev, [key]: Number(e.target.value) }))
-                  }
-                  className="w-full accent-primary"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>{low}</span>
-                  <span>{high}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Section 3: Free text */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-base font-semibold">✍️ Kilka słów</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="wins">
-              Co poszło dobrze w tym tygodniu?
+      <section className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Kilka słów</p>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label
+              className="text-label uppercase text-muted-foreground"
+              htmlFor="wins"
+            >
+              Co poszło dobrze?
             </label>
-            <textarea
+            <Textarea
               id="wins"
               value={winsText}
               onChange={(e) => setWinsText(e.target.value)}
               rows={2}
               maxLength={1000}
-              placeholder="np. wybiłem/am rekord w martwym ciągu, nie opuściłem/am żadnego treningu..."
-              className="w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="np. wybiłem/am rekord, nie opuściłem/am żadnego treningu…"
+              className="resize-none"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="struggles">
-              Co było trudne lub poszło gorzej niż planowałem/am?
+          <div className="flex flex-col gap-1.5">
+            <label
+              className="text-label uppercase text-muted-foreground"
+              htmlFor="struggles"
+            >
+              Co było trudne?
             </label>
-            <textarea
+            <Textarea
               id="struggles"
               value={strugglesText}
               onChange={(e) => setStrugglesText(e.target.value)}
               rows={2}
               maxLength={1000}
-              placeholder="np. za mało spałem/am, opuściłem/am trening w środę, stres w pracy..."
-              className="w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="np. za mało snu, opuszczony trening, stres…"
+              className="resize-none"
             />
           </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium" htmlFor="focus">
-              Na czym chcę się skupić w przyszłym tygodniu?
+          <div className="flex flex-col gap-1.5">
+            <label
+              className="text-label uppercase text-muted-foreground"
+              htmlFor="focus"
+            >
+              Na czym skupić się w nowym tygodniu?
             </label>
-            <textarea
+            <Textarea
               id="focus"
               value={focusNextWeek}
               onChange={(e) => setFocusNextWeek(e.target.value)}
               rows={2}
               maxLength={1000}
-              placeholder="np. więcej snu, trzymanie się planu treningowego..."
-              className="w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="np. więcej snu, trzymanie się planu…"
+              className="resize-none"
             />
           </div>
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t bg-background px-6 py-4">
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={() => void handleSubmit()}
-          className="w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90 disabled:opacity-60"
-        >
-          {submitting ? 'Analizuję...' : 'Wyślij check-in'}
-        </button>
+      <div className="fixed inset-x-0 bottom-0 border-t border-border/60 bg-background/80 px-5 py-4 backdrop-blur-xl safe-bottom">
+        <div className="mx-auto max-w-2xl">
+          <Button
+            type="button"
+            size="hero"
+            disabled={submitting}
+            isLoading={submitting}
+            onClick={() => void handleSubmit()}
+            className="w-full gap-2"
+          >
+            {!submitting && <Send className="h-4 w-4" />}
+            {submitting ? 'Analizuję…' : 'Wyślij check-in'}
+          </Button>
+        </div>
       </div>
     </div>
   )

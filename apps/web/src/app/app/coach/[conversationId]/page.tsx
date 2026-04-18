@@ -39,18 +39,17 @@ export default async function CoachConversationPage({ params, searchParams }: Pr
 
   return (
     <div className="flex h-[calc(100svh-var(--bottom-nav-height)-3.5rem)] flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b px-4 py-3 bg-background sticky top-14 z-10">
+      <div className="sticky top-14 z-10 flex items-center gap-3 border-b border-border/60 bg-background/80 px-5 py-3 backdrop-blur-xl">
         <Link
           href="/app/profile/conversations"
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
           aria-label="Wróć do historii rozmów"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4" />
         </Link>
-        <div>
-          <h1 className="text-sm font-semibold leading-tight">{title}</h1>
-          <p className="text-xs text-muted-foreground">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-body-m font-semibold tracking-tight leading-tight">{title}</h1>
+          <p className="font-mono text-[11px] tabular-nums uppercase tracking-wider text-muted-foreground">
             {new Date(conversation.started_at).toLocaleDateString('pl-PL', {
               day: 'numeric',
               month: 'short',
