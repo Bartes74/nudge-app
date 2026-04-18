@@ -4,114 +4,213 @@
 
 @layer base {
   /* -------------------------------------------------------
-   * Nudge design tokens — light mode
-   * Warm, approachable palette: deep navy + coral brand
+   * Nudge design tokens — Editorial / Performance
+   * Warm near-black + warm off-white + coral heritage
+   * + electric lime (success) as the single data-positive signal.
    * ------------------------------------------------------- */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --background: 48 14% 98%;
+    --foreground: 240 18% 5%;
+
+    --surface-1: 0 0% 100%;
+    --surface-2: 45 17% 94%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 240 18% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 240 18% 5%;
 
-    /* Brand: warm coral/orange — energetic, friendly */
+    /* Primary = Brand (coral) — kept aliased for shadcn compatibility */
     --primary: 22 100% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 45 17% 94%;
+    --secondary-foreground: 240 18% 5%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 45 17% 94%;
+    --muted-foreground: 48 7% 40%;
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    /* Accent = neutral hover/surface — used by shadcn components */
+    --accent: 45 17% 94%;
+    --accent-foreground: 240 18% 5%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 68% 54%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 45 15% 87%;
+    --input: 45 15% 87%;
     --ring: 22 100% 55%;
 
-    /* Nudge brand tokens */
+    /* Nudge brand — coral */
     --brand: 22 100% 55%;
     --brand-foreground: 0 0% 100%;
     --brand-muted: 22 100% 95%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    /* Electric lime — data-positive / high-signal CTA */
+    --success: 73 87% 58%;
+    --success-foreground: 240 18% 5%;
 
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 37 77% 57%;
+    --warning-foreground: 240 18% 5%;
 
     --radius: 0.75rem;
 
     /* Bottom nav height — used in shell padding */
     --bottom-nav-height: 4rem;
+
+    /* Grain overlay strength — tuned per scheme */
+    --grain-opacity: 0.035;
   }
 
   /* -------------------------------------------------------
    * Dark mode tokens
    * ------------------------------------------------------- */
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    --background: 240 12% 4%;
+    --foreground: 42 27% 93%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --surface-1: 240 11% 9%;
+    --surface-2: 240 10% 12%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --card: 240 11% 9%;
+    --card-foreground: 42 27% 93%;
 
-    --primary: 22 100% 58%;
+    --popover: 240 11% 9%;
+    --popover-foreground: 42 27% 93%;
+
+    --primary: 22 100% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 18%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 10% 12%;
+    --secondary-foreground: 42 27% 93%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 10% 12%;
+    --muted-foreground: 48 6% 58%;
 
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 10% 12%;
+    --accent-foreground: 42 27% 93%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 73% 59%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
-    --ring: 22 100% 58%;
+    --border: 240 9% 18%;
+    --input: 240 9% 18%;
+    --ring: 22 100% 59%;
 
-    --brand: 22 100% 58%;
+    --brand: 22 100% 59%;
     --brand-foreground: 0 0% 100%;
-    --brand-muted: 22 40% 18%;
+    --brand-muted: 22 50% 14%;
 
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
+    --success: 73 100% 61%;
+    --success-foreground: 240 12% 4%;
 
-    --warning: 38 90% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 37 90% 60%;
+    --warning-foreground: 240 12% 4%;
+
+    --grain-opacity: 0.055;
   }
 
   /* -------------------------------------------------------
-   * Base resets
+   * Base resets + editorial typography
    * ------------------------------------------------------- */
   * {
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+    text-size-adjust: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    font-feature-settings: "ss01" 1, "cv11" 1, "calt" 1, "rlig" 1;
     -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Subtle grain / noise overlay — layered above background, under content.
+     Fixed so it doesn't reflow during scroll. Disabled for reduced motion. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: theme('backgroundImage.grain');
+    background-size: 240px 240px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: overlay;
+  }
+
+  .dark body::before {
+    mix-blend-mode: soft-light;
+  }
+
+  /* Ensure app content stays above the overlay */
+  body > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Selection — warm brand tint */
+  ::selection {
+    background-color: hsl(var(--brand) / 0.2);
+    color: hsl(var(--foreground));
+  }
+
+  /* Tabular figures for any numeric cell */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Display text uses the serif face with tighter tracking and italic-ready */
+  .font-display {
+    font-feature-settings: "dlig" 1, "liga" 1;
   }
 
   /* Safe area support for notched devices */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  /* Balance multi-line headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Reduced motion: strip all non-opacity transforms */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    body::before {
+      display: none;
+    }
+  }
+}
+
+@layer utilities {
+  /* Staggered children reveal — apply .animate-stagger on a parent,
+     and direct children will rise-in with increasing delay. */
+  .animate-stagger > * {
+    animation: rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .animate-stagger > *:nth-child(1) { animation-delay: 0ms; }
+  .animate-stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .animate-stagger > *:nth-child(3) { animation-delay: 120ms; }
+  .animate-stagger > *:nth-child(4) { animation-delay: 180ms; }
+  .animate-stagger > *:nth-child(5) { animation-delay: 240ms; }
+  .animate-stagger > *:nth-child(6) { animation-delay: 300ms; }
+  .animate-stagger > *:nth-child(n+7) { animation-delay: 360ms; }
 }
