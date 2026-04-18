@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { RefreshCw, Loader2 } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
@@ -27,7 +27,7 @@ export function SubstituteButton({ exerciseSlug, exerciseName }: SubstituteButto
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        plan_exercise_id: '', // contextual — user can substitute from workout page too
+        plan_exercise_id: '',
         current_slug: exerciseSlug,
         reason: reason.trim(),
       }),
@@ -50,6 +50,7 @@ export function SubstituteButton({ exerciseSlug, exerciseName }: SubstituteButto
     <>
       <Button
         variant="outline"
+        size="lg"
         className="w-full gap-2"
         onClick={() => setOpen(true)}
       >
@@ -60,17 +61,20 @@ export function SubstituteButton({ exerciseSlug, exerciseName }: SubstituteButto
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Zamień: {exerciseName}</DialogTitle>
+            <DialogTitle className="font-display text-display-m font-normal text-balance">
+              Zamień:{' '}
+              <span className="font-sans font-semibold">{exerciseName}</span>
+            </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4">
-            <div>
-              <label className="text-sm font-medium" htmlFor="reason">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label className="text-label uppercase text-muted-foreground" htmlFor="reason">
                 Dlaczego chcesz zamienić?
               </label>
               <textarea
                 id="reason"
-                className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full resize-none rounded-lg border border-border bg-surface-1 px-3 py-2.5 text-body-m leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
                 rows={3}
                 placeholder="np. boli mnie bark, brak sztangi, za trudne…"
                 value={reason}
@@ -78,14 +82,16 @@ export function SubstituteButton({ exerciseSlug, exerciseName }: SubstituteButto
               />
             </div>
 
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && <p className="text-body-s text-destructive">{error}</p>}
 
             <Button
               onClick={handleSubstitute}
               disabled={loading || !reason.trim()}
+              isLoading={loading}
+              size="lg"
               className="w-full"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Zamień'}
+              Zamień
             </Button>
           </div>
         </DialogContent>

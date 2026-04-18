@@ -1,10 +1,22 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ChevronLeft, History } from 'lucide-react'
+import { ArrowLeft, History } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 
 export const metadata: Metadata = { title: 'Historia planu' }
+
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+const DAY_SHORT: Record<string, string> = {
+  mon: 'Pon',
+  tue: 'Wt',
+  wed: 'Śr',
+  thu: 'Czw',
+  fri: 'Pt',
+  sat: 'Sb',
+  sun: 'Nd',
+}
 
 export default async function PlanHistoryPage() {
   const supabase = await createClient()
@@ -37,63 +49,82 @@ export default async function PlanHistoryPage() {
   const versionList = (versions.data ?? []) as Version[]
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-center gap-2">
-        <Link href="/app/plan" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" />
-          Plan
-        </Link>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/plan"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Plan
+      </Link>
 
-      <h1 className="text-2xl font-semibold">Historia planu</h1>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Plan</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Historia —</span>
+          <br />
+          <span className="font-sans font-semibold">ewolucja planu.</span>
+        </h1>
+      </header>
 
       {versionList.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
-          <History className="h-10 w-10 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">Brak historii zmian planu.</p>
-        </div>
+        <Card variant="outline" padding="xl" className="flex flex-col items-center gap-4 text-center">
+          <History className="h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
+          <p className="text-body-m text-muted-foreground">
+            Brak historii zmian planu.
+          </p>
+        </Card>
       ) : (
-        <div className="flex flex-col gap-3">
-          {versionList.map((v, idx) => (
-            <div key={v.id} className="rounded-xl border bg-card p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={idx === 0 ? 'default' : 'outline'}>
-                      v{v.version_number}
-                    </Badge>
-                    {idx === 0 && (
-                      <Badge variant="secondary">Aktualny</Badge>
-                    )}
+        <section className="flex flex-col gap-3">
+          {versionList.map((v, idx) => {
+            const isCurrent = idx === 0
+            const daysPresent = v.week_structure
+              ? DAY_ORDER.filter((d) => v.week_structure![d])
+              : []
+            return (
+              <Card
+                key={v.id}
+                variant={isCurrent ? 'default' : 'recessed'}
+                padding="md"
+                className={isCurrent ? 'border-foreground/30' : undefined}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant={isCurrent ? 'brand' : 'outline'} className="font-mono tabular-nums">
+                        v{v.version_number}
+                      </Badge>
+                      {isCurrent && <Badge variant="label">Aktualny</Badge>}
+                    </div>
+                    <p className="text-body-m font-medium leading-relaxed text-foreground">
+                      {v.change_reason ?? 'Wygenerowano plan.'}
+                    </p>
                   </div>
-                  <p className="mt-2 text-sm font-medium">
-                    {v.change_reason ?? 'Wygenerowano plan.'}
+                  <p className="shrink-0 font-mono text-body-s tabular-nums text-muted-foreground">
+                    {new Date(v.created_at).toLocaleDateString('pl-PL', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(v.created_at).toLocaleDateString('pl-PL', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
-                </p>
-              </div>
 
-              {v.week_structure && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {Object.keys(v.week_structure).map((day) => (
-                    <span
-                      key={day}
-                      className="rounded-md bg-muted px-2 py-0.5 text-xs uppercase tracking-wide"
-                    >
-                      {day}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                {daysPresent.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {daysPresent.map((day) => (
+                      <span
+                        key={day}
+                        className="rounded-md bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground"
+                      >
+                        {DAY_SHORT[day] ?? day}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </section>
       )}
     </div>
   )

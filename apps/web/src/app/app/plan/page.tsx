@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Dumbbell, ChevronRight, Clock } from 'lucide-react'
+import { Dumbbell, ChevronRight, Clock, ArrowUpRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardEyebrow } from '@/components/ui/card'
 import { GeneratePlanButton } from './GeneratePlanButton'
 
 export const metadata: Metadata = { title: 'Plan' }
@@ -15,6 +16,16 @@ const DAY_LABELS: Record<string, string> = {
   fri: 'Piątek',
   sat: 'Sobota',
   sun: 'Niedziela',
+}
+
+const DAY_SHORT: Record<string, string> = {
+  mon: 'Pon',
+  tue: 'Wt',
+  wed: 'Śr',
+  thu: 'Czw',
+  fri: 'Pt',
+  sat: 'Sb',
+  sun: 'Nd',
 }
 
 export default async function PlanPage() {
@@ -58,15 +69,30 @@ export default async function PlanPage() {
 
   if (!version) {
     return (
-      <div className="flex flex-col gap-6 p-4">
-        <h1 className="text-2xl font-semibold">Plan treningowy</h1>
-        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
-          <Dumbbell className="h-10 w-10 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">
-            Nie masz jeszcze planu. Wróć do zakładki &ldquo;Dziś&rdquo; i wygeneruj go.
-          </p>
-          <GeneratePlanButton />
-        </div>
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+        <header className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Plan</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-sans font-semibold">Twój plan treningowy</span>
+          </h1>
+        </header>
+
+        <Card variant="hero" padding="xl" className="animate-rise-in">
+          <div className="flex flex-col items-start gap-5">
+            <Dumbbell className="h-8 w-8 text-brand" aria-hidden="true" />
+            <div className="flex flex-col gap-2">
+              <p className="text-label uppercase text-muted-foreground">Brak aktywnego planu</p>
+              <p className="text-display-m font-display text-balance">
+                <span className="font-sans font-semibold">Jeszcze nie masz planu.</span>
+              </p>
+              <p className="text-body-m text-muted-foreground">
+                Wróć do zakładki <span className="font-medium text-foreground">Dziś</span> i wygeneruj go
+                — dopasujemy ćwiczenia do Twojego celu.
+              </p>
+            </div>
+            <GeneratePlanButton />
+          </div>
+        </Card>
       </div>
     )
   }
@@ -76,64 +102,100 @@ export default async function PlanPage() {
   )
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Plan treningowy</h1>
-        <Link href="/app/plan/history" className="text-xs text-muted-foreground underline underline-offset-2">
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Plan</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Tydzień</span>
+            <br />
+            <span className="font-sans font-semibold">treningowy.</span>
+          </h1>
+        </div>
+        <Link
+          href="/app/plan/history"
+          className="inline-flex shrink-0 items-center gap-1 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+        >
           Historia
+          <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
-      </div>
+      </header>
 
-      {/* Week grid */}
-      <div className="flex flex-col gap-2">
+      <section className="flex flex-col gap-2.5">
         {sortedDays.map((day) => {
           const workout = workoutsByDay[day]
-          return (
-            <div key={day}>
-              {workout ? (
-                <Link
-                  href={`/app/plan/workout/${workout.id}`}
-                  className="flex items-center justify-between rounded-xl border bg-card p-4 hover:bg-muted/50 transition-colors"
+          if (workout) {
+            return (
+              <Link
+                key={day}
+                href={`/app/plan/workout/${workout.id}`}
+                className="group"
+              >
+                <Card
+                  variant="default"
+                  padding="sm"
+                  className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
                 >
-                  <div>
-                    <p className="text-xs text-muted-foreground">{DAY_LABELS[day] ?? day}</p>
-                    <p className="font-semibold">{workout.name}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {workout.exercises.length} ćwiczeń
-                    </p>
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-center">
+                      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        {DAY_SHORT[day] ?? day}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-body-m font-semibold tracking-tight">
+                        {workout.name}
+                      </p>
+                      <p className="mt-0.5 text-body-s text-muted-foreground">
+                        <span className="font-mono tabular-nums">{workout.exercises.length}</span> ćwiczeń
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="gap-1">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
                       <Clock className="h-3 w-3" />
                       {workout.duration_min_estimated} min
                     </Badge>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
                   </div>
-                </Link>
-              ) : (
-                <div className="flex items-center rounded-xl border border-dashed bg-muted/20 p-4">
-                  <p className="text-xs text-muted-foreground">{DAY_LABELS[day] ?? day}</p>
-                  <p className="ml-4 text-sm text-muted-foreground/60">Odpoczynek</p>
-                </div>
-              )}
+                </Card>
+              </Link>
+            )
+          }
+          return (
+            <div
+              key={day}
+              className="flex items-center gap-4 rounded-xl border border-dashed border-border/60 px-4 py-3"
+            >
+              <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                  {DAY_SHORT[day] ?? day}
+                </span>
+              </div>
+              <p className="text-body-s text-muted-foreground/70">Odpoczynek</p>
             </div>
           )
         })}
-      </div>
+      </section>
 
-      {/* Progression rules */}
       {version.progression_rules && (
-        <div className="rounded-xl border bg-muted/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Progresja</p>
-          <p className="mt-1 text-sm">{version.progression_rules.when}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Metoda: {version.progression_rules.method} · +{version.progression_rules.add_weight_kg} kg
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Progresja</CardEyebrow>
+          <p className="mt-2 text-body-m leading-relaxed text-foreground">
+            {version.progression_rules.when}
           </p>
-        </div>
+          <p className="mt-1 text-body-s text-muted-foreground">
+            <span className="font-mono tabular-nums">{version.progression_rules.method}</span>
+            <span className="mx-1.5 opacity-40">·</span>
+            <span className="font-mono tabular-nums">+{version.progression_rules.add_weight_kg} kg</span>
+          </p>
+        </Card>
       )}
 
       {version.additional_notes && (
-        <p className="text-sm text-muted-foreground">{version.additional_notes}</p>
+        <p className="text-body-m text-muted-foreground leading-relaxed">
+          {version.additional_notes}
+        </p>
       )}
     </div>
   )

@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { Card } from '@/components/ui/card'
 import { ExerciseHistoryChart } from './ExerciseHistoryChart'
 
 export async function generateMetadata({
@@ -67,61 +68,74 @@ export default async function ExerciseHistoryPage({
     .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
 
   return (
-    <div className="flex flex-col gap-5 p-4 pb-8">
-      <div className="flex items-center gap-2">
-        <Link
-          href={`/app/plan/exercise/${slug}`}
-          className="flex items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {exercise.name_pl}
-        </Link>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href={`/app/plan/exercise/${slug}`}
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        {exercise.name_pl}
+      </Link>
 
-      <h1 className="text-xl font-bold">Historia: {exercise.name_pl}</h1>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Historia</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Twoje sesje —</span>
+          <br />
+          <span className="font-sans font-semibold">{exercise.name_pl}.</span>
+        </h1>
+      </header>
 
       {sessions.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          Brak historii dla tego ćwiczenia.
-        </p>
+        <Card variant="outline" padding="xl" className="text-center">
+          <p className="text-body-m text-muted-foreground">
+            Brak historii dla tego ćwiczenia.
+          </p>
+        </Card>
       ) : (
         <>
           <ExerciseHistoryChart sessions={sessions} />
 
-          <div className="flex flex-col gap-3">
+          <section className="flex flex-col gap-2.5">
             {[...sessions].reverse().map((session) => (
-              <div key={session.workout_log_id} className="rounded-xl border bg-card p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold">
+              <Card key={session.workout_log_id} variant="default" padding="sm">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-body-m font-semibold tracking-tight">
                     {new Date(session.started_at).toLocaleDateString('pl-PL', {
                       weekday: 'short',
                       day: 'numeric',
                       month: 'short',
                     })}
                   </p>
-                  <div className="flex gap-3 text-xs text-muted-foreground">
+                  <div className="flex shrink-0 gap-3 font-mono text-body-s tabular-nums text-muted-foreground">
                     {session.max_weight_kg != null && (
-                      <span>max {session.max_weight_kg} kg</span>
+                      <span>
+                        max <span className="text-foreground">{session.max_weight_kg}</span> kg
+                      </span>
                     )}
-                    <span>{session.total_sets} serii</span>
+                    <span>
+                      <span className="text-foreground">{session.total_sets}</span> serii
+                    </span>
                   </div>
                 </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {session.sets.map((s, i) => (
                     <span
                       key={i}
-                      className="rounded-md bg-muted px-2 py-0.5 text-xs tabular-nums"
+                      className="rounded-md bg-surface-2 px-2 py-0.5 font-mono text-body-s tabular-nums text-foreground"
                     >
                       {s.weight_kg != null ? `${s.weight_kg}kg` : '—'}
-                      {' × '}
+                      <span className="mx-1 opacity-40">×</span>
                       {s.reps != null ? s.reps : '—'}
-                      {s.rir != null ? ` @${s.rir}` : ''}
+                      {s.rir != null ? (
+                        <span className="ml-1 text-muted-foreground">@{s.rir}</span>
+                      ) : null}
                     </span>
                   ))}
                 </div>
-              </div>
+              </Card>
             ))}
-          </div>
+          </section>
         </>
       )}
     </div>

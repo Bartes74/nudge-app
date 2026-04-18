@@ -2,7 +2,9 @@
 
 import { use, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Dumbbell } from 'lucide-react'
+import { ArrowRight, Dumbbell } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 type PreMood = 'bad' | 'ok' | 'good' | 'great'
 type PreEnergy = 'low' | 'moderate' | 'high' | 'variable'
@@ -53,70 +55,83 @@ export default function StartWorkoutPage({
   }
 
   return (
-    <div className="flex min-h-[100dvh] flex-col justify-between p-6">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <Dumbbell className="h-5 w-5 text-primary" />
+    <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col justify-between gap-10 px-5 pt-8 pb-10 animate-stagger">
+      <div className="flex flex-col gap-10">
+        <header className="flex flex-col gap-3">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-muted">
+            <Dumbbell className="h-5 w-5 text-brand" aria-hidden="true" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold">Gotowy?</h1>
-            <p className="text-sm text-muted-foreground">Powiedz jak się czujesz przed treningiem</p>
-          </div>
-        </div>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Zanim zaczniemy —</span>
+            <br />
+            <span className="font-sans font-semibold">jak się czujesz?</span>
+          </h1>
+          <p className="text-body-m text-muted-foreground">
+            Dzięki temu lepiej dopasujemy intensywność.
+          </p>
+        </header>
 
-        {/* Mood */}
-        <div>
-          <p className="mb-3 text-sm font-semibold">Nastrój</p>
+        <section className="flex flex-col gap-4">
+          <p className="text-label uppercase text-muted-foreground">Nastrój</p>
           <div className="grid grid-cols-4 gap-2">
             {MOOD_OPTIONS.map((o) => (
               <button
                 key={o.value}
                 type="button"
                 onClick={() => setMood(o.value)}
-                className={`flex flex-col items-center rounded-xl border py-3 text-center transition-colors ${
+                className={cn(
+                  'flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-4 text-center transition-[border-color,background-color,transform] duration-200 ease-premium active:scale-[0.97]',
                   mood === o.value
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-background'
-                }`}
+                    ? 'border-foreground bg-foreground text-background shadow-lift'
+                    : 'border-border bg-surface-1 text-foreground hover:border-foreground/30 hover:bg-surface-2',
+                )}
+                aria-pressed={mood === o.value}
               >
                 <span className="text-2xl">{o.emoji}</span>
-                <span className="mt-1 text-xs font-medium">{o.label}</span>
+                <span className="text-body-s font-medium tracking-tight">{o.label}</span>
               </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Energy */}
-        <div>
-          <p className="mb-3 text-sm font-semibold">Energia</p>
+        <section className="flex flex-col gap-4">
+          <p className="text-label uppercase text-muted-foreground">Energia</p>
           <div className="grid grid-cols-2 gap-2">
             {ENERGY_OPTIONS.map((o) => (
               <button
                 key={o.value}
                 type="button"
                 onClick={() => setEnergy(o.value)}
-                className={`rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
+                className={cn(
+                  'rounded-xl border px-4 py-4 text-body-m font-semibold tracking-tight transition-[border-color,background-color,transform] duration-200 ease-premium active:scale-[0.97]',
                   energy === o.value
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border bg-background'
-                }`}
+                    ? 'border-foreground bg-foreground text-background shadow-lift'
+                    : 'border-border bg-surface-1 text-foreground hover:border-foreground/30 hover:bg-surface-2',
+                )}
+                aria-pressed={energy === o.value}
               >
                 {o.label}
               </button>
             ))}
           </div>
-        </div>
+        </section>
       </div>
 
-      <button
+      <Button
         type="button"
         disabled={loading}
         onClick={() => void handleStart()}
-        className="mt-8 w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90 disabled:opacity-60"
+        size="hero"
+        className="w-full gap-2"
+        isLoading={loading}
       >
-        {loading ? 'Startuję...' : 'Zaczynamy 🔥'}
-      </button>
+        {loading ? 'Startuję…' : (
+          <>
+            Zaczynamy
+            <ArrowRight className="h-4 w-4" />
+          </>
+        )}
+      </Button>
     </div>
   )
 }

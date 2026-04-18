@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ChevronLeft, Dumbbell, RefreshCw } from 'lucide-react'
+import { ArrowLeft, ChevronRight, Dumbbell, RefreshCw, History } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardEyebrow } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { SubstituteButton } from './SubstituteButton'
 import { AskCoachButton } from '@/components/coach/AskCoachButton'
@@ -46,7 +47,6 @@ export default async function ExercisePage({
 
   if (!exercise) notFound()
 
-  // Load alternatives
   const altSlugs = (exercise.alternatives_slugs as string[]) ?? []
   const { data: alternatives } = altSlugs.length > 0
     ? await supabase
@@ -57,106 +57,154 @@ export default async function ExercisePage({
     : { data: [] }
 
   return (
-    <div className="flex flex-col gap-5 p-4 pb-8">
-      <div className="flex items-center gap-2">
-        <button onClick={() => history.back()} className="flex items-center text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" />
-          Wstecz
-        </button>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/plan"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Plan
+      </Link>
 
-      <div>
-        <h1 className="text-2xl font-semibold">{exercise.name_pl}</h1>
-        {exercise.name_en && (
-          <p className="text-sm text-muted-foreground">{exercise.name_en}</p>
-        )}
-        <div className="mt-2 flex flex-wrap gap-2">
+      <header className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {exercise.category && (
-            <Badge variant="secondary">{CATEGORY_LABELS[exercise.category as string] ?? exercise.category}</Badge>
+            <Badge variant="outline-warm">
+              {CATEGORY_LABELS[exercise.category as string] ?? exercise.category}
+            </Badge>
           )}
           {exercise.difficulty && (
-            <Badge variant="outline">{DIFFICULTY_LABELS[exercise.difficulty as string] ?? exercise.difficulty}</Badge>
+            <Badge variant="outline">
+              {DIFFICULTY_LABELS[exercise.difficulty as string] ?? exercise.difficulty}
+            </Badge>
           )}
-          {exercise.is_compound && <Badge>Wielostawowe</Badge>}
+          {exercise.is_compound && <Badge variant="brand">Wielostawowe</Badge>}
         </div>
-      </div>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-sans font-semibold">{exercise.name_pl}</span>
+        </h1>
+        {exercise.name_en && (
+          <p className="font-display text-body-l italic text-muted-foreground">
+            {exercise.name_en}
+          </p>
+        )}
+      </header>
 
-      {/* Muscles */}
+      <Link
+        href={`/app/plan/exercise/${slug}/history`}
+        className="group"
+      >
+        <Card
+          variant="default"
+          padding="sm"
+          className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+              <History className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-body-m font-semibold tracking-tight">Historia</p>
+              <p className="text-body-s text-muted-foreground">Twoje poprzednie sesje</p>
+            </div>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+        </Card>
+      </Link>
+
       {((exercise.primary_muscles as string[])?.length > 0 || (exercise.secondary_muscles as string[])?.length > 0) && (
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mięśnie</p>
-          {(exercise.primary_muscles as string[])?.length > 0 && (
-            <p className="mt-2 text-sm">
-              <span className="font-medium">Główne: </span>
-              {(exercise.primary_muscles as string[]).join(', ')}
-            </p>
-          )}
-          {(exercise.secondary_muscles as string[])?.length > 0 && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              <span className="font-medium">Pomocnicze: </span>
-              {(exercise.secondary_muscles as string[]).join(', ')}
-            </p>
-          )}
-        </div>
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Mięśnie</CardEyebrow>
+          <div className="mt-3 flex flex-col gap-2">
+            {(exercise.primary_muscles as string[])?.length > 0 && (
+              <div className="flex items-start gap-3">
+                <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
+                  Główne
+                </span>
+                <p className="flex-1 text-body-m text-foreground">
+                  {(exercise.primary_muscles as string[]).join(', ')}
+                </p>
+              </div>
+            )}
+            {(exercise.secondary_muscles as string[])?.length > 0 && (
+              <div className="flex items-start gap-3 border-t border-border/60 pt-2">
+                <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
+                  Pomocnicze
+                </span>
+                <p className="flex-1 text-body-m text-muted-foreground">
+                  {(exercise.secondary_muscles as string[]).join(', ')}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
-      {/* Technique */}
       {exercise.technique_notes && (
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Technika</p>
-          <p className="mt-2 text-sm leading-relaxed">{exercise.technique_notes}</p>
-        </div>
+        <Card variant="default" padding="md">
+          <CardEyebrow>Technika</CardEyebrow>
+          <p className="mt-3 text-body-m leading-relaxed text-foreground">
+            {exercise.technique_notes}
+          </p>
+        </Card>
       )}
 
-      {/* Common mistakes accordion */}
       {exercise.common_mistakes && (
         <Accordion type="single" collapsible>
-          <AccordionItem value="mistakes" className="rounded-xl border bg-card px-4">
-            <AccordionTrigger className="text-sm font-medium">Częste błędy</AccordionTrigger>
-            <AccordionContent className="text-sm text-muted-foreground">
+          <AccordionItem value="mistakes" className="rounded-xl border border-border bg-surface-1 px-5">
+            <AccordionTrigger className="text-body-m font-semibold tracking-tight">
+              Częste błędy
+            </AccordionTrigger>
+            <AccordionContent className="text-body-m leading-relaxed text-muted-foreground">
               {exercise.common_mistakes}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
       )}
 
-      {/* Equipment */}
       {(exercise.equipment_required as string[])?.length > 0 && (
-        <div className="flex items-center gap-2">
-          <Dumbbell className="h-4 w-4 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
-            {(exercise.equipment_required as string[]).join(', ')}
-          </p>
+        <div className="flex items-center gap-2 text-body-s text-muted-foreground">
+          <Dumbbell className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="font-mono">
+            {(exercise.equipment_required as string[]).join(' · ')}
+          </span>
         </div>
       )}
 
-      {/* Alternatives */}
       {alternatives && alternatives.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-            <p className="text-sm font-semibold">Zamienniki</p>
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+            <p className="text-label uppercase text-muted-foreground">Zamienniki</p>
           </div>
           <div className="flex flex-col gap-2">
             {alternatives.map((alt) => (
               <Link
                 key={alt.id}
                 href={`/app/plan/exercise/${alt.slug}`}
-                className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50 transition-colors"
+                className="group"
               >
-                <div>
-                  <p className="text-sm font-medium">{alt.name_pl}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {DIFFICULTY_LABELS[alt.difficulty as string] ?? alt.difficulty}
-                    {(alt.equipment_required as string[])?.length > 0 &&
-                      ` · ${(alt.equipment_required as string[]).join(', ')}`}
-                  </p>
-                </div>
-                <ChevronLeft className="h-4 w-4 rotate-180 text-muted-foreground" />
+                <Card
+                  variant="default"
+                  padding="sm"
+                  className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-body-m font-semibold tracking-tight">
+                      {alt.name_pl}
+                    </p>
+                    <p className="mt-0.5 text-body-s text-muted-foreground">
+                      {DIFFICULTY_LABELS[alt.difficulty as string] ?? alt.difficulty}
+                      {(alt.equipment_required as string[])?.length > 0 &&
+                        ` · ${(alt.equipment_required as string[]).join(', ')}`}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+                </Card>
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       <SubstituteButton exerciseSlug={slug} exerciseName={exercise.name_pl} />
