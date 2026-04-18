@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Card, CardEyebrow } from '@/components/ui/card'
 
 interface ProfileDataProps {
   profile: {
@@ -23,16 +24,16 @@ interface ProfileDataProps {
 type FieldKey = keyof ProfileDataProps['profile']
 
 const LABELS: Record<FieldKey, string> = {
-  display_name: 'Imię / pseudonim',
+  display_name: 'Imię',
   birth_date: 'Data urodzenia',
   gender: 'Płeć',
   height_cm: 'Wzrost',
   current_weight_kg: 'Masa ciała',
-  experience_level: 'Poziom doświadczenia',
+  experience_level: 'Doświadczenie',
   primary_goal: 'Cel główny',
   nutrition_mode: 'Tryb żywieniowy',
-  dietary_constraints: 'Ograniczenia dietetyczne',
-  life_context: 'Kontekst życiowy',
+  dietary_constraints: 'Ograniczenia',
+  life_context: 'Kontekst',
 }
 
 const GOAL_LABELS: Record<string, string> = {
@@ -76,8 +77,13 @@ function formatValue(key: FieldKey, value: ProfileDataProps['profile'][FieldKey]
   return String(value)
 }
 
-// Simple text/number fields that can be inline-edited
-const EDITABLE_TEXT_FIELDS = new Set<FieldKey>(['display_name', 'birth_date', 'height_cm', 'current_weight_kg'])
+const EDITABLE_TEXT_FIELDS = new Set<FieldKey>([
+  'display_name',
+  'birth_date',
+  'height_cm',
+  'current_weight_kg',
+])
+const NUMERIC_FIELDS = new Set<FieldKey>(['height_cm', 'current_weight_kg'])
 
 interface FieldRowProps {
   fieldKey: FieldKey
@@ -90,6 +96,7 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
   const [draft, setDraft] = React.useState(String(value ?? ''))
   const [saving, setSaving] = React.useState(false)
   const isEditable = EDITABLE_TEXT_FIELDS.has(fieldKey)
+  const isNumeric = NUMERIC_FIELDS.has(fieldKey)
 
   async function handleSave() {
     if (!draft.trim()) return
@@ -103,9 +110,9 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
   }
 
   return (
-    <div className="flex items-start justify-between gap-3 py-3 border-b last:border-0">
-      <div className="flex-1 min-w-0">
-        <p className="text-xs text-muted-foreground mb-0.5">{LABELS[fieldKey]}</p>
+    <div className="flex items-start justify-between gap-3 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-label uppercase text-muted-foreground">{LABELS[fieldKey]}</p>
         {editing ? (
           <Input
             value={draft}
@@ -115,17 +122,21 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
               if (e.key === 'Escape') setEditing(false)
             }}
             autoFocus
-            className="h-8 text-sm"
+            className={`mt-1 h-9 ${isNumeric ? 'font-mono tabular-nums' : ''}`}
           />
         ) : (
-          <p className="text-sm font-medium text-foreground truncate">
+          <p
+            className={`mt-0.5 truncate text-body-m font-medium tracking-tight ${
+              isNumeric ? 'font-mono tabular-nums' : ''
+            }`}
+          >
             {formatValue(fieldKey, value)}
           </p>
         )}
       </div>
 
       {isEditable && (
-        <div className="flex items-center gap-1 shrink-0 mt-3">
+        <div className="mt-3 flex shrink-0 items-center gap-1">
           {editing ? (
             <>
               <Button
@@ -173,10 +184,8 @@ export function ProfileData({ profile }: ProfileDataProps) {
   const [flashMessage, setFlashMessage] = React.useState<string | null>(null)
 
   async function handleSave(key: FieldKey, newValue: string) {
-    const isNumeric = key === 'height_cm' || key === 'current_weight_kg'
-    const body: Record<string, unknown> = {
-      field_key: key,
-    }
+    const isNumeric = NUMERIC_FIELDS.has(key)
+    const body: Record<string, unknown> = { field_key: key }
     if (isNumeric) {
       body.value_numeric = parseFloat(newValue)
     } else {
@@ -222,22 +231,20 @@ export function ProfileData({ profile }: ProfileDataProps) {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-5">
       {flashMessage && (
         <div
           role="status"
-          className="rounded-lg bg-success/10 px-4 py-2 text-sm text-success text-center"
+          className="rounded-xl bg-success/10 px-4 py-2 text-center text-body-s font-medium text-success ring-1 ring-inset ring-success/20"
         >
           {flashMessage}
         </div>
       )}
 
       {GROUPS.map((group) => (
-        <section key={group.title} className="rounded-xl border bg-card">
-          <h2 className="px-4 py-3 text-sm font-semibold text-muted-foreground border-b">
-            {group.title}
-          </h2>
-          <div className="px-4">
+        <Card key={group.title} variant="default" padding="md">
+          <CardEyebrow>{group.title}</CardEyebrow>
+          <div className="mt-3">
             {group.fields.map((key) => (
               <FieldRow
                 key={key}
@@ -247,10 +254,10 @@ export function ProfileData({ profile }: ProfileDataProps) {
               />
             ))}
           </div>
-        </section>
+        </Card>
       ))}
 
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-center text-body-s text-muted-foreground">
         Wszystkie zmiany są zapisywane w historii — możesz zawsze sprawdzić, co i kiedy zmieniłeś/aś.
       </p>
     </div>

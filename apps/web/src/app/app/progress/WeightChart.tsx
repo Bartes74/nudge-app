@@ -27,7 +27,7 @@ function formatWeight(value: number): string {
 export function WeightChart({ data }: Props) {
   if (data.length === 0) {
     return (
-      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-48 items-center justify-center text-body-s text-muted-foreground">
         Brak danych do wyświetlenia
       </div>
     )
@@ -45,54 +45,59 @@ export function WeightChart({ data }: Props) {
 
   return (
     <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+      <LineChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" />
         <XAxis
           dataKey="date"
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"
+          className="font-mono tabular-nums"
         />
         <YAxis
           domain={[minW, maxW]}
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(v: number) => `${v}`}
+          className="font-mono tabular-nums"
         />
         <Tooltip
           formatter={(value, name) => [
             formatWeight(Number(value)),
             String(name) === 'waga' ? 'Pomiar' : 'Śr. 7 dni',
           ]}
-          labelClassName="font-medium"
+          labelClassName="font-semibold"
           contentStyle={{
-            borderRadius: '8px',
+            borderRadius: '12px',
             fontSize: '12px',
+            border: '1px solid hsl(var(--border))',
+            background: 'hsl(var(--surface-1))',
+            boxShadow: '0 8px 24px -12px rgb(0 0 0 / 0.15)',
           }}
         />
         <Legend
           formatter={(value: string) => (value === 'waga' ? 'Pomiar' : 'Śr. 7 dni')}
           iconType="circle"
           iconSize={8}
-          wrapperStyle={{ fontSize: '12px' }}
+          wrapperStyle={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
         />
         <Line
           type="monotone"
           dataKey="waga"
-          stroke="hsl(var(--primary))"
-          strokeWidth={1.5}
-          dot={{ r: 3, fill: 'hsl(var(--primary))' }}
-          activeDot={{ r: 5 }}
+          stroke="hsl(var(--brand))"
+          strokeWidth={2}
+          dot={{ r: 3, fill: 'hsl(var(--brand))', strokeWidth: 0 }}
+          activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
           connectNulls={false}
         />
         <Line
           type="monotone"
           dataKey="śr. 7 dni"
           stroke="hsl(var(--muted-foreground))"
-          strokeWidth={2}
-          strokeDasharray="4 2"
+          strokeWidth={1.5}
+          strokeDasharray="4 3"
           dot={false}
           connectNulls
         />

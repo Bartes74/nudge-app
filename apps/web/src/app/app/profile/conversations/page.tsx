@@ -1,7 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { MessageCircle, ChevronRight } from 'lucide-react'
+import { MessageCircle, ChevronRight, ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { Card, CardEyebrow } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export default async function ConversationsPage() {
   const supabase = await createClient()
@@ -22,37 +25,66 @@ export default async function ConversationsPage() {
     .limit(50)
 
   return (
-    <div className="container max-w-lg py-6">
-      <h1 className="text-xl font-bold mb-4">Historia rozmów z coachem</h1>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/profile"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Profil
+      </Link>
 
-      {(!conversations || conversations.length === 0) ? (
-        <div className="text-center text-muted-foreground py-16">
-          <MessageCircle className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p>Nie masz jeszcze żadnych rozmów.</p>
-          <Link
-            href="/app/coach"
-            className="mt-4 inline-block text-brand text-sm underline underline-offset-2"
-          >
-            Zacznij rozmowę
-          </Link>
-        </div>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Coach</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Historia</span>
+          <br />
+          <span className="font-sans font-semibold">rozmów.</span>
+        </h1>
+      </header>
+
+      {!conversations || conversations.length === 0 ? (
+        <Card variant="outline" padding="xl" className="flex flex-col items-center gap-4 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2 text-muted-foreground">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-body-m font-semibold tracking-tight">Brak rozmów</p>
+            <p className="text-body-s text-muted-foreground">
+              Zadaj pierwsze pytanie coachowi.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/app/coach">Zacznij rozmowę</Link>
+          </Button>
+        </Card>
       ) : (
-        <ul className="space-y-2">
+        <div className="flex flex-col gap-2">
           {conversations.map((conv) => {
             const msgCount = (conv.coach_messages as unknown as { count: number }[])?.[0]?.count ?? 0
             const date = conv.last_message_at ?? conv.started_at
             return (
-              <li key={conv.id}>
-                <Link
-                  href={`/app/coach/${conv.id}`}
-                  className="flex items-center gap-3 rounded-xl border p-4 hover:bg-muted/40 transition-colors"
+              <Link key={conv.id} href={`/app/coach/${conv.id}`} className="group">
+                <Card
+                  variant="default"
+                  padding="sm"
+                  className="flex items-center gap-3 transition-[border-color,background-color,transform] duration-200 ease-premium hover:border-foreground/30 hover:bg-surface-2/60 active:scale-[0.99]"
                 >
-                  <MessageCircle className="h-5 w-5 text-brand shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {getConvTitle(conv.entry_point, conv.context_entity_type)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-muted text-brand">
+                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-body-m font-medium tracking-tight">
+                        {getConvTitle(conv.entry_point, conv.context_entity_type)}
+                      </p>
+                      {conv.closed && (
+                        <Badge variant="label" className="px-0 text-[10px]">
+                          zakończona
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="mt-0.5 font-mono text-body-s tabular-nums text-muted-foreground">
                       {msgCount} {msgCount === 1 ? 'wiadomość' : 'wiadomości'} ·{' '}
                       {new Date(date).toLocaleDateString('pl-PL', {
                         day: 'numeric',
@@ -61,15 +93,12 @@ export default async function ConversationsPage() {
                       })}
                     </p>
                   </div>
-                  {conv.closed && (
-                    <span className="text-xs text-muted-foreground mr-1">zakończona</span>
-                  )}
-                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                </Link>
-              </li>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+                </Card>
+              </Link>
             )
           })}
-        </ul>
+        </div>
       )}
     </div>
   )

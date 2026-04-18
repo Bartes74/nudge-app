@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Scale } from 'lucide-react'
+import { ArrowLeft, ArrowUp, ArrowDown, Minus, Scale } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardEyebrow } from '@/components/ui/card'
 import { WeightChart } from '../WeightChart'
 import { computeRollingAverage, computeTrend } from '../weightUtils'
 
@@ -30,58 +31,70 @@ export default async function WeightProgressPage() {
   const latestWeight = points.length > 0 ? points[points.length - 1]!.weight_kg : null
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div className="flex items-center gap-3">
-        <Link href="/app/progress" className="text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-xl font-semibold">Historia wagi</h1>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/progress"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Postępy
+      </Link>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Aktualna waga</p>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Waga</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Trend</span>
+          <br />
+          <span className="font-sans font-semibold">masy ciała.</span>
+        </h1>
+      </header>
+
+      <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-label uppercase text-muted-foreground">Aktualna</span>
           {latestWeight != null ? (
-            <p className="text-3xl font-bold tabular-nums">
-              {latestWeight.toFixed(1)}{' '}
-              <span className="text-base font-normal text-muted-foreground">kg</span>
-            </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-mono text-data-xl tabular-nums tracking-tight text-foreground">
+                {latestWeight.toFixed(1)}
+              </span>
+              <span className="text-body-m text-muted-foreground">kg</span>
+            </div>
           ) : (
-            <p className="text-muted-foreground">—</p>
+            <span className="font-mono text-data-xl tabular-nums text-muted-foreground">—</span>
           )}
         </div>
         {trend && (
-          <div className="flex items-center gap-1.5 rounded-lg bg-muted/50 px-3 py-1.5">
-            {trend.direction === 'up' && <TrendingUp className="h-4 w-4 text-amber-500" />}
-            {trend.direction === 'down' && <TrendingDown className="h-4 w-4 text-green-500" />}
-            {trend.direction === 'stable' && <Minus className="h-4 w-4 text-muted-foreground" />}
-            <span className="text-sm font-medium tabular-nums">
+          <div className="flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 ring-1 ring-inset ring-border/70">
+            {trend.direction === 'up' && <ArrowUp className="h-3.5 w-3.5 text-warning" />}
+            {trend.direction === 'down' && <ArrowDown className="h-3.5 w-3.5 text-success" />}
+            {trend.direction === 'stable' && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span className="font-mono text-body-s tabular-nums font-medium">
               {trend.delta_kg > 0 ? '+' : ''}
               {trend.delta_kg.toFixed(1)} kg
             </span>
-            <span className="text-xs text-muted-foreground">7 dni</span>
+            <span className="text-label uppercase text-muted-foreground">7 dni</span>
           </div>
         )}
       </div>
 
-      <section className="rounded-xl border bg-card p-4">
+      <Card variant="default" padding="md">
         <WeightChart data={dataWithRolling} />
-      </section>
+      </Card>
 
       {points.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
+        <Card variant="outline" padding="lg" className="flex flex-col items-center gap-3 text-center">
           <Scale className="h-10 w-10 text-muted-foreground/50" />
-          <p className="text-sm font-medium">Brak pomiarów wagi</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-body-m font-semibold tracking-tight">Brak pomiarów</p>
+          <p className="text-body-s text-muted-foreground">
             Pierwsze zważenie pojawi się tutaj.
           </p>
-        </div>
+        </Card>
       )}
 
-      <Button asChild variant="outline" className="gap-2">
+      <Button asChild size="lg" variant="outline" className="gap-2">
         <Link href="/app/nutrition/log-weight">
           <Scale className="h-4 w-4" />
-          Zaloguj wagę
+          Zapisz wagę
         </Link>
       </Button>
     </div>

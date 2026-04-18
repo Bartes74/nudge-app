@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient, getUser } from '@/lib/supabase/server'
+import { Card } from '@/components/ui/card'
 import { ProfileSettings } from './ProfileSettings'
 import { ProfileData } from './ProfileData'
 
@@ -24,18 +26,27 @@ export default async function ProfilePage() {
   ])
 
   return (
-    <div className="flex flex-col gap-6 p-4 pb-8 max-w-lg mx-auto">
-      <h1 className="text-2xl font-semibold">Profil</h1>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Ty</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Twój</span>
+          <br />
+          <span className="font-sans font-semibold">profil.</span>
+        </h1>
+      </header>
 
       {profileResult.data?.onboarding_layer_1_done ? (
         <ProfileData profile={profileResult.data} />
       ) : (
-        <div className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-          Nie ukończyłeś/aś jeszcze onboardingu.{' '}
-          <a href="/onboarding" className="text-primary underline">
-            Skonfiguruj profil →
-          </a>
-        </div>
+        <Card variant="outline" padding="md">
+          <p className="text-body-m text-muted-foreground">
+            Nie ukończyłeś/aś jeszcze onboardingu.{' '}
+            <Link href="/onboarding" className="font-semibold text-brand underline-offset-4 hover:underline">
+              Skonfiguruj profil →
+            </Link>
+          </p>
+        </Card>
       )}
 
       <ProfileSettings
