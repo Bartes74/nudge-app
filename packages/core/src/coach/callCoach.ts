@@ -46,8 +46,16 @@ export interface CoachStreamResult {
   stream: AsyncGenerator<string, void, unknown>
   /** Resolved after stream finishes — contains final assembled text */
   fullText: Promise<string>
-  tokensIn: number
-  tokensOut: number
+  /**
+   * Resolved after stream finishes with final classify+stream aggregate tokens.
+   * Must be awaited after consuming the stream; reading before stream end will
+   * hang. These are Promises (not plain numbers) because streaming usage only
+   * arrives with the last chunk.
+   */
+  tokensIn: Promise<number>
+  tokensOut: Promise<number>
+  /** Total latency across fast-path / classification + streaming response, in ms. */
+  latencyMs: Promise<number>
 }
 
 export function interpolateTemplate(template: string, context: CoachContext & { user_message: string }): string {
@@ -70,6 +78,8 @@ export function interpolateTemplate(template: string, context: CoachContext & { 
 
 export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResult> {
   const { apiKey, model, userMessage, context, prompt, conversationHistory, userSafetyFlags } = opts
+
+  const start = Date.now()
 
   // Fast-path intent classification (avoids LLM call for obvious cases)
   const fastIntent = fastClassifyIntent(userMessage)
@@ -114,6 +124,12 @@ export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResu
 
   let resolveFullText!: (text: string) => void
   const fullText = new Promise<string>((resolve) => { resolveFullText = resolve })
+  let resolveLatency!: (ms: number) => void
+  const latencyMs = new Promise<number>((resolve) => { resolveLatency = resolve })
+  let resolveTokensIn!: (n: number) => void
+  const tokensInPromise = new Promise<number>((resolve) => { resolveTokensIn = resolve })
+  let resolveTokensOut!: (n: number) => void
+  const tokensOutPromise = new Promise<number>((resolve) => { resolveTokensOut = resolve })
 
   const guardrailFlags: string[] = []
   let guardrailModified = false
@@ -142,6 +158,9 @@ export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResu
     }
 
     resolveFullText(guardrailResult.modified_text)
+    resolveLatency(Date.now() - start)
+    resolveTokensIn(tokensIn)
+    resolveTokensOut(tokensOut)
   }
 
   const stream = generateChunks()
@@ -153,7 +172,8 @@ export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResu
     guardrailModified,
     stream,
     fullText,
-    tokensIn,
-    tokensOut,
+    tokensIn: tokensInPromise,
+    tokensOut: tokensOutPromise,
+    latencyMs,
   }
 }

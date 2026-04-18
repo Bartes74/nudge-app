@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { callStructured } from '../llm/client'
+import { callStructured, logLlmCall } from '../llm/client'
 
 export interface CheckinAggregates {
   weekOf: string
@@ -203,21 +203,11 @@ Zasady werdyktu:
     schemaName: 'checkin_analysis',
   })
 
-  const { data: llmCall } = await opts.supabase
-    .from('llm_calls')
-    .insert({
-      user_id: opts.userId,
-      provider: meta.provider,
-      model: meta.model,
-      tokens_in: meta.tokens_in,
-      tokens_out: meta.tokens_out,
-      cost_usd: meta.cost_usd,
-      latency_ms: meta.latency_ms,
-      output_valid: true,
-      used_structured_output: true,
-    })
-    .select('id')
-    .single()
+  const llmCallId = await logLlmCall({
+    supabase: opts.supabase,
+    userId: opts.userId,
+    meta,
+  })
 
   const planChangeNeeded = output.plan_change_needed
   const planChangeDetails =
@@ -236,6 +226,6 @@ Zasady werdyktu:
       planChangeNeeded,
       planChangeDetails,
     },
-    llmCallId: llmCall?.id ?? null,
+    llmCallId,
   }
 }

@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 
 export interface LlmCallMeta {
@@ -12,6 +13,52 @@ export interface LlmCallMeta {
 export interface StructuredCallResult<T> {
   output: T
   meta: LlmCallMeta
+}
+
+/**
+ * Convention: every call to `callStructured` / `callStructuredVision` / any
+ * direct OpenAI streaming call must be followed by a row in `public.llm_calls`
+ * (CLAUDE.md zasada #6). Use this helper to keep the insert shape uniform
+ * across callers — it covers the columns every caller needs (meta + user_id)
+ * and accepts the optional attribution fields (prompt_id, prompt_version,
+ * ai_task_id) that differ per call site.
+ *
+ * The Supabase client must have insert rights on `llm_calls` — use a service
+ * role client in API routes / jobs, or the user-scoped client only if the
+ * current RLS policy allows self-inserts.
+ */
+export interface LogLlmCallInput {
+  supabase: SupabaseClient
+  userId: string | null
+  meta: LlmCallMeta
+  promptId?: string | null
+  promptVersion?: number | null
+  aiTaskId?: string | null
+  usedStructuredOutput?: boolean
+  outputValid?: boolean
+}
+
+export async function logLlmCall(input: LogLlmCallInput): Promise<string | null> {
+  const { data } = await input.supabase
+    .from('llm_calls')
+    .insert({
+      user_id: input.userId,
+      provider: input.meta.provider,
+      model: input.meta.model,
+      prompt_id: input.promptId ?? null,
+      prompt_version: input.promptVersion ?? null,
+      ai_task_id: input.aiTaskId ?? null,
+      tokens_in: input.meta.tokens_in,
+      tokens_out: input.meta.tokens_out,
+      cost_usd: input.meta.cost_usd,
+      latency_ms: input.meta.latency_ms,
+      used_structured_output: input.usedStructuredOutput ?? true,
+      output_valid: input.outputValid ?? true,
+    })
+    .select('id')
+    .single()
+
+  return data?.id ?? null
 }
 
 // OpenAI pricing (input/output per 1M tokens, USD)

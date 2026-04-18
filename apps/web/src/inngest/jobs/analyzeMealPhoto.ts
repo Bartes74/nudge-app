@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { inngest } from '../client'
 import { env } from '@/lib/env'
 import { analyzeMealPhoto } from '@nudge/core/vision/analyzeMealPhoto'
+import { logLlmCall } from '@nudge/core/llm/client'
 
 const MONTHLY_COST_ALERT_USD = 5
 
@@ -62,25 +63,15 @@ export const analyzeMealPhotoJob = inngest.createFunction(
         note: note ?? undefined,
       })
 
-      const { data: llmCall } = await supabase
-        .from('llm_calls')
-        .insert({
-          user_id,
-          provider: result.meta.provider,
-          model: result.meta.model,
-          prompt_id: promptData?.id ?? null,
-          prompt_version: 1,
-          tokens_in: result.meta.tokens_in,
-          tokens_out: result.meta.tokens_out,
-          cost_usd: result.meta.cost_usd,
-          latency_ms: result.meta.latency_ms,
-          used_structured_output: true,
-          output_valid: true,
-        })
-        .select('id')
-        .single()
+      const llmCallId = await logLlmCall({
+        supabase,
+        userId: user_id,
+        meta: result.meta,
+        promptId: promptData?.id ?? null,
+        promptVersion: 1,
+      })
 
-      return { analysis: result.output, llmCallId: llmCall?.id ?? null }
+      return { analysis: result.output, llmCallId }
     })
 
     await step.run('save-results', async () => {

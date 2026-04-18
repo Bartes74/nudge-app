@@ -4,6 +4,7 @@ import { env } from '@/lib/env'
 import { evaluateGuardrails, hasBlockingGuardrail } from '@nudge/core/rules/guardrails'
 import { calculateNutritionTargets } from '@nudge/core/planners/nutrition/calculateNutritionTargets'
 import { generateNutritionPlan } from '@nudge/core/planners/nutrition/generateNutritionPlan'
+import { logLlmCall } from '@nudge/core/llm/client'
 import type { NutritionPlannerProfile } from '@nudge/core/planners/nutrition/types'
 import type { GuardrailProfile, GuardrailContext } from '@nudge/core/rules/guardrails'
 import type { ActivityLevel } from '@nudge/core/domain/profile'
@@ -139,26 +140,16 @@ export const generateNutritionPlanJob = inngest.createFunction(
         promptId: promptData.id,
       })
 
-      const { data: llmCall } = await supabase
-        .from('llm_calls')
-        .insert({
-          user_id,
-          ai_task_id: task_id,
-          provider: result.meta.provider,
-          model: result.meta.model,
-          prompt_id: promptData.id,
-          prompt_version: 1,
-          tokens_in: result.meta.tokens_in,
-          tokens_out: result.meta.tokens_out,
-          cost_usd: result.meta.cost_usd,
-          latency_ms: result.meta.latency_ms,
-          used_structured_output: true,
-          output_valid: true,
-        })
-        .select('id')
-        .single()
+      const llmCallId = await logLlmCall({
+        supabase,
+        userId: user_id,
+        meta: result.meta,
+        aiTaskId: task_id,
+        promptId: promptData.id,
+        promptVersion: 1,
+      })
 
-      return { planOutput: result.plan, llmCallId: llmCall?.id ?? null }
+      return { planOutput: result.plan, llmCallId }
     })
 
     const planVersionId = await step.run('save-plan', async () => {

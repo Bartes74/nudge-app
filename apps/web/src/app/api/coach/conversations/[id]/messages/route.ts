@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { callCoach } from '@nudge/core/coach/callCoach'
+import { logLlmCall } from '@nudge/core/llm/client'
 import { env } from '@/lib/env'
 import type { CoachContext } from '@nudge/core/coach/types'
 
@@ -207,6 +208,9 @@ export async function POST(
         }
 
         finalText = await coachResult.fullText
+        const tokensIn = await coachResult.tokensIn
+        const tokensOut = await coachResult.tokensOut
+        const latencyMs = await coachResult.latencyMs
 
         // If guardrail modified the text, send the corrected full text
         if (coachResult.guardrailModified) {
@@ -223,32 +227,30 @@ export async function POST(
           env.SUPABASE_SERVICE_ROLE_KEY,
         )
 
-        // Record LLM call
-        const { data: llmCallRow } = await serviceSupabase
-          .from('llm_calls')
-          .insert({
-            user_id: user.id,
+        const llmCallId = await logLlmCall({
+          supabase: serviceSupabase,
+          userId: user.id,
+          meta: {
             provider: 'openai',
             model: 'gpt-4o-mini',
-            prompt_id: promptMap[coachResult.promptSlug]?.id ?? null,
-            prompt_version: 1,
-            tokens_in: coachResult.tokensIn,
-            tokens_out: coachResult.tokensOut,
-            cost_usd:
-              (coachResult.tokensIn * 0.15 + coachResult.tokensOut * 0.6) /
-              1_000_000,
-          })
-          .select('id')
-          .single()
+            tokens_in: tokensIn,
+            tokens_out: tokensOut,
+            cost_usd: (tokensIn * 0.15 + tokensOut * 0.6) / 1_000_000,
+            latency_ms: latencyMs,
+          },
+          promptId: promptMap[coachResult.promptSlug]?.id ?? null,
+          promptVersion: 1,
+          usedStructuredOutput: false,
+        })
 
         await serviceSupabase.from('coach_messages').insert({
           conversation_id: conversationId,
           role: 'assistant',
           content: finalText,
           intent: coachResult.intent,
-          tokens_in: coachResult.tokensIn,
-          tokens_out: coachResult.tokensOut,
-          llm_call_id: llmCallRow?.id ?? null,
+          tokens_in: tokensIn,
+          tokens_out: tokensOut,
+          llm_call_id: llmCallId,
           guardrail_flagged: coachResult.guardrailFlags.length > 0,
           guardrail_reasons:
             coachResult.guardrailFlags.length > 0 ? coachResult.guardrailFlags : null,
