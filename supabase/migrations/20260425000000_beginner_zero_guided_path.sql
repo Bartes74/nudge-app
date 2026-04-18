@@ -28,9 +28,8 @@ BEGIN
   END IF;
 END $$;
 
-DO $$ BEGIN
-  ALTER TYPE tone_preset ADD VALUE IF NOT EXISTS 'calm_guided';
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+-- tone_preset 'calm_guided' is added in 20260424900000_tone_preset_calm_guided.sql
+-- (Postgres forbids using a new enum value in the same transaction that adds it)
 
 DO $$ BEGIN
   CREATE TYPE entry_path AS ENUM ('guided_beginner', 'standard_training');
