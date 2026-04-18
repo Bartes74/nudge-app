@@ -1,6 +1,27 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "NODE_ENV",
+    "SKIP_ENV_VALIDATION",
+    "OPENAI_API_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "RESEND_API_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "SENTRY_AUTH_TOKEN",
+    "INNGEST_EVENT_KEY",
+    "INNGEST_SIGNING_KEY",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "NEXT_PUBLIC_POSTHOG_HOST",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "NEXT_PUBLIC_DEV_MODE",
+    "NEXT_PUBLIC_APP_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
