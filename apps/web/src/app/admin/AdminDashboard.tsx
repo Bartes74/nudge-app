@@ -3,11 +3,12 @@
 import type { ReactNode } from 'react'
 import { useFormState } from 'react-dom'
 import Link from 'next/link'
+import { Users, TrendingUp, DollarSign, Zap, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Users, TrendingUp, DollarSign, Zap, AlertTriangle } from 'lucide-react'
+import { Card, CardEyebrow } from '@/components/ui/card'
 import { createUserAction, type CreateUserActionState } from './actions'
 
 export interface AdminUserRow {
@@ -58,153 +59,222 @@ export function AdminDashboard({
   const costAlert = costPerUser > COST_ALERT_USD
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Zarządzanie metrykami i użytkownikami testowymi.
+    <div className="mx-auto flex max-w-5xl flex-col gap-10 px-5 pt-8 pb-24 animate-stagger">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Wewnętrzne · Admin</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight">
+            <span className="font-display italic text-muted-foreground">Panel</span>{' '}
+            <span className="font-sans font-semibold">administratora.</span>
+          </h1>
+          <p className="text-body-m text-muted-foreground">
+            Metryki biznesowe, kosztów AI i użytkownicy testowi.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/app">
-            <Button variant="outline" size="sm">
-              Otwórz aplikację
-            </Button>
-          </Link>
-          <Badge variant="outline">Internal</Badge>
+          <Button asChild variant="outline" size="sm">
+            <Link href="/app">Otwórz aplikację</Link>
+          </Button>
+          <Badge variant="outline-warm">Internal</Badge>
         </div>
-      </div>
+      </header>
 
       <CreateUserForm />
 
-      {/* KPI grid */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard
-          icon={<Users className="h-4 w-4" />}
-          label="Aktywni"
-          value={active}
-          sub="active"
-        />
-        <StatCard
-          icon={<Zap className="h-4 w-4 text-yellow-500" />}
-          label="Trial"
-          value={trial}
-          sub="aktywnych triali"
-        />
-        <StatCard
-          icon={<TrendingUp className="h-4 w-4 text-blue-500" />}
-          label="MRR"
-          value={`${mrrPln.toFixed(0)} PLN`}
-          sub="szacunkowy"
-        />
-        <StatCard
-          icon={<DollarSign className={`h-4 w-4 ${costAlert ? 'text-destructive' : 'text-green-600'}`} />}
-          label="Koszt/user"
-          value={`$${costPerUser.toFixed(2)}`}
-          sub="bieżący miesiąc"
-          alert={costAlert}
-        />
-      </div>
-
-      {/* Secondary metrics */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <StatCard icon={<Users className="h-4 w-4" />} label="Paused" value={paused} sub="" />
-        <StatCard icon={<Users className="h-4 w-4 text-destructive" />} label="Churned" value={cancelled} sub="" />
-        <StatCard icon={<TrendingUp className="h-4 w-4" />} label="Churn rate" value={`${churnRate}%`} sub="lifetime" />
-      </div>
-
-      {/* Cost alert */}
-      {costAlert && (
-        <div className="flex items-start gap-3 rounded-lg bg-destructive/10 border border-destructive/30 p-4 text-sm">
-          <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
-          <div>
-            <p className="font-semibold text-destructive">
-              Koszt powyżej progu ${COST_ALERT_USD}/user
-            </p>
-            <p className="text-muted-foreground mt-1">
-              Sprawdź top consumers poniżej. Rozważ: kompresję zdjęć, cache promptów, przegląd rate limitów.
-            </p>
-          </div>
+      <section className="flex flex-col gap-3">
+        <CardEyebrow>KPI</CardEyebrow>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard
+            icon={<Users className="h-4 w-4" />}
+            label="Aktywni"
+            value={active}
+            sub="Active"
+            tone="success"
+          />
+          <StatCard
+            icon={<Zap className="h-4 w-4" />}
+            label="Trial"
+            value={trial}
+            sub="Aktywne triale"
+            tone="brand"
+          />
+          <StatCard
+            icon={<TrendingUp className="h-4 w-4" />}
+            label="MRR"
+            value={`${mrrPln.toFixed(0)}`}
+            suffix="PLN"
+            sub="Szacunkowy"
+            tone="neutral"
+          />
+          <StatCard
+            icon={<DollarSign className="h-4 w-4" />}
+            label="Koszt / user"
+            value={`$${costPerUser.toFixed(2)}`}
+            sub="Bieżący miesiąc"
+            tone={costAlert ? 'destructive' : 'success'}
+          />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <CardEyebrow>Sub-metryki</CardEyebrow>
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard
+            icon={<Users className="h-4 w-4" />}
+            label="Paused"
+            value={paused}
+            sub=""
+            tone="neutral"
+          />
+          <StatCard
+            icon={<Users className="h-4 w-4" />}
+            label="Churned"
+            value={cancelled}
+            sub=""
+            tone="destructive"
+          />
+          <StatCard
+            icon={<TrendingUp className="h-4 w-4" />}
+            label="Churn rate"
+            value={`${churnRate}%`}
+            sub="Lifetime"
+            tone="neutral"
+          />
+        </div>
+      </section>
+
+      {costAlert && (
+        <Card variant="default" padding="md" className="ring-1 ring-inset ring-destructive/30">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-body-m font-semibold text-destructive">
+                Koszt powyżej progu ${COST_ALERT_USD}/user
+              </p>
+              <p className="text-body-s leading-relaxed text-muted-foreground">
+                Sprawdź top consumers poniżej. Rozważ: kompresję zdjęć, cache promptów, przegląd rate limitów.
+              </p>
+            </div>
+          </div>
+        </Card>
       )}
 
-      {/* Top AI consumers */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Top consumers (bieżący miesiąc)</h2>
-        <div className="rounded-xl border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left px-4 py-2 font-medium text-muted-foreground">User ID</th>
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Koszt (USD)</th>
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">LLM calls</th>
-                <th className="text-right px-4 py-2 font-medium text-muted-foreground">Zdjęcia</th>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between">
+          <CardEyebrow>Top consumers · bieżący miesiąc</CardEyebrow>
+          <span className="font-mono text-label uppercase tabular-nums text-muted-foreground">
+            Top {topUsers.length}
+          </span>
+        </div>
+        <Card variant="default" padding="none" className="overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-surface-2">
+                <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                  User ID
+                </th>
+                <th className="px-4 py-3 text-right text-label uppercase text-muted-foreground">
+                  Koszt (USD)
+                </th>
+                <th className="px-4 py-3 text-right text-label uppercase text-muted-foreground">
+                  LLM calls
+                </th>
+                <th className="px-4 py-3 text-right text-label uppercase text-muted-foreground">
+                  Zdjęcia
+                </th>
               </tr>
             </thead>
             <tbody>
               {topUsers.map((u, i) => (
-                <tr key={u.user_id} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                  <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
+                <tr
+                  key={u.user_id}
+                  className={`border-b border-border/40 last:border-b-0 ${
+                    i % 2 === 0 ? 'bg-surface-1' : 'bg-surface-2/30'
+                  }`}
+                >
+                  <td className="px-4 py-3 font-mono text-body-s text-muted-foreground">
                     {u.user_id.slice(0, 8)}…
                   </td>
-                  <td className="px-4 py-2 text-right font-medium">
+                  <td className="px-4 py-3 text-right font-mono text-body-s font-semibold tabular-nums">
                     ${Number(u.cost_usd_total).toFixed(3)}
                   </td>
-                  <td className="px-4 py-2 text-right">{u.llm_calls_count}</td>
-                  <td className="px-4 py-2 text-right">{u.photo_analysis_count}</td>
+                  <td className="px-4 py-3 text-right font-mono text-body-s tabular-nums">
+                    {u.llm_calls_count}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-body-s tabular-nums">
+                    {u.photo_analysis_count}
+                  </td>
                 </tr>
               ))}
               {topUsers.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">
+                  <td
+                    colSpan={4}
+                    className="px-4 py-8 text-center text-body-s text-muted-foreground"
+                  >
                     Brak danych za bieżący miesiąc
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
-      </div>
+        </Card>
+      </section>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Użytkownicy</h2>
-            <p className="text-sm text-muted-foreground">
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <CardEyebrow>Użytkownicy</CardEyebrow>
+            <p className="text-body-s text-muted-foreground">
               Konta utworzone w Supabase. Nowe konta z tego panelu są od razu potwierdzone i dostają trial.
             </p>
           </div>
           <Badge variant="secondary">{users.length} kont</Badge>
         </div>
 
-        <div className="rounded-xl border overflow-hidden">
+        <Card variant="default" padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Użytkownik</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Rola</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Status</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Onboarding</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Tryb</th>
-                  <th className="text-left px-4 py-2 font-medium text-muted-foreground">Utworzono</th>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface-2">
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Użytkownik
+                  </th>
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Rola
+                  </th>
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Onboarding
+                  </th>
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Tryb
+                  </th>
+                  <th className="px-4 py-3 text-left text-label uppercase text-muted-foreground">
+                    Utworzono
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user, index) => (
                   <tr
                     key={user.id}
-                    className={index % 2 === 0 ? 'bg-background' : 'bg-muted/20'}
+                    className={`border-b border-border/40 last:border-b-0 ${
+                      index % 2 === 0 ? 'bg-surface-1' : 'bg-surface-2/30'
+                    }`}
                   >
                     <td className="px-4 py-3 align-top">
-                      <div className="space-y-0.5">
-                        <p className="font-medium">{user.email}</p>
-                        <p className="font-mono text-xs text-muted-foreground">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-body-s font-semibold">{user.email}</p>
+                        <p className="font-mono text-label uppercase tabular-nums text-muted-foreground">
                           {user.id.slice(0, 8)}…
                         </p>
                         {user.deletedAt && (
-                          <p className="text-xs text-destructive">Soft deleted</p>
+                          <p className="text-label uppercase text-destructive">Soft deleted</p>
                         )}
                       </div>
                     </td>
@@ -212,42 +282,48 @@ export function AdminDashboard({
                       <RoleBadge role={user.role} />
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="space-y-1">
-                        <p>{formatSubscriptionStatus(user.subscriptionStatus)}</p>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-body-s">
+                          {formatSubscriptionStatus(user.subscriptionStatus)}
+                        </p>
                         {user.trialEndsAt && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="font-mono text-label uppercase tabular-nums text-muted-foreground">
                             Trial do {formatDate(user.trialEndsAt)}
                           </p>
                         )}
                         {!user.emailConfirmedAt && (
-                          <p className="text-xs text-amber-600">E-mail niepotwierdzony</p>
+                          <p className="text-label uppercase text-warning">
+                            E-mail niepotwierdzony
+                          </p>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-top text-body-s">
                       {user.onboardingDone ? 'Gotowy' : 'Do przejścia'}
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="space-y-1">
-                        <p>{formatEntryPath(user.entryPath)}</p>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-body-s">{formatEntryPath(user.entryPath)}</p>
                         {user.adaptationPhase && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-label uppercase text-muted-foreground">
                             {formatAdaptationPhase(user.adaptationPhase)}
                           </p>
                         )}
                         {user.experienceLevel && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-label uppercase text-muted-foreground">
                             {user.experienceLevel}
                           </p>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 align-top">
-                      <div className="space-y-1">
-                        <p>{formatDate(user.createdAt)}</p>
+                      <div className="flex flex-col gap-1">
+                        <p className="font-mono text-body-s tabular-nums">
+                          {formatDate(user.createdAt)}
+                        </p>
                         {user.lastActiveAt && (
-                          <p className="text-xs text-muted-foreground">
-                            Ostatnia aktywność: {formatDate(user.lastActiveAt)}
+                          <p className="font-mono text-label uppercase tabular-nums text-muted-foreground">
+                            Ostatnia {formatDate(user.lastActiveAt)}
                           </p>
                         )}
                       </div>
@@ -256,7 +332,10 @@ export function AdminDashboard({
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-body-s text-muted-foreground"
+                    >
                       Brak użytkowników do wyświetlenia
                     </td>
                   </tr>
@@ -264,28 +343,33 @@ export function AdminDashboard({
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
+        </Card>
+      </section>
     </div>
   )
 }
 
 function CreateUserForm() {
-  const [state, formAction] =
-    useFormState<CreateUserActionState, FormData>(createUserAction, null)
+  const [state, formAction] = useFormState<CreateUserActionState, FormData>(
+    createUserAction,
+    null,
+  )
 
   return (
-    <section className="rounded-2xl border bg-card p-5 space-y-4">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold">Dodaj użytkownika</h2>
-        <p className="text-sm text-muted-foreground">
-          Konto zostanie utworzone od razu z potwierdzonym e-mailem. Nowy user dostanie automatycznie trial i będzie mógł od razu się zalogować.
+    <Card variant="default" padding="lg">
+      <div className="flex flex-col gap-1">
+        <CardEyebrow>Dodaj użytkownika</CardEyebrow>
+        <p className="text-body-s leading-relaxed text-muted-foreground">
+          Konto zostanie utworzone od razu z potwierdzonym e-mailem. Nowy user dostanie
+          automatycznie trial i będzie mógł od razu się zalogować.
         </p>
       </div>
 
-      <form action={formAction} className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-email">E-mail</Label>
+      <form action={formAction} className="mt-5 grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="admin-email" className="text-label uppercase text-muted-foreground">
+            E-mail
+          </Label>
           <Input
             id="admin-email"
             name="email"
@@ -296,8 +380,13 @@ function CreateUserForm() {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-password">Hasło</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label
+            htmlFor="admin-password"
+            className="text-label uppercase text-muted-foreground"
+          >
+            Hasło
+          </Label>
           <Input
             id="admin-password"
             name="password"
@@ -308,8 +397,13 @@ function CreateUserForm() {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-full-name">Imię i nazwisko</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label
+            htmlFor="admin-full-name"
+            className="text-label uppercase text-muted-foreground"
+          >
+            Imię i nazwisko
+          </Label>
           <Input
             id="admin-full-name"
             name="fullName"
@@ -318,13 +412,15 @@ function CreateUserForm() {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="admin-role">Rola</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="admin-role" className="text-label uppercase text-muted-foreground">
+            Rola
+          </Label>
           <select
             id="admin-role"
             name="role"
             defaultValue="user"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            className="flex h-11 w-full rounded-xl border border-input bg-surface-1 px-3 py-2 text-body-m ring-offset-background transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             <option value="user">Zwykły użytkownik</option>
             <option value="tester">Tester</option>
@@ -332,30 +428,38 @@ function CreateUserForm() {
           </select>
         </div>
 
-        <div className="md:col-span-2 flex items-center justify-between gap-3">
-          <div className="space-y-1">
+        <div className="flex items-center justify-between gap-3 md:col-span-2">
+          <div className="flex-1">
             {state?.error && (
-              <p className="text-sm text-destructive" role="alert">
-                {state.error}
-              </p>
+              <div
+                className="flex items-start gap-2 text-body-s text-destructive"
+                role="alert"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{state.error}</span>
+              </div>
             )}
             {state?.success && (
-              <p className="text-sm text-green-700" role="status">
-                {state.success}
-              </p>
+              <div
+                className="flex items-start gap-2 text-body-s text-success"
+                role="status"
+              >
+                <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{state.success}</span>
+              </div>
             )}
           </div>
 
           <Button type="submit">Utwórz użytkownika</Button>
         </div>
       </form>
-    </section>
+    </Card>
   )
 }
 
 function RoleBadge({ role }: { role: AdminUserRow['role'] }) {
   if (role === 'admin') {
-    return <Badge>Admin</Badge>
+    return <Badge variant="brand">Admin</Badge>
   }
 
   if (role === 'tester') {
@@ -415,29 +519,69 @@ function formatDate(value: string | null): string {
   })
 }
 
+function toneStyles(tone: 'success' | 'brand' | 'destructive' | 'neutral'): {
+  iconBg: string
+  valueText: string
+  ring: string
+} {
+  if (tone === 'success') {
+    return {
+      iconBg: 'bg-success/10 text-success',
+      valueText: 'text-foreground',
+      ring: '',
+    }
+  }
+  if (tone === 'brand') {
+    return {
+      iconBg: 'bg-brand-muted text-brand',
+      valueText: 'text-foreground',
+      ring: '',
+    }
+  }
+  if (tone === 'destructive') {
+    return {
+      iconBg: 'bg-destructive/10 text-destructive',
+      valueText: 'text-destructive',
+      ring: 'ring-1 ring-inset ring-destructive/20',
+    }
+  }
+  return {
+    iconBg: 'bg-surface-2 text-muted-foreground',
+    valueText: 'text-foreground',
+    ring: '',
+  }
+}
+
 function StatCard({
   icon,
   label,
   value,
   sub,
-  alert,
+  suffix,
+  tone = 'neutral',
 }: {
   icon: ReactNode
   label: string
   value: string | number
   sub: string
-  alert?: boolean
+  suffix?: string
+  tone?: 'success' | 'brand' | 'destructive' | 'neutral'
 }) {
+  const tones = toneStyles(tone)
+
   return (
-    <div
-      className={`rounded-xl border p-4 space-y-1 ${alert ? 'border-destructive/50 bg-destructive/5' : 'bg-card'}`}
-    >
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {icon}
-        {label}
+    <Card variant="default" padding="md" className={tones.ring}>
+      <div className="flex items-center justify-between">
+        <CardEyebrow>{label}</CardEyebrow>
+        <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${tones.iconBg}`}>
+          {icon}
+        </div>
       </div>
-      <p className={`text-2xl font-bold ${alert ? 'text-destructive' : ''}`}>{value}</p>
-      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
-    </div>
+      <div className="mt-3 flex items-baseline gap-1.5 font-mono tabular-nums">
+        <span className={`text-data-l font-semibold ${tones.valueText}`}>{value}</span>
+        {suffix && <span className="text-label uppercase text-muted-foreground">{suffix}</span>}
+      </div>
+      {sub && <p className="mt-1 text-label uppercase text-muted-foreground">{sub}</p>}
+    </Card>
   )
 }
