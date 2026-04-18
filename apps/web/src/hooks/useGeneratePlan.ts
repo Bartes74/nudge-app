@@ -40,7 +40,7 @@ export function useGeneratePlan(onComplete: () => void) {
 
     // Poll for completion
     const poll = setInterval(async () => {
-      const taskRes = await fetch(`/api/plan/training/tasks/${taskId}`)
+      const taskRes = await fetch(`/api/ai-tasks/${taskId}`)
       const task = await taskRes.json() as { status: string; error?: string }
 
       if (task.status === 'completed') {

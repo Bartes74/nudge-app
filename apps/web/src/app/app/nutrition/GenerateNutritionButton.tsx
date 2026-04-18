@@ -32,7 +32,7 @@ export function GenerateNutritionButton() {
   function pollTask(taskId: string) {
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/plan/training/tasks/${taskId}`)
+        const res = await fetch(`/api/ai-tasks/${taskId}`)
         const task = (await res.json()) as { status?: string; error?: string }
         if (task.status === 'completed') {
           clearInterval(interval)

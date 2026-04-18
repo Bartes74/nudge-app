@@ -594,7 +594,7 @@ ZADANIE:
 5. Kolejka: Inngest `generate_training_plan` job.
 6. API:
    - POST /api/plan/training/generate (enqueue task, zwróć task_id)
-   - GET /api/plan/training/tasks/:id (status + wynik)
+   - GET /api/ai-tasks/:id (status + wynik — generyczne dla wszystkich ai_tasks)
    - POST /api/plan/training/substitute
    - GET /api/plan/training/current
    - GET /api/plan/training/versions
