@@ -2,8 +2,10 @@
 
 import { useFormState } from 'react-dom'
 import Link from 'next/link'
+import { CheckCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import {
   signInAction,
   magicLinkAction,
@@ -23,14 +25,15 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
     useFormState<AuthActionState, FormData>(magicLinkAction, null)
 
   return (
-    <div className="space-y-4">
-      {/* Email + password */}
-      <form action={emailPasswordFormAction} className="space-y-3">
+    <div className="flex flex-col gap-5">
+      <form action={emailPasswordFormAction} className="flex flex-col gap-4">
         {redirectTo && (
           <input type="hidden" name="redirectTo" value={redirectTo} />
         )}
-        <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email" className="text-label uppercase text-muted-foreground">
+            E-mail
+          </Label>
           <Input
             id="email"
             name="email"
@@ -40,12 +43,14 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
             required
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Hasło</Label>
+            <Label htmlFor="password" className="text-label uppercase text-muted-foreground">
+              Hasło
+            </Label>
             <Link
               href="/forgot-password"
-              className="text-xs text-muted-foreground hover:text-primary"
+              className="text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
             >
               Nie pamiętasz?
             </Link>
@@ -61,36 +66,42 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
         </div>
 
         {emailPasswordState?.error && (
-          <p className="text-sm text-destructive" role="alert">
-            {emailPasswordState.error}
-          </p>
+          <Card
+            variant="default"
+            padding="sm"
+            className="ring-1 ring-inset ring-destructive/20"
+            role="alert"
+          >
+            <p className="text-body-s text-destructive">{emailPasswordState.error}</p>
+          </Card>
         )}
 
-        <AuthSubmitButton className="w-full">
+        <AuthSubmitButton size="hero" className="w-full">
           Zaloguj się
         </AuthSubmitButton>
       </form>
 
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">lub</span>
-        </div>
-      </div>
+      <Divider />
 
-      {/* Magic link */}
-      <form action={magicFormAction} className="space-y-3">
+      <form action={magicFormAction} className="flex flex-col gap-3">
         {magicState?.success ? (
-          <p className="rounded-md bg-brand-muted p-3 text-center text-sm text-brand">
-            Sprawdź skrzynkę — wysłaliśmy Ci link do logowania.
-          </p>
+          <Card variant="default" padding="sm" className="ring-1 ring-inset ring-success/20">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+              <p className="text-body-s leading-relaxed text-foreground">
+                Sprawdź skrzynkę — wysłaliśmy Ci link do logowania.
+              </p>
+            </div>
+          </Card>
         ) : (
           <>
-            <div className="space-y-1.5">
-              <Label htmlFor="magic-email">E-mail (magic link)</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor="magic-email"
+                className="text-label uppercase text-muted-foreground"
+              >
+                E-mail (magic link)
+              </Label>
               <Input
                 id="magic-email"
                 name="email"
@@ -100,7 +111,7 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
               />
             </div>
             {magicState?.error && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-body-s text-destructive" role="alert">
                 {magicState.error}
               </p>
             )}
@@ -111,7 +122,6 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
         )}
       </form>
 
-      {/* OAuth */}
       <div className="grid grid-cols-2 gap-2">
         <form action={async () => { await oauthAction('google') }}>
           <AuthSubmitButton variant="outline" className="w-full gap-2">
@@ -125,6 +135,21 @@ function SignInFormInner({ redirectTo }: { redirectTo?: string }) {
             Apple
           </AuthSubmitButton>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function Divider() {
+  return (
+    <div className="relative">
+      <div className="absolute inset-0 flex items-center">
+        <span className="w-full border-t border-border" />
+      </div>
+      <div className="relative flex justify-center">
+        <span className="bg-background px-3 text-label uppercase text-muted-foreground">
+          lub
+        </span>
       </div>
     </div>
   )

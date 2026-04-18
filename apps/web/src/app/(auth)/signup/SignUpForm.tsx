@@ -3,6 +3,7 @@
 import { useFormState } from 'react-dom'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import { oauthAction, signUpAction, type AuthActionState } from '@/app/(auth)/actions'
 import { AuthSubmitButton } from '@/app/(auth)/AuthSubmitButton'
 
@@ -13,10 +14,12 @@ export function SignUpForm() {
   )
 
   return (
-    <div className="space-y-4">
-      <form action={formAction} className="space-y-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail</Label>
+    <div className="flex flex-col gap-5">
+      <form action={formAction} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email" className="text-label uppercase text-muted-foreground">
+            E-mail
+          </Label>
           <Input
             id="email"
             name="email"
@@ -26,8 +29,10 @@ export function SignUpForm() {
             required
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="password">Hasło</Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password" className="text-label uppercase text-muted-foreground">
+            Hasło
+          </Label>
           <Input
             id="password"
             name="password"
@@ -39,22 +44,29 @@ export function SignUpForm() {
         </div>
 
         {state?.error && (
-          <p className="text-sm text-destructive" role="alert">
-            {state.error}
-          </p>
+          <Card
+            variant="default"
+            padding="sm"
+            className="ring-1 ring-inset ring-destructive/20"
+            role="alert"
+          >
+            <p className="text-body-s text-destructive">{state.error}</p>
+          </Card>
         )}
 
-        <AuthSubmitButton className="w-full">
+        <AuthSubmitButton size="hero" className="w-full">
           Utwórz konto
         </AuthSubmitButton>
       </form>
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
+          <span className="w-full border-t border-border" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">lub</span>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 text-label uppercase text-muted-foreground">
+            lub
+          </span>
         </div>
       </div>
 

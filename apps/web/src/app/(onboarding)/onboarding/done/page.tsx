@@ -1,8 +1,10 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowRight, Target } from 'lucide-react'
 import { getUser } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 export const metadata = {
   title: 'Profil gotowy — Nudge',
@@ -30,50 +32,64 @@ export default async function OnboardingDonePage() {
     general_health: 'Zdrowy styl życia',
   }
 
+  const experienceLabels: Record<string, string> = {
+    beginner_zero: 'Spokojny start',
+    beginner: 'Początkujący',
+    intermediate: 'Średniozaawansowany',
+    advanced: 'Zaawansowany',
+  }
+
   const goalLabel = profile.primary_goal
     ? goalLabels[profile.primary_goal] ?? profile.primary_goal
     : null
 
+  const experienceLabel = profile.experience_level
+    ? experienceLabels[profile.experience_level] ?? profile.experience_level
+    : null
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center px-4 text-center gap-8">
-      {/* Illustration placeholder */}
-      <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary/10 text-5xl">
-        🎯
-      </div>
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-5 py-12">
+      <div className="flex w-full max-w-md flex-col items-center gap-8 text-center animate-stagger">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+          <Target className="h-7 w-7" aria-hidden="true" />
+        </div>
 
-      <div className="space-y-3 max-w-sm">
-        <h1 className="text-2xl font-bold">Twój profil jest gotowy!</h1>
-        <p className="text-muted-foreground leading-relaxed">
-          {goalLabel && (
-            <>Cel: <span className="font-medium text-foreground">{goalLabel}</span>. </>
-          )}
-          Mamy co trzeba, żeby zbudować Twój pierwszy plan. Czas zadziałać.
-        </p>
-      </div>
+        <header className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Profil gotowy</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Czas</span>
+            <br />
+            <span className="font-sans font-semibold">zadziałać.</span>
+          </h1>
+          <p className="text-body-m leading-relaxed text-muted-foreground">
+            {goalLabel && (
+              <>
+                Cel:{' '}
+                <span className="font-medium text-foreground">{goalLabel}</span>.{' '}
+              </>
+            )}
+            Mamy co trzeba, żeby zbudować Twój pierwszy plan.
+          </p>
+        </header>
 
-      {/* Summary chips */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-xs">
-        {profile.primary_goal && (
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-sm text-primary font-medium">
-            {goalLabel}
-          </span>
+        {(goalLabel || experienceLabel) && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {goalLabel && <Badge variant="brand">{goalLabel}</Badge>}
+            {experienceLabel && <Badge variant="outline-warm">{experienceLabel}</Badge>}
+          </div>
         )}
-        {profile.experience_level && (
-          <span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
-            {profile.experience_level === 'beginner_zero' ? 'Spokojny start' :
-             profile.experience_level === 'beginner' ? 'Początkujący' :
-             profile.experience_level === 'intermediate' ? 'Średniozaawansowany' : 'Zaawansowany'}
-          </span>
-        )}
-      </div>
 
-      <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Button asChild size="lg" className="w-full">
-          <Link href="/app">Przejdź do aplikacji →</Link>
-        </Button>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/app/profile">Sprawdź swój profil</Link>
-        </Button>
+        <div className="flex w-full flex-col gap-2">
+          <Button asChild size="hero" className="w-full gap-2">
+            <Link href="/app">
+              Przejdź do aplikacji
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/app/profile">Sprawdź swój profil</Link>
+          </Button>
+        </div>
       </div>
     </div>
   )
