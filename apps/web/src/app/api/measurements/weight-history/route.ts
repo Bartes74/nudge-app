@@ -5,7 +5,7 @@ import {
   computeTrend,
   type WeightDataPoint,
   type WeightTrend,
-} from '@/app/(app)/progress/weightUtils'
+} from '@/app/app/progress/weightUtils'
 
 export type { WeightDataPoint, WeightTrend }
 
