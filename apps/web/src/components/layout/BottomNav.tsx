@@ -18,10 +18,10 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t bg-background/95 backdrop-blur-sm safe-bottom"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/80 backdrop-blur-xl safe-bottom"
       aria-label="Nawigacja główna"
     >
-      <ul className="flex h-[var(--bottom-nav-height)] items-center">
+      <ul className="flex h-[var(--bottom-nav-height)] items-stretch">
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
           const isActive = exact
             ? pathname === href
@@ -32,18 +32,29 @@ export function BottomNav() {
               <Link
                 href={href}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 py-2 text-xs font-medium transition-colors',
+                  'group relative flex h-full flex-col items-center justify-center gap-1',
+                  'text-[10px] font-semibold uppercase tracking-wider',
+                  'transition-colors duration-200 ease-premium',
                   isActive
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground',
+                    ? 'text-foreground'
+                    : 'text-muted-foreground/70 hover:text-foreground',
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <Icon
-                  className={cn('h-5 w-5', isActive && 'stroke-[2.5]')}
-                  aria-hidden="true"
-                />
-                <span>{label}</span>
+                <span
+                  className={cn(
+                    'flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-200 ease-premium',
+                    isActive
+                      ? 'bg-foreground text-background'
+                      : 'bg-transparent',
+                  )}
+                >
+                  <Icon
+                    className={cn('h-[18px] w-[18px]', isActive && 'stroke-[2.2]')}
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="leading-none">{label}</span>
               </Link>
             </li>
           )
