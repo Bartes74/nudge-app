@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { inngest } from '../client.js'
-import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../../email/sender.js'
 import { PostCancellationD1Email } from '../../email/templates/PostCancellationD1.js'
-import { env } from '../../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../../lib/supabaseAdmin.js'
+import type { ApiEventContext } from '../types.js'
 
 const APP_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://nudge.app'
 
@@ -13,18 +12,18 @@ const APP_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://nudge.app'
  * Sends retention email the next day.
  */
 export const sendPostCancellationEmail = inngest.createFunction(
-  { id: 'post-cancellation-email', name: 'Post-cancellation D1 email' },
-  { event: 'nudge/subscription.cancelled' },
-  async ({ event, step }) => {
+  {
+    id: 'post-cancellation-email',
+    name: 'Post-cancellation D1 email',
+    triggers: [{ event: 'nudge/subscription.cancelled' }],
+  },
+  async ({ event, step }: ApiEventContext<{ userId: string }>) => {
     const { userId } = event.data as { userId: string }
 
     await step.sleep('wait-1-day', '1d')
 
     await step.run('send-cancellation-email', async () => {
-      const supabase = createClient<Database>(
-        env.SUPABASE_URL,
-        env.SUPABASE_SERVICE_ROLE_KEY,
-      )
+      const supabase = createSupabaseAdminClient()
 
       const { data: user } = await supabase.auth.admin.getUserById(userId)
       if (!user.user) return

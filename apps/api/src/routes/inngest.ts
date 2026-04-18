@@ -20,12 +20,10 @@ const handler = serve({
   ],
 })
 
-export async function inngestRoute(app: FastifyInstance) {
+export function inngestRoute(app: FastifyInstance) {
   app.route({
     method: ['GET', 'POST', 'PUT'],
     url: '/api/inngest',
-    handler: async (req, reply) => {
-      await handler(req.raw, reply.raw)
-    },
+    handler,
   })
 }

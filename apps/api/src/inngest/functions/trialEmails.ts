@@ -1,11 +1,10 @@
 import * as React from 'react'
 import { inngest } from '../client.js'
-import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../../email/sender.js'
 import { TrialD4Email } from '../../email/templates/TrialD4.js'
 import { TrialD7Email } from '../../email/templates/TrialD7.js'
-import { env } from '../../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../../lib/supabaseAdmin.js'
+import type { ApiEventContext } from '../types.js'
 
 const APP_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://nudge.app'
 const PAYWALL_URL = `${APP_URL}/paywall`
@@ -15,9 +14,12 @@ const PAYWALL_URL = `${APP_URL}/paywall`
  * Schedules D4 insight email and D7 conversion email.
  */
 export const scheduleTrialEmails = inngest.createFunction(
-  { id: 'trial-emails-schedule', name: 'Schedule trial email sequence' },
-  { event: 'nudge/trial.started' },
-  async ({ event, step }) => {
+  {
+    id: 'trial-emails-schedule',
+    name: 'Schedule trial email sequence',
+    triggers: [{ event: 'nudge/trial.started' }],
+  },
+  async ({ event, step }: ApiEventContext<{ userId: string }>) => {
     const { userId } = event.data as { userId: string }
 
     // D4 — 4 days after trial start
@@ -35,7 +37,7 @@ export const scheduleTrialEmails = inngest.createFunction(
 )
 
 async function sendTrialD4(userId: string) {
-  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+  const supabase = createSupabaseAdminClient()
 
   const { data: user } = await supabase.auth.admin.getUserById(userId)
   if (!user.user) return
@@ -68,7 +70,7 @@ async function sendTrialD4(userId: string) {
 }
 
 async function sendTrialD7(userId: string) {
-  const supabase = createClient<Database>(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+  const supabase = createSupabaseAdminClient()
 
   const { data: user } = await supabase.auth.admin.getUserById(userId)
   if (!user.user) return
@@ -86,7 +88,7 @@ async function sendTrialD7(userId: string) {
     .from('workout_logs')
     .select('id', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('status', 'finished')
+    .not('ended_at', 'is', null)
     .gte('started_at', trialStart)
 
   const { count: mealsLogged } = await supabase

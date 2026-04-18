@@ -1,9 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createClient } from '@supabase/supabase-js'
 import { stripe } from '../stripe/client.js'
 import { env } from '../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../lib/supabaseAdmin.js'
 
 const createCheckoutSchema = z.object({
   priceId: z.string().min(1),
@@ -18,11 +17,8 @@ const createPortalSchema = z.object({
   returnUrl: z.string().url(),
 })
 
-export async function stripeRoutes(app: FastifyInstance) {
-  const supabaseAdmin = createClient<Database>(
-    env.SUPABASE_URL,
-    env.SUPABASE_SERVICE_ROLE_KEY,
-  )
+export function stripeRoutes(app: FastifyInstance) {
+  const supabaseAdmin = createSupabaseAdminClient()
 
   /**
    * POST /stripe/checkout
@@ -69,7 +65,6 @@ export async function stripeRoutes(app: FastifyInstance) {
       cancel_url: cancelUrl,
       subscription_data: {
         metadata: { nudge_user_id: userId },
-        trial_end: 'now', // Trial already tracked in our DB; start billing immediately
       },
       allow_promotion_codes: true,
       locale: 'pl',

@@ -5,6 +5,7 @@ import { evaluateGuardrails, hasBlockingGuardrail } from '@nudge/core/rules/guar
 import { calculateNutritionTargets } from '@nudge/core/planners/nutrition/calculateNutritionTargets'
 import { generateNutritionPlan } from '@nudge/core/planners/nutrition/generateNutritionPlan'
 import { logLlmCall } from '@nudge/core/llm/client'
+import { finalizeAiTaskAfterFailure } from './utils/finalizeAiTaskAfterFailure'
 import type { NutritionPlannerProfile } from '@nudge/core/planners/nutrition/types'
 import type { GuardrailProfile, GuardrailContext } from '@nudge/core/rules/guardrails'
 import type { ActivityLevel } from '@nudge/core/domain/profile'
@@ -30,15 +31,13 @@ export const generateNutritionPlanJob = inngest.createFunction(
     onFailure: async ({ event, error }: { event: { data: { event: { data: Record<string, unknown> } } }; error: Error }) => {
       const { task_id } = event.data.event.data as { task_id: string }
       if (!task_id) return
-      const supabase = serviceClient()
-      await supabase
-        .from('ai_tasks')
-        .update({
-          status: 'failed',
-          error: error.message ?? 'Generacja planu żywieniowego nie powiodła się.',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', task_id)
+      console.error('[generate-nutrition-plan] job failed', error)
+      await finalizeAiTaskAfterFailure({
+        taskId: task_id,
+        userFacingError: 'Nie udało się wygenerować planu żywieniowego. Spróbuj ponownie.',
+        planVersionTable: 'nutrition_plan_versions',
+        outputPayloadKey: 'nutrition_plan_version_id',
+      })
     },
   },
   async ({ event, step }: { event: { data: Record<string, unknown> }; step: any }) => {

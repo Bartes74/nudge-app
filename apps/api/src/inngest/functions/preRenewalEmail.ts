@@ -1,10 +1,9 @@
 import * as React from 'react'
 import { inngest } from '../client.js'
-import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../../email/sender.js'
 import { PreRenewalD14Email } from '../../email/templates/PreRenewalD14.js'
-import { env } from '../../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../../lib/supabaseAdmin.js'
+import type { ApiCronContext } from '../types.js'
 
 const APP_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://nudge.app'
 
@@ -16,13 +15,10 @@ export const sendPreRenewalEmails = inngest.createFunction(
   {
     id: 'pre-renewal-d14-email',
     name: 'Pre-renewal D14 yearly summary email',
+    triggers: [{ cron: '0 10 * * *' }],
   },
-  { cron: '0 10 * * *' }, // 10:00 UTC daily
-  async ({ step }) => {
-    const supabase = createClient<Database>(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-    )
+  async ({ step }: ApiCronContext) => {
+    const supabase = createSupabaseAdminClient()
 
     const in14Days = new Date(Date.now() + 14 * 86_400_000)
     const windowStart = new Date(in14Days.getTime() - 12 * 60 * 60 * 1000).toISOString()
@@ -57,7 +53,7 @@ export const sendPreRenewalEmails = inngest.createFunction(
           .from('workout_logs')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', renewal.user_id)
-          .eq('status', 'finished')
+          .not('ended_at', 'is', null)
           .gte('started_at', yearStart)
 
         const { count: mealsLoggedThisYear } = await supabase
@@ -67,10 +63,11 @@ export const sendPreRenewalEmails = inngest.createFunction(
           .gte('created_at', yearStart)
 
         const { count: checkInsThisYear } = await supabase
-          .from('weekly_checkins')
+          .from('checkin_sessions')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', renewal.user_id)
-          .gte('week_start_date', yearStart.split('T')[0]!)
+          .not('submitted_at', 'is', null)
+          .gte('submitted_at', yearStart)
 
         const firstName = profile?.display_name?.split(' ')[0] ?? 'tam'
         const amount = renewal.price_amount

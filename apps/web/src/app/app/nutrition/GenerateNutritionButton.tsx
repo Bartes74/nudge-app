@@ -1,16 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { startAiTaskPolling } from '@/lib/aiTasks'
 
 export function GenerateNutritionButton() {
   const router = useRouter()
   const [state, setState] = useState<'idle' | 'loading' | 'polling'>('idle')
+  const stopPollingRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => () => {
+    stopPollingRef.current?.()
+  }, [])
 
   async function handleGenerate() {
+    stopPollingRef.current?.()
     setState('loading')
     try {
       const res = await fetch('/api/plan/nutrition/generate', { method: 'POST' })
@@ -22,32 +29,24 @@ export function GenerateNutritionButton() {
       }
       const { task_id } = await res.json()
       setState('polling')
-      pollTask(task_id)
+      stopPollingRef.current = startAiTaskPolling(task_id, {
+        onCompleted: () => {
+          router.refresh()
+          setState('idle')
+        },
+        onFailed: (message) => {
+          toast.error(message)
+          setState('idle')
+        },
+        onRequestError: (message) => {
+          toast.error(message)
+          setState('idle')
+        },
+      })
     } catch {
       toast.error('Wystąpił błąd')
       setState('idle')
     }
-  }
-
-  function pollTask(taskId: string) {
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/ai-tasks/${taskId}`)
-        const task = (await res.json()) as { status?: string; error?: string }
-        if (task.status === 'completed') {
-          clearInterval(interval)
-          router.refresh()
-          setState('idle')
-        } else if (task.status === 'failed' || task.status === 'cancelled') {
-          clearInterval(interval)
-          toast.error(task.error ?? 'Nie udało się wygenerować planu')
-          setState('idle')
-        }
-      } catch {
-        clearInterval(interval)
-        setState('idle')
-      }
-    }, 2000)
   }
 
   const label =

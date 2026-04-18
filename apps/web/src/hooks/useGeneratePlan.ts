@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { startAiTaskPolling } from '@/lib/aiTasks'
 
 type TaskStatus = 'idle' | 'generating' | 'completed' | 'failed' | 'blocked'
 
@@ -18,40 +19,58 @@ export function useGeneratePlan(onComplete: () => void) {
     error: null,
     blockedReasons: null,
   })
+  const stopPollingRef = useRef<(() => void) | null>(null)
+
+  useEffect(() => () => {
+    stopPollingRef.current?.()
+  }, [])
 
   const generate = useCallback(async () => {
+    stopPollingRef.current?.()
     setState({ status: 'generating', taskId: null, error: null, blockedReasons: null })
 
-    const res = await fetch('/api/plan/training/generate', { method: 'POST' })
-    const json = await res.json() as { task_id?: string; error?: string; flags?: string[] }
+    try {
+      const res = await fetch('/api/plan/training/generate', { method: 'POST' })
+      const json = (await res.json()) as { task_id?: string; error?: string; flags?: string[] }
 
-    if (res.status === 422) {
-      setState({ status: 'blocked', taskId: null, error: null, blockedReasons: json.flags ?? [] })
-      return
-    }
-
-    if (!res.ok || !json.task_id) {
-      setState({ status: 'failed', taskId: null, error: json.error ?? 'Nieznany błąd', blockedReasons: null })
-      return
-    }
-
-    const taskId = json.task_id
-    setState((s) => ({ ...s, taskId }))
-
-    // Poll for completion
-    const poll = setInterval(async () => {
-      const taskRes = await fetch(`/api/ai-tasks/${taskId}`)
-      const task = await taskRes.json() as { status: string; error?: string }
-
-      if (task.status === 'completed') {
-        clearInterval(poll)
-        setState({ status: 'completed', taskId, error: null, blockedReasons: null })
-        onComplete()
-      } else if (task.status === 'failed' || task.status === 'cancelled') {
-        clearInterval(poll)
-        setState({ status: 'failed', taskId, error: task.error ?? 'Generacja nie powiodła się', blockedReasons: null })
+      if (res.status === 422) {
+        setState({ status: 'blocked', taskId: null, error: null, blockedReasons: json.flags ?? [] })
+        return
       }
-    }, 2000)
+
+      if (!res.ok || !json.task_id) {
+        setState({
+          status: 'failed',
+          taskId: null,
+          error: json.error ?? 'Nie udało się uruchomić generowania planu.',
+          blockedReasons: null,
+        })
+        return
+      }
+
+      const taskId = json.task_id
+      setState((s) => ({ ...s, taskId }))
+
+      stopPollingRef.current = startAiTaskPolling(taskId, {
+        onCompleted: () => {
+          setState({ status: 'completed', taskId, error: null, blockedReasons: null })
+          onComplete()
+        },
+        onFailed: (message) => {
+          setState({ status: 'failed', taskId, error: message, blockedReasons: null })
+        },
+        onRequestError: (message) => {
+          setState({ status: 'failed', taskId, error: message, blockedReasons: null })
+        },
+      })
+    } catch {
+      setState({
+        status: 'failed',
+        taskId: null,
+        error: 'Wystąpił błąd połączenia. Spróbuj ponownie.',
+        blockedReasons: null,
+      })
+    }
   }, [onComplete])
 
   return { ...state, generate }

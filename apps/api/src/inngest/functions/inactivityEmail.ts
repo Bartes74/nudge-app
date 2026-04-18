@@ -1,11 +1,10 @@
 import * as React from 'react'
 import { inngest } from '../client.js'
-import { createClient } from '@supabase/supabase-js'
 import { sendEmail } from '../../email/sender.js'
 import { InactivityD60Email } from '../../email/templates/InactivityD60.js'
 import { stripe } from '../../stripe/client.js'
-import { env } from '../../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../../lib/supabaseAdmin.js'
+import type { ApiCronContext } from '../types.js'
 
 const APP_URL = process.env['NEXT_PUBLIC_APP_URL'] ?? 'https://nudge.app'
 const DISCOUNT_PERCENT = 30
@@ -18,13 +17,10 @@ export const sendInactivityEmails = inngest.createFunction(
   {
     id: 'inactivity-d60-email',
     name: 'Inactivity D60 re-engagement email',
+    triggers: [{ cron: '0 9 * * *' }],
   },
-  { cron: '0 9 * * *' }, // 09:00 UTC daily
-  async ({ step }) => {
-    const supabase = createClient<Database>(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-    )
+  async ({ step }: ApiCronContext) => {
+    const supabase = createSupabaseAdminClient()
 
     const cutoff = new Date(Date.now() - 60 * 86_400_000).toISOString()
     const recentCutoff = new Date(Date.now() - 57 * 86_400_000).toISOString() // avoid resending within 3d window
@@ -57,7 +53,7 @@ export const sendInactivityEmails = inngest.createFunction(
           .from('workout_logs')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', candidate.user_id)
-          .eq('status', 'finished')
+          .not('ended_at', 'is', null)
           .gte('started_at', cutoff)
 
         const { count: recentMeals } = await supabase
@@ -84,7 +80,7 @@ export const sendInactivityEmails = inngest.createFunction(
           .from('workout_logs')
           .select('started_at')
           .eq('user_id', candidate.user_id)
-          .eq('status', 'finished')
+          .not('ended_at', 'is', null)
           .order('started_at', { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -101,7 +97,7 @@ export const sendInactivityEmails = inngest.createFunction(
           .from('workout_logs')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', candidate.user_id)
-          .eq('status', 'finished')
+          .not('ended_at', 'is', null)
 
         const progressNote =
           totalWorkouts && totalWorkouts > 0

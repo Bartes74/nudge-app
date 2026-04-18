@@ -1,7 +1,6 @@
 import { inngest } from '../client.js'
-import { createClient } from '@supabase/supabase-js'
 import { env } from '../../lib/env.js'
-import type { Database } from '@nudge/core/types/db'
+import { createSupabaseAdminClient } from '../../lib/supabaseAdmin.js'
 
 const COST_ALERT_THRESHOLD_USD = 3.0
 
@@ -13,13 +12,10 @@ export const checkCostAlert = inngest.createFunction(
   {
     id: 'cost-alert-daily',
     name: 'Daily cost per active user alert',
+    triggers: [{ cron: '0 8 * * *' }],
   },
-  { cron: '0 8 * * *' }, // 08:00 UTC daily
   async () => {
-    const supabase = createClient<Database>(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-    )
+    const supabase = createSupabaseAdminClient()
 
     const now = new Date()
     const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
@@ -33,8 +29,9 @@ export const checkCostAlert = inngest.createFunction(
       .select('user_id, cost_usd_total')
       .in('month_key', [currentMonth, prevMonth])
 
-    const totalCost = usageRows?.reduce((sum, r) => sum + Number(r.cost_usd_total), 0) ?? 0
-    const uniqueUsers = new Set(usageRows?.map((r) => r.user_id) ?? []).size
+    const totalCost =
+      usageRows?.reduce((sum, row) => sum + Number(row.cost_usd_total), 0) ?? 0
+    const uniqueUsers = new Set(usageRows?.map((row) => row.user_id) ?? []).size
 
     if (uniqueUsers === 0) return { skipped: true }
 

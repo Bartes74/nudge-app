@@ -6,6 +6,7 @@ import { selectTemplate } from '@nudge/core/planners/training/selectTemplate'
 import { fillTemplate } from '@nudge/core/planners/training/fillTemplate'
 import { generateGuidedBeginnerPlan } from '@nudge/core/planners/training/generateGuidedBeginnerPlan'
 import { logLlmCall } from '@nudge/core/llm/client'
+import { finalizeAiTaskAfterFailure } from './utils/finalizeAiTaskAfterFailure'
 import type { PlannerProfile } from '@nudge/core/planners/training/types'
 import type { ExerciseCatalogEntry } from '@nudge/core/planners/training/types'
 import type { GuidedTrainingPlanOutput, TrainingPlanOutput } from '@nudge/core/planners/training/types'
@@ -23,16 +24,16 @@ export const generateTrainingPlanJob = inngest.createFunction(
     retries: 0,
     onFailure: async ({ event, error }: { event: { data: { event: { data: Record<string, unknown> } } }; error: Error }) => {
       const { task_id } = event.data.event.data as { task_id: string }
+      const { user_id } = event.data.event.data as { user_id?: string }
       if (!task_id) return
-      const supabase = serviceClient()
-      await supabase
-        .from('ai_tasks')
-        .update({
-          status: 'failed',
-          error: error.message ?? 'Generacja planu treningowego nie powiodła się.',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', task_id)
+      console.error('[generate-training-plan] job failed', error)
+      await finalizeAiTaskAfterFailure({
+        taskId: task_id,
+        userFacingError: 'Nie udało się wygenerować planu treningowego. Spróbuj ponownie.',
+        planVersionTable: 'training_plan_versions',
+        outputPayloadKey: 'plan_version_id',
+        userIdForProfileSync: user_id,
+      })
     },
   },
   async ({ event, step }: { event: { data: Record<string, unknown> }; step: any }) => {
