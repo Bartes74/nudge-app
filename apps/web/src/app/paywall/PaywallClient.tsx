@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { Check, Zap, Shield, TrendingUp, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Check, Zap, Shield, TrendingUp } from 'lucide-react'
+import { Card, CardEyebrow } from '@/components/ui/card'
 
 const FEATURES = [
   'Spersonalizowany plan treningowy i żywieniowy',
@@ -34,7 +36,7 @@ export function PaywallClient({
 
   async function handleCheckout(plan: 'monthly' | 'yearly') {
     if (!billingEnabled || !apiUrl || !monthlyPriceId || !yearlyPriceId) {
-      alert('Płatności nie są jeszcze skonfigurowane na tym środowisku.')
+      toast.error('Płatności nie są jeszcze skonfigurowane na tym środowisku.')
       return
     }
 
@@ -71,105 +73,140 @@ export function PaywallClient({
       const { url } = (await res.json()) as { url: string }
       window.location.href = url
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Nieznany błąd'
-      alert(msg)
+      toast.error(err instanceof Error ? err.message : 'Nieznany błąd')
       setLoading(null)
     }
   }
 
   return (
-    <div className="min-h-svh bg-background flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg space-y-8">
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Kontynuuj z Nudge</h1>
-          <p className="text-muted-foreground">
+    <div className="min-h-svh bg-background px-5 py-12">
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 animate-stagger">
+        <header className="flex flex-col gap-2 text-center">
+          <p className="text-label uppercase text-muted-foreground">Subskrypcja</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Kontynuuj</span>
+            <br />
+            <span className="font-sans font-semibold">z Nudge.</span>
+          </h1>
+          <p className="text-body-m leading-relaxed text-muted-foreground">
             Twoje dane i postępy są zachowane. Wybierz plan i wróć do coachingu.
           </p>
-        </div>
+        </header>
 
-        {/* Feature list */}
-        <ul className="space-y-2">
-          {FEATURES.map((f) => (
-            <li key={f} className="flex items-center gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary shrink-0" />
-              <span>{f}</span>
-            </li>
-          ))}
-        </ul>
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Co dostajesz</CardEyebrow>
+          <ul className="mt-3 flex flex-col gap-2.5">
+            {FEATURES.map((feature) => (
+              <li
+                key={feature}
+                className="flex items-start gap-2.5 text-body-m leading-relaxed text-foreground"
+              >
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
 
-        {/* Plans */}
-        <div className="grid gap-4">
-          {!billingEnabled && (
-            <div className="rounded-2xl border border-dashed bg-muted/30 p-4 text-sm text-muted-foreground">
-              Płatności nie są jeszcze skonfigurowane na tym środowisku. Możesz
-              testować logowanie, onboarding i aplikację, a checkout uruchomi się po
-              dodaniu konfiguracji Stripe.
+        {!billingEnabled && (
+          <Card
+            variant="default"
+            padding="md"
+            className="ring-1 ring-inset ring-warning/20 border-dashed"
+          >
+            <p className="text-body-s leading-relaxed text-muted-foreground">
+              Płatności nie są jeszcze skonfigurowane na tym środowisku. Możesz testować
+              logowanie, onboarding i aplikację, a checkout uruchomi się po dodaniu
+              konfiguracji Stripe.
+            </p>
+          </Card>
+        )}
+
+        <div className="flex flex-col gap-4">
+          <Card
+            variant="default"
+            padding="lg"
+            className="relative ring-1 ring-inset ring-brand/30"
+          >
+            <div className="absolute -top-3 left-5">
+              <Badge variant="brand">Najlepsza cena</Badge>
             </div>
-          )}
-
-          {/* Yearly — highlighted */}
-          <div className="relative rounded-2xl border-2 border-primary bg-primary/5 p-5 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-lg">Plan roczny</span>
-                  <Badge variant="default" className="text-xs">Najlepsza cena</Badge>
-                </div>
-                <p className="text-muted-foreground text-sm mt-0.5">
-                  <span className="text-foreground font-bold text-2xl">349 PLN</span>
-                  {' '}/rok
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CardEyebrow>Plan roczny</CardEyebrow>
+                <p className="mt-1 flex items-baseline gap-1.5 font-mono tabular-nums">
+                  <span className="text-data-l font-semibold text-foreground">349</span>
+                  <span className="text-label uppercase text-muted-foreground">PLN / rok</span>
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-body-s text-muted-foreground">
                   ~29 PLN/miesiąc — oszczędzasz 41%
                 </p>
               </div>
-              <TrendingUp className="h-6 w-6 text-primary mt-1" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-muted text-brand">
+                <TrendingUp className="h-5 w-5" aria-hidden="true" />
+              </div>
             </div>
             <Button
-              className="w-full"
-              size="lg"
+              size="hero"
+              className="mt-5 w-full gap-2"
               onClick={() => handleCheckout('yearly')}
               disabled={loading !== null || !billingEnabled}
             >
-              {loading === 'yearly' ? 'Przekierowuję…' : 'Wybieram plan roczny'}
+              {loading === 'yearly' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Przekierowuję…
+                </>
+              ) : (
+                <>
+                  Wybieram plan roczny
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </Button>
-          </div>
+          </Card>
 
-          {/* Monthly */}
-          <div className="rounded-2xl border bg-card p-5 space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="font-semibold text-lg">Plan miesięczny</span>
-                <p className="text-muted-foreground text-sm mt-0.5">
-                  <span className="text-foreground font-bold text-2xl">49 PLN</span>
-                  {' '}/miesiąc
+          <Card variant="default" padding="lg">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CardEyebrow>Plan miesięczny</CardEyebrow>
+                <p className="mt-1 flex items-baseline gap-1.5 font-mono tabular-nums">
+                  <span className="text-data-l font-semibold text-foreground">49</span>
+                  <span className="text-label uppercase text-muted-foreground">PLN / miesiąc</span>
                 </p>
               </div>
-              <Zap className="h-6 w-6 text-muted-foreground mt-1" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-2 text-muted-foreground">
+                <Zap className="h-5 w-5" aria-hidden="true" />
+              </div>
             </div>
             <Button
-              className="w-full"
               variant="outline"
               size="lg"
+              className="mt-5 w-full"
               onClick={() => handleCheckout('monthly')}
               disabled={loading !== null || !billingEnabled}
             >
-              {loading === 'monthly' ? 'Przekierowuję…' : 'Wybieram plan miesięczny'}
+              {loading === 'monthly' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Przekierowuję…
+                </>
+              ) : (
+                'Wybieram plan miesięczny'
+              )}
             </Button>
-          </div>
+          </Card>
         </div>
 
-        {/* Trust signals */}
-        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Shield className="h-3.5 w-3.5" />
-            Bezpieczna płatność Stripe
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-label uppercase text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Shield className="h-3 w-3" />
+            Płatność Stripe
           </span>
-          <span>•</span>
+          <span aria-hidden="true">·</span>
           <span>Anuluj kiedy chcesz</span>
-          <span>•</span>
-          <span>Dane zachowane zawsze</span>
+          <span aria-hidden="true">·</span>
+          <span>Dane zachowane</span>
         </div>
       </div>
     </div>

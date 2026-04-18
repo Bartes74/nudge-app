@@ -2,10 +2,21 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { toast } from 'sonner'
 import type { AccessResult } from '@nudge/core/billing'
+import {
+  ArrowLeft,
+  CreditCard,
+  PauseCircle,
+  XCircle,
+  CheckCircle2,
+  Clock,
+  Loader2,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CreditCard, PauseCircle, XCircle, CheckCircle2, Clock } from 'lucide-react'
+import { Card, CardEyebrow } from '@/components/ui/card'
 
 interface BillingClientProps {
   access: AccessResult
@@ -15,17 +26,27 @@ interface BillingClientProps {
   apiUrl: string | null
 }
 
-const STATUS_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-  full: { label: 'Aktywna', variant: 'default' },
-  trial: { label: 'Trial', variant: 'secondary' },
-  paused: { label: 'Wstrzymana', variant: 'outline' },
+const STATUS_LABELS: Record<
+  string,
+  { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'brand' | 'success' | 'outline-warm' | 'label' }
+> = {
+  full: { label: 'Aktywna', variant: 'success' },
+  trial: { label: 'Trial', variant: 'brand' },
+  paused: { label: 'Wstrzymana', variant: 'outline-warm' },
   paywall: { label: 'Nieaktywna', variant: 'destructive' },
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pl-PL', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 export function BillingClient({
   access,
   userId,
-  userEmail,
   billingEnabled,
   apiUrl,
 }: BillingClientProps) {
@@ -37,7 +58,7 @@ export function BillingClient({
 
   async function openPortal() {
     if (!billingEnabled || !apiUrl) {
-      alert('Portal płatności nie jest jeszcze skonfigurowany na tym środowisku.')
+      toast.error('Portal płatności nie jest jeszcze skonfigurowany na tym środowisku.')
       return
     }
 
@@ -55,7 +76,7 @@ export function BillingClient({
       const { url } = (await res.json()) as { url: string }
       window.location.href = url
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Błąd')
+      toast.error(err instanceof Error ? err.message : 'Błąd')
       setLoading(false)
     }
   }
@@ -67,106 +88,125 @@ export function BillingClient({
         ? 'Plan miesięczny (49 PLN/mc)'
         : '—'
 
-  const periodEnd = sub?.current_period_end
-    ? new Date(sub.current_period_end).toLocaleDateString('pl-PL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : null
-
-  const trialEnd = sub?.trial_ends_at
-    ? new Date(sub.trial_ends_at).toLocaleDateString('pl-PL', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      })
-    : null
+  const periodEnd = sub?.current_period_end ? formatDate(sub.current_period_end) : null
+  const trialEnd = sub?.trial_ends_at ? formatDate(sub.trial_ends_at) : null
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Subskrypcja</h1>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/profile"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Profil
+      </Link>
 
-      {/* Status card */}
-      <div className="rounded-2xl border bg-card p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Status</span>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Konto</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Twoja</span>
+          <br />
+          <span className="font-sans font-semibold">subskrypcja.</span>
+        </h1>
+      </header>
+
+      <Card variant="default" padding="md">
+        <CardEyebrow>Status</CardEyebrow>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-body-m text-muted-foreground">Aktualny plan</span>
           <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
         </div>
 
         {sub?.plan && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Plan</span>
-            <span className="text-sm font-medium">{planLabel}</span>
+          <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+            <span className="text-body-m text-muted-foreground">Plan</span>
+            <span className="text-body-m font-medium">{planLabel}</span>
           </div>
         )}
 
         {access.status === 'trial' && trialEnd && (
-          <div className="flex items-center gap-2 rounded-lg bg-secondary p-3 text-sm">
-            <Clock className="h-4 w-4 shrink-0 text-primary" />
-            <span>
-              Trial kończy się <strong>{trialEnd}</strong> — zostało{' '}
-              <strong>{access.trialDaysLeft ?? 0} dni</strong>
-            </span>
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-brand-muted/50 p-3 ring-1 ring-inset ring-brand/20">
+            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
+            <p className="text-body-s leading-relaxed text-foreground">
+              Trial kończy się <strong className="font-semibold">{trialEnd}</strong> — zostało{' '}
+              <strong className="font-semibold">{access.trialDaysLeft ?? 0} dni</strong>.
+            </p>
           </div>
         )}
 
         {access.status === 'paused' && access.pausedUntil && (
-          <div className="flex items-center gap-2 rounded-lg bg-secondary p-3 text-sm">
-            <PauseCircle className="h-4 w-4 shrink-0" />
-            <span>
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-surface-2 p-3 ring-1 ring-inset ring-warning/20">
+            <PauseCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-warning"
+              aria-hidden="true"
+            />
+            <p className="text-body-s leading-relaxed text-foreground">
               Subskrypcja wstrzymana do{' '}
-              <strong>
-                {new Date(access.pausedUntil).toLocaleDateString('pl-PL', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </strong>
-            </span>
+              <strong className="font-semibold">{formatDate(access.pausedUntil)}</strong>.
+            </p>
           </div>
         )}
 
         {access.status === 'full' && periodEnd && (
-          <div className="flex items-center gap-2 rounded-lg bg-secondary p-3 text-sm">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
-            <span>
-              Następne odnowienie: <strong>{periodEnd}</strong>
-            </span>
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl bg-surface-2 p-3 ring-1 ring-inset ring-success/20">
+            <CheckCircle2
+              className="mt-0.5 h-4 w-4 shrink-0 text-success"
+              aria-hidden="true"
+            />
+            <p className="text-body-s leading-relaxed text-foreground">
+              Następne odnowienie:{' '}
+              <strong className="font-semibold">{periodEnd}</strong>.
+            </p>
           </div>
         )}
-      </div>
+      </Card>
 
-      {/* Actions */}
-      <div className="space-y-3">
-        {!billingEnabled && (
-          <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground text-center">
+      {!billingEnabled && (
+        <Card
+          variant="default"
+          padding="md"
+          className="ring-1 ring-inset ring-warning/20 border-dashed"
+        >
+          <p className="text-body-s leading-relaxed text-muted-foreground">
             Płatności i portal Stripe nie są jeszcze skonfigurowane na tym środowisku.
-            Możesz dalej testować aplikację, a obsługa subskrypcji pojawi się po
-            uzupełnieniu envów billingowych.
-          </div>
-        )}
+            Możesz dalej testować aplikację, a obsługa subskrypcji pojawi się po uzupełnieniu
+            envów billingowych.
+          </p>
+        </Card>
+      )}
 
+      <div className="flex flex-col gap-2">
         {(access.status === 'full' || access.status === 'paused') &&
           sub?.provider_customer_id && (
             <>
               <Button
-                className="w-full"
+                size="hero"
                 variant="outline"
+                className="w-full gap-2"
                 onClick={openPortal}
                 disabled={loading || !billingEnabled}
               >
-                <CreditCard className="mr-2 h-4 w-4" />
-                {loading ? 'Przekierowuję…' : 'Zarządzaj subskrypcją'}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Przekierowuję…
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    Zarządzaj subskrypcją
+                  </>
+                )}
               </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Zmień plan, zaktualizuj kartę, pobierz faktury lub wstrzymaj subskrypcję
+              <p className="text-center text-label uppercase text-muted-foreground">
+                Zmień plan · Zaktualizuj kartę · Pobierz faktury · Wstrzymaj
               </p>
             </>
           )}
 
         {access.status === 'trial' && (
           <Button
+            size="hero"
             className="w-full"
             disabled={!billingEnabled}
             onClick={() => router.push('/paywall')}
@@ -177,6 +217,7 @@ export function BillingClient({
 
         {access.status === 'paywall' && (
           <Button
+            size="hero"
             className="w-full"
             disabled={!billingEnabled}
             onClick={() => router.push('/paywall')}
@@ -186,12 +227,18 @@ export function BillingClient({
         )}
       </div>
 
-      {/* Data retention notice */}
       {(access.status === 'paywall' || access.status === 'paused') && (
-        <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground text-center">
-          <XCircle className="h-4 w-4 mx-auto mb-1.5" />
-          Twoje dane treningowe i profil są bezpiecznie zachowane. Wróć kiedy chcesz.
-        </div>
+        <Card variant="recessed" padding="md">
+          <div className="flex items-start gap-2.5">
+            <XCircle
+              className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <p className="text-body-s leading-relaxed text-muted-foreground">
+              Twoje dane treningowe i profil są bezpiecznie zachowane. Wróć kiedy chcesz.
+            </p>
+          </div>
+        </Card>
       )}
     </div>
   )
