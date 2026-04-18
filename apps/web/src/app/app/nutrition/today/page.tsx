@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Plus, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card, CardEyebrow } from '@/components/ui/card'
 
 export const metadata: Metadata = { title: 'Dzisiaj — jedzenie' }
 
@@ -40,46 +41,53 @@ function ProgressRing({
   value,
   target,
   unit,
-  color,
+  tint,
 }: {
   label: string
   value: number
   target: number | null
   unit: string
-  color: string
+  tint: string
 }) {
-  const radius = 32
+  const radius = 30
   const circumference = 2 * Math.PI * radius
   const pct = target ? Math.min(value / target, 1) : 0
   const dash = pct * circumference
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width="80" height="80" viewBox="0 0 80 80" className="-rotate-90">
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="8"
-          className="text-muted/30"
-        />
-        <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth="8"
-          strokeDasharray={`${dash} ${circumference}`}
-          strokeLinecap="round"
-          style={{ transition: 'stroke-dasharray 0.6s ease' }}
-        />
-      </svg>
-      <span className="text-base font-bold tabular-nums leading-none">{Math.round(value)}</span>
-      <span className="text-[11px] text-muted-foreground">{unit}</span>
-      <span className="text-[11px] font-medium">{label}</span>
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative">
+        <svg width="76" height="76" viewBox="0 0 76 76" className="-rotate-90">
+          <circle
+            cx="38"
+            cy="38"
+            r={radius}
+            fill="none"
+            stroke="hsl(var(--surface-2))"
+            strokeWidth="6"
+          />
+          <circle
+            cx="38"
+            cy="38"
+            r={radius}
+            fill="none"
+            stroke={tint}
+            strokeWidth="6"
+            strokeDasharray={`${dash} ${circumference}`}
+            strokeLinecap="round"
+            style={{ transition: 'stroke-dasharray 0.6s cubic-bezier(0.22,1,0.36,1)' }}
+          />
+        </svg>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-mono text-body-m font-semibold tabular-nums leading-none text-foreground">
+            {Math.round(value)}
+          </span>
+          <span className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
+            {unit}
+          </span>
+        </div>
+      </div>
+      <span className="text-label uppercase text-muted-foreground">{label}</span>
     </div>
   )
 }
@@ -141,11 +149,17 @@ export default async function NutritionTodayPage() {
   })
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Dzisiaj</h1>
-          <p className="text-sm capitalize text-muted-foreground">{todayFormatted}</p>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">
+            <span className="tabular-nums">{todayFormatted}</span>
+          </p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Dzisiaj —</span>
+            <br />
+            <span className="font-sans font-semibold">jedzenie.</span>
+          </h1>
         </div>
         <Button asChild size="sm" className="gap-1.5">
           <Link href="/app/nutrition/log">
@@ -153,91 +167,102 @@ export default async function NutritionTodayPage() {
             Dodaj
           </Link>
         </Button>
-      </div>
+      </header>
 
-      {/* Progress rings */}
-      <section className="rounded-xl border bg-card p-5">
-        <div className="grid grid-cols-4 gap-2">
+      <Card variant="default" padding="md">
+        <CardEyebrow>Dzienne makro</CardEyebrow>
+        <div className="mt-5 grid grid-cols-4 gap-2">
           <ProgressRing
             label="kcal"
             value={kcal}
             target={targets?.calories_target ?? null}
             unit="kcal"
-            color="hsl(var(--primary))"
+            tint="hsl(var(--brand))"
           />
           <ProgressRing
             label="Białko"
             value={protein}
             target={targets?.protein_g_target ?? null}
             unit="g"
-            color="#3b82f6"
+            tint="hsl(var(--success))"
           />
           <ProgressRing
             label="Węgle"
             value={carbs}
             target={targets?.carbs_g_target ?? null}
             unit="g"
-            color="#f59e0b"
+            tint="hsl(var(--warning))"
           />
           <ProgressRing
             label="Tłuszcze"
             value={fat}
             target={targets?.fat_g_target ?? null}
             unit="g"
-            color="#ef4444"
+            tint="hsl(var(--foreground))"
           />
         </div>
         {targets?.calories_target && (
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Cel: {targets.calories_target} kcal / {targets.protein_g_target}g B /{' '}
-            {targets.carbs_g_target}g W / {targets.fat_g_target}g T
-          </p>
+          <div className="mt-4 border-t border-border/60 pt-3">
+            <p className="text-center font-mono text-body-s tabular-nums text-muted-foreground">
+              Cel{' '}
+              <span className="text-foreground">{targets.calories_target}</span> kcal
+              <span className="mx-1.5 opacity-40">·</span>
+              <span className="text-foreground">{targets.protein_g_target}</span>g B
+              <span className="mx-1.5 opacity-40">·</span>
+              <span className="text-foreground">{targets.carbs_g_target}</span>g W
+              <span className="mx-1.5 opacity-40">·</span>
+              <span className="text-foreground">{targets.fat_g_target}</span>g T
+            </p>
+          </div>
         )}
-      </section>
+      </Card>
 
-      {/* Meal list */}
-      <section>
-        <p className="mb-2 text-sm font-medium text-muted-foreground">
-          Posiłki ({meals.length})
-        </p>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between">
+          <p className="text-label uppercase text-muted-foreground">
+            Posiłki <span className="font-mono tabular-nums text-foreground">{meals.length}</span>
+          </p>
+        </div>
+
         {meals.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/30 p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              Brak posiłków dzisiaj. Dodaj pierwszy!
+          <Card variant="outline" padding="xl" className="flex flex-col items-center gap-4 text-center">
+            <p className="text-body-m text-muted-foreground">
+              Brak posiłków dzisiaj. Dodaj pierwszy.
             </p>
             <Button asChild size="sm">
               <Link href="/app/nutrition/log">Dodaj posiłek</Link>
             </Button>
-          </div>
+          </Card>
         ) : (
           <div className="flex flex-col gap-2">
             {meals.map((meal) => (
-              <Link
-                key={meal.id}
-                href={`/app/nutrition/log/${meal.id}`}
-                className="flex items-center justify-between rounded-xl border bg-card p-3.5 transition-colors hover:bg-muted/50"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {meal.meal_type
-                        ? (MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type)
-                        : 'Posiłek'}
-                    </span>
-                    {meal.status === 'pending_analysis' && (
-                      <Badge variant="secondary" className="text-xs">
-                        Analizuję…
-                      </Badge>
+              <Link key={meal.id} href={`/app/nutrition/log/${meal.id}`} className="group">
+                <Card
+                  variant="default"
+                  padding="sm"
+                  className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-body-m font-semibold tracking-tight">
+                        {meal.meal_type
+                          ? (MEAL_TYPE_LABELS[meal.meal_type] ?? meal.meal_type)
+                          : 'Posiłek'}
+                      </span>
+                      {meal.status === 'pending_analysis' && (
+                        <Badge variant="label" className="px-2">
+                          Analizuję…
+                        </Badge>
+                      )}
+                    </div>
+                    {meal.kcal_estimate_min != null && meal.kcal_estimate_max != null && (
+                      <p className="mt-0.5 font-mono text-body-s tabular-nums text-muted-foreground">
+                        {Math.round(meal.kcal_estimate_min)}–{Math.round(meal.kcal_estimate_max)} kcal
+                      </p>
                     )}
                   </div>
-                  {meal.kcal_estimate_min != null && meal.kcal_estimate_max != null && (
-                    <p className="text-xs text-muted-foreground">
-                      {Math.round(meal.kcal_estimate_min)}–
-                      {Math.round(meal.kcal_estimate_max)} kcal
-                    </p>
-                  )}
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+                </Card>
               </Link>
             ))}
           </div>

@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -86,18 +88,30 @@ export default function ManualMealLogPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Ręczny wpis</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Wpisz składniki i kalorie
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/nutrition/log"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Wróć
+      </Link>
 
-      <div>
-        <Label className="text-xs text-muted-foreground">Typ posiłku (opcjonalnie)</Label>
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Ręczny wpis</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Wpisz</span>
+          <br />
+          <span className="font-sans font-semibold">składniki.</span>
+        </h1>
+      </header>
+
+      <div className="flex flex-col gap-2">
+        <Label className="text-label uppercase text-muted-foreground">
+          Typ posiłku <span className="normal-case tracking-tight">(opcjonalnie)</span>
+        </Label>
         <Select value={mealType} onValueChange={setMealType}>
-          <SelectTrigger className="mt-1">
+          <SelectTrigger>
             <SelectValue placeholder="Wybierz typ" />
           </SelectTrigger>
           <SelectContent>
@@ -111,87 +125,86 @@ export default function ManualMealLogPage() {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {items.map((item, idx) => (
-          <div key={idx} className="rounded-xl border bg-card p-4">
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">
-                Składnik {idx + 1}
-              </span>
+          <Card key={idx} variant="default" padding="md">
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-label uppercase text-muted-foreground">
+                Składnik{' '}
+                <span className="font-mono tabular-nums text-foreground">
+                  {String(idx + 1).padStart(2, '0')}
+                </span>
+              </p>
               {items.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeItem(idx)}
-                  className="text-muted-foreground hover:text-destructive"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Usuń składnik"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
 
-            <div className="mb-2">
+            <div className="flex flex-col gap-3">
               <Input
                 placeholder="Nazwa (np. ryż gotowany)"
                 value={item.label}
                 onChange={(e) => updateItem(idx, 'label', e.target.value)}
               />
-            </div>
-
-            <div className="mb-3">
               <Input
                 placeholder="Porcja (np. ~200g, 1 talerz)"
                 value={item.portion_estimate}
                 onChange={(e) => updateItem(idx, 'portion_estimate', e.target.value)}
               />
-            </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs text-muted-foreground">Kalorie *</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="kcal"
-                  value={item.kcal_estimate}
-                  onChange={(e) => updateItem(idx, 'kcal_estimate', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Białko (g)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="g"
-                  value={item.protein_g}
-                  onChange={(e) => updateItem(idx, 'protein_g', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Węgle (g)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="g"
-                  value={item.carbs_g}
-                  onChange={(e) => updateItem(idx, 'carbs_g', e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Tłuszcze (g)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  placeholder="g"
-                  value={item.fat_g}
-                  onChange={(e) => updateItem(idx, 'fat_g', e.target.value)}
-                  className="mt-1"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-label uppercase text-muted-foreground">
+                    Kalorie <span className="text-brand">*</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="kcal"
+                    value={item.kcal_estimate}
+                    onChange={(e) => updateItem(idx, 'kcal_estimate', e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-label uppercase text-muted-foreground">Białko (g)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="g"
+                    value={item.protein_g}
+                    onChange={(e) => updateItem(idx, 'protein_g', e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-label uppercase text-muted-foreground">Węgle (g)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="g"
+                    value={item.carbs_g}
+                    onChange={(e) => updateItem(idx, 'carbs_g', e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-label uppercase text-muted-foreground">Tłuszcze (g)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="g"
+                    value={item.fat_g}
+                    onChange={(e) => updateItem(idx, 'fat_g', e.target.value)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
 
         <Button type="button" variant="outline" className="gap-2" onClick={addItem}>
@@ -203,10 +216,10 @@ export default function ManualMealLogPage() {
       <Button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full gap-2"
-        size="lg"
+        isLoading={loading}
+        className="w-full"
+        size="hero"
       >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
         Zapisz posiłek
       </Button>
     </div>

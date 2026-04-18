@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Loader2, Save, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Save, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
 
 interface MealLogItem {
@@ -94,103 +96,113 @@ export default function MealLogEditPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-4 p-8 text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
         <AlertTriangle className="h-10 w-10 text-destructive" />
-        <p className="text-destructive">{error}</p>
+        <p className="text-body-m text-destructive">{error}</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div>
-        <h1 className="text-2xl font-semibold">Edytuj składniki</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Popraw wartości rozpoznane przez AI
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href={`/app/nutrition/log/${mealLogId}`}
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Wróć
+      </Link>
+
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">Edycja</p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Popraw</span>
+          <br />
+          <span className="font-sans font-semibold">składniki.</span>
+        </h1>
+        <p className="text-body-m text-muted-foreground">
+          Twoje korekty pomagają AI dokładniej rozpoznawać posiłki.
         </p>
-      </div>
+      </header>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <div key={item.id} className="rounded-xl border bg-card p-4">
-            <div className="mb-3">
-              <Label htmlFor={`label-${item.id}`} className="text-xs text-muted-foreground">
-                Składnik
-              </Label>
-              <Input
-                id={`label-${item.id}`}
-                value={item.label}
-                onChange={(e) => updateField(item.id, 'label', e.target.value)}
-                className="mt-1"
-              />
-            </div>
+          <Card key={item.id} variant="default" padding="md">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`label-${item.id}`} className="text-label uppercase text-muted-foreground">
+                  Składnik
+                </Label>
+                <Input
+                  id={`label-${item.id}`}
+                  value={item.label}
+                  onChange={(e) => updateField(item.id, 'label', e.target.value)}
+                />
+              </div>
 
-            <div className="mb-3">
-              <Label htmlFor={`portion-${item.id}`} className="text-xs text-muted-foreground">
-                Porcja
-              </Label>
-              <Input
-                id={`portion-${item.id}`}
-                value={item.portion_estimate ?? ''}
-                onChange={(e) => updateField(item.id, 'portion_estimate', e.target.value)}
-                placeholder="np. ~150g, 1 talerz"
-                className="mt-1"
-              />
-            </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`portion-${item.id}`} className="text-label uppercase text-muted-foreground">
+                  Porcja
+                </Label>
+                <Input
+                  id={`portion-${item.id}`}
+                  value={item.portion_estimate ?? ''}
+                  onChange={(e) => updateField(item.id, 'portion_estimate', e.target.value)}
+                  placeholder="np. ~150g, 1 talerz"
+                />
+              </div>
 
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              {(
-                [
-                  ['kcal_estimate', 'Kalorie (kcal)'],
-                  ['protein_g', 'Białko (g)'],
-                  ['carbs_g', 'Węgle (g)'],
-                  ['fat_g', 'Tłuszcze (g)'],
-                ] as const
-              ).map(([field, fieldLabel]) => (
-                <div key={field}>
-                  <Label htmlFor={`${field}-${item.id}`} className="text-xs text-muted-foreground">
-                    {fieldLabel}
-                  </Label>
-                  <Input
-                    id={`${field}-${item.id}`}
-                    type="number"
-                    min="0"
-                    value={item[field] ?? ''}
-                    onChange={(e) => updateField(item.id, field, e.target.value)}
-                    className="mt-1"
-                  />
-                </div>
-              ))}
-            </div>
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    ['kcal_estimate', 'Kalorie (kcal)'],
+                    ['protein_g', 'Białko (g)'],
+                    ['carbs_g', 'Węgle (g)'],
+                    ['fat_g', 'Tłuszcze (g)'],
+                  ] as const
+                ).map(([field, fieldLabel]) => (
+                  <div key={field} className="flex flex-col gap-1.5">
+                    <Label htmlFor={`${field}-${item.id}`} className="text-label uppercase text-muted-foreground">
+                      {fieldLabel}
+                    </Label>
+                    <Input
+                      id={`${field}-${item.id}`}
+                      type="number"
+                      min="0"
+                      value={item[field] ?? ''}
+                      onChange={(e) => updateField(item.id, field, e.target.value)}
+                    />
+                  </div>
+                ))}
+              </div>
 
-            <Button
-              size="sm"
-              disabled={!item.dirty || item.saving}
-              onClick={() => saveItem(item)}
-              className="w-full gap-2"
-            >
-              {item.saving ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
+              <Button
+                size="sm"
+                disabled={!item.dirty || item.saving}
+                isLoading={item.saving}
+                onClick={() => saveItem(item)}
+                className="w-full gap-2"
+              >
                 <Save className="h-3.5 w-3.5" />
-              )}
-              Zapisz zmiany
-            </Button>
-          </div>
+                Zapisz zmiany
+              </Button>
+            </div>
+          </Card>
         ))}
       </div>
 
       <Button
         variant="outline"
         className="w-full"
+        size="lg"
         onClick={() => router.push(`/app/nutrition/log/${mealLogId}`)}
       >
         Gotowe

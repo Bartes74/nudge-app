@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Star, StarOff, AlertTriangle, Pencil, ChevronRight } from 'lucide-react'
+import { Loader2, Star, AlertTriangle, Pencil, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardEyebrow } from '@/components/ui/card'
 
 interface MealLogItem {
   id: string
@@ -50,13 +51,14 @@ function ConfidenceStars({ score }: { score: number }) {
   const stars = Math.round(score * 5)
   return (
     <div className="flex items-center gap-0.5" aria-label={`Pewność: ${stars}/5`}>
-      {Array.from({ length: 5 }).map((_, i) =>
-        i < stars ? (
-          <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-        ) : (
-          <StarOff key={i} className="h-3.5 w-3.5 text-muted-foreground/40" />
-        ),
-      )}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`h-3.5 w-3.5 ${
+            i < stars ? 'fill-brand text-brand' : 'fill-transparent text-muted-foreground/30'
+          }`}
+        />
+      ))}
     </div>
   )
 }
@@ -74,12 +76,16 @@ function MacroRange({
 }) {
   if (min == null || max == null) return null
   return (
-    <div className="flex flex-col items-center rounded-xl bg-muted/50 p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-base font-bold tabular-nums">
-        {Math.round(min)}–{Math.round(max)}
-      </span>
-      <span className="text-xs text-muted-foreground">{unit}</span>
+    <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-3 py-3">
+      <span className="text-label uppercase text-muted-foreground">{label}</span>
+      <div className="flex items-baseline gap-1">
+        <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
+          {Math.round(min)}
+          <span className="text-muted-foreground">–</span>
+          {Math.round(max)}
+        </span>
+        <span className="text-body-s text-muted-foreground">{unit}</span>
+      </div>
     </div>
   )
 }
@@ -131,9 +137,11 @@ export default function MealLogResultPage() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center gap-4 p-8 text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
         <AlertTriangle className="h-10 w-10 text-destructive" />
-        <p className="font-medium text-destructive">{error}</p>
+        <p className="text-display-m font-display text-balance">
+          <span className="font-sans font-semibold">{error}</span>
+        </p>
         <Button asChild variant="outline">
           <Link href="/app/nutrition/log">Wróć</Link>
         </Button>
@@ -143,25 +151,33 @@ export default function MealLogResultPage() {
 
   if (!mealLog || mealLog.status === 'pending_analysis') {
     return (
-      <div className="flex flex-col items-center gap-4 p-8 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        <p className="font-medium">Analizuję zdjęcie…</p>
-        <p className="text-sm text-muted-foreground">
-          Zazwyczaj zajmuje to kilka sekund
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
+        <Loader2 className="h-10 w-10 animate-spin text-brand" />
+        <div className="flex flex-col gap-2">
+          <p className="text-display-m font-display text-balance">
+            <span className="font-display italic text-muted-foreground">Analizuję —</span>
+            <br />
+            <span className="font-sans font-semibold">chwilę.</span>
+          </p>
+          <p className="text-body-m text-muted-foreground">
+            Zazwyczaj zajmuje to kilka sekund.
+          </p>
+        </div>
       </div>
     )
   }
 
   if (mealLog.status === 'failed') {
     return (
-      <div className="flex flex-col items-center gap-4 p-8 text-center">
-        <AlertTriangle className="h-10 w-10 text-amber-500" />
-        <p className="font-medium">Nie udało się przeanalizować zdjęcia</p>
-        <p className="text-sm text-muted-foreground">
-          Możesz dodać posiłek ręcznie.
-        </p>
-        <Button asChild>
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
+        <AlertTriangle className="h-10 w-10 text-warning" />
+        <div className="flex flex-col gap-2">
+          <p className="text-display-m font-display text-balance">
+            <span className="font-sans font-semibold">Nie udało się przeanalizować.</span>
+          </p>
+          <p className="text-body-m text-muted-foreground">Możesz dodać posiłek ręcznie.</p>
+        </div>
+        <Button asChild size="lg">
           <Link href="/app/nutrition/log/manual">Dodaj ręcznie</Link>
         </Button>
       </div>
@@ -171,18 +187,27 @@ export default function MealLogResultPage() {
   const items = mealLog.meal_log_items
 
   return (
-    <div className="flex flex-col gap-5 p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">
-            {mealLog.meal_type ? (MEAL_TYPE_LABELS[mealLog.meal_type] ?? mealLog.meal_type) : 'Posiłek'}
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/nutrition/today"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+        Dzisiaj
+      </Link>
+
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Posiłek</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-sans font-semibold">
+              {mealLog.meal_type ? (MEAL_TYPE_LABELS[mealLog.meal_type] ?? mealLog.meal_type) : 'Posiłek'}
+            </span>
           </h1>
           {mealLog.confidence_score != null && (
             <div className="mt-1 flex items-center gap-2">
               <ConfidenceStars score={mealLog.confidence_score} />
-              <span className="text-xs text-muted-foreground">
-                pewność analizy
-              </span>
+              <span className="text-body-s text-muted-foreground">pewność analizy</span>
             </div>
           )}
         </div>
@@ -192,15 +217,12 @@ export default function MealLogResultPage() {
             Edytuj
           </Link>
         </Button>
-      </div>
+      </header>
 
-      {/* Macro ranges */}
       {mealLog.status === 'analyzed' && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
-            Szacowane wartości (zakres)
-          </p>
-          <div className="grid grid-cols-2 gap-2">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Szacowane wartości (zakres)</CardEyebrow>
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <MacroRange
               label="Kalorie"
               min={mealLog.kcal_estimate_min}
@@ -226,73 +248,74 @@ export default function MealLogResultPage() {
               unit="g"
             />
           </div>
-        </section>
+        </Card>
       )}
 
-      {/* User warnings */}
       {mealLog.user_warnings && mealLog.user_warnings.length > 0 && (
-        <section className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            Uwagi
-          </p>
-          <ul className="flex flex-col gap-1.5">
+        <Card variant="destructive" padding="md">
+          <CardEyebrow className="text-destructive">Uwagi</CardEyebrow>
+          <ul className="mt-3 flex flex-col gap-2">
             {mealLog.user_warnings.map((w, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-amber-800 dark:text-amber-300">
-                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {w}
+              <li key={i} className="flex items-start gap-2.5 text-body-m text-foreground">
+                <AlertTriangle className="mt-1 h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span>{w}</span>
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
 
-      {/* Ingredients */}
       {items.length > 0 && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">
-            Rozpoznane składniki
-          </p>
-          <div className="flex flex-col divide-y">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Rozpoznane składniki</CardEyebrow>
+          <div className="mt-3 flex flex-col divide-y divide-border/60">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-2.5">
-                <div className="flex-1">
+              <div key={item.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="truncate text-body-m font-medium tracking-tight">{item.label}</span>
                     {item.is_user_corrected && (
-                      <Badge variant="outline" className="h-4 px-1 text-[10px]">
+                      <Badge variant="label" className="px-0 text-[10px]">
                         edytowano
                       </Badge>
                     )}
                   </div>
                   {item.portion_estimate && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="mt-0.5 font-mono text-body-s tabular-nums text-muted-foreground">
                       {item.portion_estimate}
                     </span>
                   )}
                 </div>
                 {item.kcal_estimate != null && (
-                  <span className="ml-3 text-sm font-medium tabular-nums">
-                    ~{item.kcal_estimate} kcal
+                  <span className="shrink-0 font-mono text-body-m tabular-nums text-foreground">
+                    ~{item.kcal_estimate}
+                    <span className="ml-1 text-body-s text-muted-foreground">kcal</span>
                   </span>
                 )}
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       )}
 
       {mealLog.note && (
-        <p className="rounded-xl bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-          Notatka: {mealLog.note}
-        </p>
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Notatka</CardEyebrow>
+          <p className="mt-2 text-body-m leading-relaxed text-foreground">{mealLog.note}</p>
+        </Card>
       )}
 
-      <Link
-        href="/app/nutrition/today"
-        className="flex items-center justify-between rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
-      >
-        <span className="text-sm font-medium">Zobacz dzienne podsumowanie</span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      <Link href="/app/nutrition/today" className="group">
+        <Card
+          variant="default"
+          padding="sm"
+          className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
+        >
+          <span className="text-body-m font-semibold tracking-tight">
+            Zobacz dzienne podsumowanie
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+        </Card>
       </Link>
     </div>
   )

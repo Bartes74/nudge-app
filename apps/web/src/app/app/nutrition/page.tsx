@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Salad, Scale, ChevronRight, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { Salad, Scale, ChevronRight, CheckCircle2, Circle, AlertCircle, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardEyebrow } from '@/components/ui/card'
 import {
   Accordion,
   AccordionContent,
@@ -48,12 +49,24 @@ interface NutritionVersion {
   } | null
 }
 
-function MacroCard({ label, value, unit }: { label: string; value: number; unit: string }) {
+function MacroTile({
+  label,
+  value,
+  unit,
+}: {
+  label: string
+  value: number
+  unit: string
+}) {
   return (
-    <div className="flex flex-col items-center rounded-xl bg-muted/50 p-3">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xl font-bold tabular-nums">{value}</span>
-      <span className="text-xs text-muted-foreground">{unit}</span>
+    <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-3 py-3">
+      <span className="text-label uppercase text-muted-foreground">{label}</span>
+      <div className="flex items-baseline gap-1">
+        <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
+          {value}
+        </span>
+        <span className="text-body-s text-muted-foreground">{unit}</span>
+      </div>
     </div>
   )
 }
@@ -62,22 +75,28 @@ function SupplementList({
   items,
   icon: Icon,
   label,
-  className,
+  tone,
 }: {
   items: string[]
   icon: React.ComponentType<{ className?: string }>
   label: string
-  className?: string
+  tone: 'success' | 'muted' | 'warn'
 }) {
   if (items.length === 0) return null
+  const iconTone =
+    tone === 'success'
+      ? 'text-success'
+      : tone === 'warn'
+        ? 'text-warning'
+        : 'text-muted-foreground/60'
   return (
-    <div className="space-y-1">
-      <p className={`text-xs font-medium uppercase tracking-wide ${className}`}>{label}</p>
-      <ul className="space-y-1">
+    <div className="flex flex-col gap-2">
+      <p className="text-label uppercase text-muted-foreground">{label}</p>
+      <ul className="flex flex-col gap-1.5">
         {items.map((item) => (
-          <li key={item} className="flex items-start gap-2 text-sm">
-            <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            {item}
+          <li key={item} className="flex items-start gap-2.5 text-body-m text-foreground">
+            <Icon className={`mt-1 h-3.5 w-3.5 shrink-0 ${iconTone}`} />
+            <span>{item}</span>
           </li>
         ))}
       </ul>
@@ -134,33 +153,50 @@ export default async function NutritionPage() {
 
   if (!version) {
     return (
-      <div className="flex flex-col gap-6 p-4">
-        <h1 className="text-2xl font-semibold">Jedzenie</h1>
+      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+        <header className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Jedzenie</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Twoje</span>
+            <br />
+            <span className="font-sans font-semibold">żywienie.</span>
+          </h1>
+        </header>
 
         {!profile?.onboarding_layer_1_done ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
-            <Salad className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium">Odpowiedz na 3 pytania, żeby otrzymać plan</p>
-            <p className="text-xs text-muted-foreground">
-              Potrzebujemy podstawowych danych, żeby dopasować zalecenia do Ciebie.
-            </p>
-            <Button asChild size="sm">
-              <Link href="/onboarding">Uzupełnij profil</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 rounded-xl border bg-card p-6">
-            <div className="flex items-center gap-3">
-              <Salad className="h-8 w-8 text-primary" />
-              <div>
-                <p className="font-medium">Gotowy na plan żywieniowy?</p>
-                <p className="text-sm text-muted-foreground">
-                  Wygenerujemy zalecenia dopasowane do Twojego celu i stylu życia.
+          <Card variant="hero" padding="xl">
+            <div className="flex flex-col items-start gap-5">
+              <Salad className="h-8 w-8 text-brand" aria-hidden="true" />
+              <div className="flex flex-col gap-2">
+                <p className="text-label uppercase text-muted-foreground">Brak profilu</p>
+                <p className="text-display-m font-display text-balance">
+                  <span className="font-sans font-semibold">Odpowiedz na 3 pytania.</span>
+                </p>
+                <p className="text-body-m text-muted-foreground">
+                  Potrzebujemy kilku danych, żeby dopasować rekomendacje do Ciebie.
                 </p>
               </div>
+              <Button asChild size="hero" className="gap-2">
+                <Link href="/onboarding">
+                  Uzupełnij profil
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
-            <GenerateNutritionButton />
-          </div>
+          </Card>
+        ) : (
+          <Card variant="hero" padding="xl">
+            <div className="flex flex-col items-start gap-5">
+              <Salad className="h-8 w-8 text-brand" aria-hidden="true" />
+              <div className="flex flex-col gap-2">
+                <p className="text-label uppercase text-muted-foreground">Gotowy na plan?</p>
+                <p className="text-display-m font-display text-balance">
+                  <span className="font-sans font-semibold">Wygenerujemy zalecenia dopasowane do Twojego celu.</span>
+                </p>
+              </div>
+              <GenerateNutritionButton />
+            </div>
+          </Card>
         )}
       </div>
     )
@@ -172,64 +208,79 @@ export default async function NutritionPage() {
   const meals = version.meal_distribution ?? []
 
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Jedzenie</h1>
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-label uppercase text-muted-foreground">Jedzenie</p>
+          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+            <span className="font-display italic text-muted-foreground">Twój</span>
+            <br />
+            <span className="font-sans font-semibold">plan żywieniowy.</span>
+          </h1>
+        </div>
         <Button asChild variant="outline" size="sm" className="gap-1.5">
           <Link href="/app/nutrition/log-weight">
             <Scale className="h-4 w-4" />
             Waga
           </Link>
         </Button>
-      </div>
+      </header>
 
-      {/* Targets header — only for ranges and exact mode */}
       {version.mode !== 'simple' && version.calories_target != null && (
-        <section className="rounded-xl border bg-card p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-sm font-medium text-muted-foreground">Dzienne cele</p>
-            <Badge variant="secondary">{version.mode === 'exact' ? 'Dokładny' : 'Orientacyjny'}</Badge>
+        <Card variant="default" padding="md">
+          <div className="flex items-center justify-between">
+            <CardEyebrow>Dzienne cele</CardEyebrow>
+            <Badge variant={version.mode === 'exact' ? 'brand' : 'outline-warm'}>
+              {version.mode === 'exact' ? 'Dokładny' : 'Orientacyjny'}
+            </Badge>
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <MacroCard label="Kalorie" value={version.calories_target} unit="kcal" />
-            <MacroCard label="Białko" value={version.protein_g_target!} unit="g" />
-            <MacroCard label="Węgle" value={version.carbs_g_target!} unit="g" />
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <MacroTile label="Kalorie" value={version.calories_target} unit="kcal" />
+            <MacroTile label="Białko" value={version.protein_g_target!} unit="g" />
+            <MacroTile label="Węgle" value={version.carbs_g_target!} unit="g" />
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
-            <MacroCard label="Tłuszcze" value={version.fat_g_target!} unit="g" />
-            <MacroCard label="Błonnik" value={version.fiber_g_target!} unit="g" />
-            <MacroCard label="Woda" value={Math.round(version.water_ml_target! / 1000 * 10) / 10} unit="l" />
+            <MacroTile label="Tłuszcze" value={version.fat_g_target!} unit="g" />
+            <MacroTile label="Błonnik" value={version.fiber_g_target!} unit="g" />
+            <MacroTile
+              label="Woda"
+              value={Math.round((version.water_ml_target! / 1000) * 10) / 10}
+              unit="l"
+            />
           </div>
-        </section>
+        </Card>
       )}
 
-      {/* Simple mode — water reminder */}
       {version.mode === 'simple' && version.water_ml_target != null && (
-        <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm">
-          <span className="text-lg">💧</span>
-          <span>
-            Pij około <strong>{Math.round(version.water_ml_target / 1000 * 10) / 10} l</strong> wody dziennie
-          </span>
-        </div>
+        <Card variant="recessed" padding="md">
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-display-m tabular-nums text-brand">
+              {Math.round((version.water_ml_target / 1000) * 10) / 10}
+            </span>
+            <div className="flex flex-col">
+              <p className="text-label uppercase text-muted-foreground">Woda dziennie</p>
+              <p className="text-body-s text-muted-foreground">Pij regularnie przez dzień</p>
+            </div>
+          </div>
+        </Card>
       )}
 
-      {/* Meal distribution */}
       {meals.length > 0 && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">Rozkład posiłków</p>
-          <div className="space-y-2">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Rozkład posiłków</CardEyebrow>
+          <div className="mt-4 flex flex-col divide-y divide-border/60">
             {meals.map((meal) => (
-              <div key={meal.meal} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              <div key={meal.meal} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground font-mono text-[11px] tabular-nums text-background">
                     {meal.meal}
                   </span>
-                  <span className="font-medium">{meal.name}</span>
+                  <span className="text-body-m font-medium tracking-tight">{meal.name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <span>{meal.time}</span>
+                <div className="flex items-center gap-3 text-body-s">
+                  <span className="font-mono tabular-nums text-muted-foreground">{meal.time}</span>
                   {version.mode !== 'simple' && (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline-warm" className="font-mono tabular-nums">
                       {Math.round(meal.kcal_share * 100)}%
                     </Badge>
                   )}
@@ -237,142 +288,146 @@ export default async function NutritionPage() {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       )}
 
-      {/* Strategy notes */}
       {version.strategy_notes && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-2 text-sm font-medium text-muted-foreground">Strategia</p>
-          <p className="text-sm leading-relaxed">{version.strategy_notes}</p>
-        </section>
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Strategia</CardEyebrow>
+          <p className="mt-3 text-body-m leading-relaxed text-foreground">
+            {version.strategy_notes}
+          </p>
+        </Card>
       )}
 
-      {/* Practical guidelines */}
       {guidelines && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">Wytyczne praktyczne</p>
-          <div className="space-y-4">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Wytyczne praktyczne</CardEyebrow>
+          <div className="mt-4 flex flex-col gap-5">
             {guidelines.base_products.length > 0 && (
-              <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Baza diety
-                </p>
-                <ul className="space-y-1">
+              <div className="flex flex-col gap-2">
+                <p className="text-label uppercase text-muted-foreground">Baza diety</p>
+                <ul className="flex flex-col gap-1.5">
                   {guidelines.base_products.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-green-500" />
-                      {item}
+                    <li key={item} className="flex items-start gap-2.5 text-body-m text-foreground">
+                      <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-success" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
             {guidelines.protein_sources.length > 0 && (
-              <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Źródła białka
-                </p>
-                <ul className="space-y-1">
+              <div className="flex flex-col gap-2 border-t border-border/60 pt-4">
+                <p className="text-label uppercase text-muted-foreground">Źródła białka</p>
+                <ul className="flex flex-col gap-1.5">
                   {guidelines.protein_sources.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm">
-                      <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
-                      {item}
+                    <li key={item} className="flex items-start gap-2.5 text-body-m text-foreground">
+                      <Circle className="mt-1 h-3.5 w-3.5 shrink-0 text-brand" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
             {guidelines.limit.length > 0 && (
-              <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Ogranicz
-                </p>
-                <ul className="space-y-1">
+              <div className="flex flex-col gap-2 border-t border-border/60 pt-4">
+                <p className="text-label uppercase text-muted-foreground">Ogranicz</p>
+                <ul className="flex flex-col gap-1.5">
                   {guidelines.limit.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                      {item}
+                    <li key={item} className="flex items-start gap-2.5 text-body-m text-foreground">
+                      <AlertCircle className="mt-1 h-3.5 w-3.5 shrink-0 text-warning" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
           </div>
-        </section>
+        </Card>
       )}
 
-      {/* Supplements */}
       {supplements && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium text-muted-foreground">Suplementy</p>
-          <div className="space-y-4">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Suplementy</CardEyebrow>
+          <div className="mt-4 flex flex-col gap-5">
             <SupplementList
               items={supplements.sensible}
               icon={CheckCircle2}
               label="Warto rozważyć"
-              className="text-green-600 dark:text-green-400"
+              tone="success"
             />
+            {supplements.optional.length > 0 && supplements.sensible.length > 0 && (
+              <div className="border-t border-border/60" />
+            )}
             <SupplementList
               items={supplements.optional}
               icon={Circle}
               label="Opcjonalne"
-              className="text-muted-foreground"
+              tone="muted"
             />
+            {supplements.unnecessary.length > 0 &&
+              (supplements.sensible.length > 0 || supplements.optional.length > 0) && (
+                <div className="border-t border-border/60" />
+              )}
             <SupplementList
               items={supplements.unnecessary}
               icon={AlertCircle}
               label="Zbędne na tym etapie"
-              className="text-muted-foreground"
+              tone="warn"
             />
           </div>
-        </section>
+        </Card>
       )}
 
-      {/* Emergency plan — accordion */}
       {emergency && (
-        <section className="rounded-xl border bg-card p-4">
-          <p className="mb-1 text-sm font-medium text-muted-foreground">Plan awaryjny</p>
-          <p className="mb-3 text-xs text-muted-foreground">Co robić w trudnych sytuacjach</p>
-          <Accordion type="single" collapsible className="w-full">
+        <Card variant="default" padding="md">
+          <CardEyebrow>Plan awaryjny</CardEyebrow>
+          <p className="mt-1 text-body-s text-muted-foreground">Co robić w trudnych sytuacjach</p>
+          <Accordion type="single" collapsible className="mt-3 w-full">
             {(Object.entries(emergency) as [keyof typeof emergency, string][]).map(([key, value]) => (
-              <AccordionItem key={key} value={key}>
-                <AccordionTrigger className="text-sm font-normal">
+              <AccordionItem key={key} value={key} className="border-b border-border/60 last:border-b-0">
+                <AccordionTrigger className="text-body-m font-medium tracking-tight">
                   {EMERGENCY_LABELS[key] ?? key}
                 </AccordionTrigger>
-                <AccordionContent className="text-sm leading-relaxed text-muted-foreground">
+                <AccordionContent className="text-body-m leading-relaxed text-muted-foreground">
                   {value}
                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>
-        </section>
+        </Card>
       )}
 
-      {/* Quick weight log CTA */}
-      <Link
-        href="/app/nutrition/log-weight"
-        className="flex items-center justify-between rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
-      >
-        <div className="flex items-center gap-3">
-          <Scale className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Zaloguj wagę</p>
-            {lastMeasurement ? (
-              <p className="text-xs text-muted-foreground">
-                Ostatni pomiar:{' '}
-                {Number(lastMeasurement.weight_kg).toFixed(1)} kg —{' '}
-                {new Date(lastMeasurement.measured_at as string).toLocaleDateString('pl-PL')}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">Brak pomiarów</p>
-            )}
+      <Link href="/app/nutrition/log-weight" className="group">
+        <Card
+          variant="default"
+          padding="sm"
+          className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+              <Scale className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-body-m font-semibold tracking-tight">Zaloguj wagę</p>
+              {lastMeasurement ? (
+                <p className="font-mono text-body-s tabular-nums text-muted-foreground">
+                  Ostatnio: {Number(lastMeasurement.weight_kg).toFixed(1)} kg ·{' '}
+                  {new Date(lastMeasurement.measured_at as string).toLocaleDateString('pl-PL', {
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                </p>
+              ) : (
+                <p className="text-body-s text-muted-foreground">Brak pomiarów</p>
+              )}
+            </div>
           </div>
-        </div>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
+        </Card>
       </Link>
 
-      {/* Ask coach about diet */}
       <AskCoachButton
         entryPoint="meal_shortcut"
         contextEntityType="meal"
@@ -381,8 +436,7 @@ export default async function NutritionPage() {
         label="Spytaj o produkt lub makro"
       />
 
-      {/* Regenerate */}
-      <div className="pb-4">
+      <div className="pt-2">
         <GenerateNutritionButton />
       </div>
     </div>

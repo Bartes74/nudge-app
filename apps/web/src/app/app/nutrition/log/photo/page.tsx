@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Camera, X, Send, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { ArrowLeft, Camera, X, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -71,29 +72,49 @@ export default function MealPhotoPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">
-        {showNote ? 'Zdjęcie + notatka' : 'Zdjęcie posiłku'}
-      </h1>
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-5 pt-6 pb-24 animate-stagger">
+      <Link
+        href="/app/nutrition/log"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Wróć
+      </Link>
+
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">
+          {showNote ? 'Zdjęcie + notatka' : 'Zdjęcie'}
+        </p>
+        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
+          <span className="font-display italic text-muted-foreground">Sfotografuj</span>
+          <br />
+          <span className="font-sans font-semibold">posiłek.</span>
+        </h1>
+      </header>
 
       {!preview ? (
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="flex aspect-square w-full max-w-sm flex-col items-center justify-center gap-3 self-center rounded-2xl border-2 border-dashed border-muted-foreground/30 bg-muted/30 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-muted/50"
+          className="group flex aspect-square w-full max-w-sm flex-col items-center justify-center gap-3 self-center rounded-2xl border-2 border-dashed border-border bg-surface-2/50 text-muted-foreground transition-[border-color,background-color,transform] duration-200 ease-premium hover:border-foreground/40 hover:bg-surface-2 active:scale-[0.99]"
         >
-          <Camera className="h-10 w-10" />
-          <span className="text-sm font-medium">Dotknij, aby zrobić zdjęcie</span>
-          <span className="text-xs">lub wybierz z galerii</span>
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground text-background">
+            <Camera className="h-6 w-6" aria-hidden="true" />
+          </div>
+          <span className="text-body-m font-semibold tracking-tight text-foreground">
+            Dotknij, aby zrobić zdjęcie
+          </span>
+          <span className="text-body-s">lub wybierz z galerii</span>
         </button>
       ) : (
-        <div className="relative w-full max-w-sm self-center overflow-hidden rounded-2xl">
+        <div className="relative w-full max-w-sm self-center overflow-hidden rounded-2xl border border-border shadow-lift">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={preview} alt="Podgląd posiłku" className="w-full object-cover" />
           <button
             type="button"
             onClick={clearPhoto}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/80 text-foreground shadow-lift backdrop-blur-md transition-transform hover:scale-105"
+            aria-label="Usuń zdjęcie"
           >
             <X className="h-4 w-4" />
           </button>
@@ -110,28 +131,30 @@ export default function MealPhotoPage() {
       />
 
       {(showNote || preview) && (
-        <Textarea
-          placeholder="Notatka dla AI (opcjonalnie): np. 'to był duży talerz', 'z sosem śmietanowym'"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          maxLength={300}
-          rows={3}
-          className="resize-none"
-        />
+        <div className="flex flex-col gap-2">
+          <label htmlFor="meal-note" className="text-label uppercase text-muted-foreground">
+            Notatka <span className="normal-case tracking-tight">(opcjonalnie)</span>
+          </label>
+          <Textarea
+            id="meal-note"
+            placeholder="np. „to był duży talerz”, „z sosem śmietanowym”…"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={300}
+            rows={3}
+            className="resize-none"
+          />
+        </div>
       )}
 
       <Button
         onClick={handleSubmit}
         disabled={!file || loading}
+        isLoading={loading}
         className="w-full gap-2"
-        size="lg"
+        size="hero"
       >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Przesyłam...
-          </>
-        ) : (
+        {loading ? 'Przesyłam…' : (
           <>
             <Send className="h-4 w-4" />
             Analizuj posiłek

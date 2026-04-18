@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Loader2, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
+import { toast } from 'sonner'
 
 export function GenerateNutritionButton() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export function GenerateNutritionButton() {
       const res = await fetch('/api/plan/nutrition/generate', { method: 'POST' })
       if (!res.ok) {
         const body = await res.json()
-        alert(body.error ?? 'Błąd generowania planu')
+        toast.error(body.error ?? 'Błąd generowania planu')
         setState('idle')
         return
       }
@@ -23,6 +24,7 @@ export function GenerateNutritionButton() {
       setState('polling')
       pollTask(task_id)
     } catch {
+      toast.error('Wystąpił błąd')
       setState('idle')
     }
   }
@@ -38,7 +40,7 @@ export function GenerateNutritionButton() {
           setState('idle')
         } else if (body.task?.status === 'failed' || body.task?.status === 'cancelled') {
           clearInterval(interval)
-          alert(body.task.error ?? 'Nie udało się wygenerować planu')
+          toast.error(body.task.error ?? 'Nie udało się wygenerować planu')
           setState('idle')
         }
       } catch {
@@ -48,16 +50,23 @@ export function GenerateNutritionButton() {
     }, 2000)
   }
 
+  const label =
+    state === 'loading'
+      ? 'Uruchamianie…'
+      : state === 'polling'
+        ? 'Generowanie planu…'
+        : 'Wygeneruj plan żywieniowy'
+
   return (
-    <Button onClick={handleGenerate} disabled={state !== 'idle'} className="w-full gap-2">
-      {state !== 'idle' ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <Sparkles className="h-4 w-4" />
-      )}
-      {state === 'idle' && 'Wygeneruj plan żywieniowy'}
-      {state === 'loading' && 'Uruchamianie...'}
-      {state === 'polling' && 'Generowanie planu...'}
+    <Button
+      onClick={handleGenerate}
+      disabled={state !== 'idle'}
+      isLoading={state !== 'idle'}
+      size="hero"
+      className="w-full gap-2"
+    >
+      {state === 'idle' && <Sparkles className="h-4 w-4" />}
+      {label}
     </Button>
   )
 }

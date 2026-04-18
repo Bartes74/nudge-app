@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ChevronDown, Loader2 } from 'lucide-react'
+import { Card, CardEyebrow } from '@/components/ui/card'
+import { ChevronDown, AlertTriangle, Save } from 'lucide-react'
 
 export function LogWeightForm() {
   const router = useRouter()
@@ -74,58 +75,56 @@ export function LogWeightForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="rounded-xl border bg-card p-4">
-        <div className="flex flex-col gap-3">
-          <Label htmlFor="weight" className="text-base font-medium">
-            Waga ciała
-          </Label>
-          <div className="flex items-center gap-2">
-            <Input
-              id="weight"
-              type="number"
-              inputMode="decimal"
-              placeholder="np. 74.5"
-              min={20}
-              max={500}
-              step={0.1}
-              value={weightKg}
-              onChange={(e) => setWeightKg(e.target.value)}
-              className="text-lg"
-              autoFocus
-            />
-            <span className="text-sm text-muted-foreground">kg</span>
-          </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <Card variant="default" padding="md">
+        <CardEyebrow>Waga ciała</CardEyebrow>
+        <div className="mt-3 flex items-baseline gap-3">
+          <Input
+            id="weight"
+            type="number"
+            inputMode="decimal"
+            placeholder="74.5"
+            min={20}
+            max={500}
+            step={0.1}
+            value={weightKg}
+            onChange={(e) => setWeightKg(e.target.value)}
+            className="h-14 border-0 bg-transparent px-0 font-mono text-display-m tabular-nums tracking-tight text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            autoFocus
+          />
+          <span className="text-body-m text-muted-foreground">kg</span>
         </div>
-      </div>
+      </Card>
 
       <button
         type="button"
         onClick={() => setShowCircumferences((p) => !p)}
-        className="flex items-center gap-2 text-sm text-muted-foreground"
+        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronDown
-          className={`h-4 w-4 transition-transform ${showCircumferences ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 transition-transform duration-200 ease-premium ${
+            showCircumferences ? 'rotate-180' : ''
+          }`}
         />
-        {showCircumferences ? 'Ukryj obwody' : 'Dodaj obwody (opcjonalnie)'}
+        {showCircumferences ? 'Ukryj obwody' : 'Dodaj obwody'}
       </button>
 
       {showCircumferences && (
-        <div className="rounded-xl border bg-card p-4">
-          <p className="mb-4 text-sm font-medium">Obwody ciała</p>
-          <div className="grid grid-cols-2 gap-3">
+        <Card variant="recessed" padding="md">
+          <CardEyebrow>Obwody ciała</CardEyebrow>
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {[
               { key: 'waist_cm', label: 'Talia' },
               { key: 'hips_cm', label: 'Biodra' },
-              { key: 'chest_cm', label: 'Klatka piersiowa' },
+              { key: 'chest_cm', label: 'Klatka' },
               { key: 'thigh_cm', label: 'Udo' },
               { key: 'arm_cm', label: 'Ramię' },
             ].map(({ key, label }) => (
               <div key={key} className="flex flex-col gap-1.5">
-                <Label htmlFor={key} className="text-xs text-muted-foreground">
+                <Label htmlFor={key} className="text-label uppercase text-muted-foreground">
                   {label}
                 </Label>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <Input
                     id={key}
                     type="number"
@@ -136,21 +135,34 @@ export function LogWeightForm() {
                     onChange={(e) =>
                       handleCircumferenceChange(key as keyof typeof circumferences, e.target.value)
                     }
+                    className="font-mono tabular-nums"
                   />
-                  <span className="text-xs text-muted-foreground">cm</span>
+                  <span className="text-body-s text-muted-foreground">cm</span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {error && (
-        <p className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">{error}</p>
+        <Card variant="destructive" padding="sm">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <p className="text-body-m text-foreground">{error}</p>
+          </div>
+        </Card>
       )}
 
-      <Button type="submit" disabled={submitting || !weightKg} className="w-full">
-        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Zapisz pomiar'}
+      <Button
+        type="submit"
+        disabled={submitting || !weightKg}
+        isLoading={submitting}
+        size="hero"
+        className="w-full gap-2"
+      >
+        <Save className="h-4 w-4" />
+        Zapisz pomiar
       </Button>
     </form>
   )
