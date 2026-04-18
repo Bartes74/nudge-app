@@ -20,6 +20,7 @@ export const generateTrainingPlanJob = inngest.createFunction(
     id: 'generate-training-plan',
     name: 'Generate Training Plan',
     triggers: [{ event: 'nudge/plan.training.generate' }],
+    retries: 0,
     onFailure: async ({ event, error }: { event: { data: { event: { data: Record<string, unknown> } } }; error: Error }) => {
       const { task_id } = event.data.event.data as { task_id: string }
       if (!task_id) return
