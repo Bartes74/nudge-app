@@ -12,6 +12,12 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardEyebrow,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
 import { useGeneratePlan } from '@/hooks/useGeneratePlan'
 
 interface Exercise {
@@ -83,6 +89,24 @@ function recommendationForPhase(adaptationPhase: string | null): string {
   return 'Najważniejsze dziś: zrób realny krok, nie idealny.'
 }
 
+function DurationChip({ minutes }: { minutes: number }) {
+  return (
+    <Badge variant="outline-warm" className="gap-1.5 px-3 py-1 text-body-s tabular-nums">
+      <Clock className="h-3.5 w-3.5" />
+      {minutes} min
+    </Badge>
+  )
+}
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1 border-t border-border/60 py-3 first:border-t-0 first:pt-0 last:pb-0">
+      <span className="text-label uppercase text-muted-foreground">{label}</span>
+      <span className="text-body-m text-foreground">{value}</span>
+    </div>
+  )
+}
+
 export function TodayCard({
   plan,
   todayDayLabel,
@@ -96,53 +120,77 @@ export function TodayCard({
 
   if (!onboardingDone) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
-        <CalendarDays className="h-10 w-10 text-muted-foreground/50" />
-        <p className="text-sm font-medium text-muted-foreground">
-          Ukończ onboarding, żeby dostać swój pierwszy spokojny plan.
-        </p>
-        <Button variant="outline" size="sm" onClick={() => router.push('/onboarding')}>
-          Wróć do onboardingu
-        </Button>
-      </div>
+      <Card variant="hero" padding="xl" className="text-center">
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-2">
+            <CalendarDays className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <p className="text-label uppercase text-muted-foreground">Pierwszy krok</p>
+            <p className="text-display-m font-display text-balance">
+              Ukończ onboarding, żeby dostać swój pierwszy spokojny plan.
+            </p>
+          </div>
+          <Button variant="default" size="hero" onClick={() => router.push('/onboarding')}>
+            Wróć do onboardingu
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </Card>
     )
   }
 
   if (status === 'blocked') {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-6">
-        <div className="flex items-center gap-2 text-destructive">
-          <AlertTriangle className="h-5 w-5" />
-          <p className="text-sm font-medium">Nie możemy jeszcze wygenerować planu</p>
+      <Card variant="destructive" padding="lg">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="flex flex-col gap-1.5">
+            <p className="text-label uppercase text-destructive">Wstrzymane</p>
+            <p className="text-body-l font-medium text-foreground">
+              Nie możemy jeszcze wygenerować planu
+            </p>
+            <p className="text-body-m text-muted-foreground">
+              Wykryliśmy kwestie bezpieczeństwa: {blockedReasons?.join(', ')}.
+            </p>
+          </div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Wykryliśmy kwestie bezpieczeństwa: {blockedReasons?.join(', ')}.
-        </p>
-      </div>
+      </Card>
     )
   }
 
   if (!plan?.current_version) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed bg-muted/40 p-8 text-center">
-        <CalendarDays className="h-10 w-10 text-muted-foreground/50" />
-        <div>
-          <p className="font-medium">Nie masz jeszcze planu</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Przygotujemy dla Ciebie pierwszy krok i pokażemy, co robić dzisiaj.
+      <Card variant="hero" padding="xl" className="text-center">
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-5">
+          <p className="text-label uppercase text-muted-foreground">Twój plan</p>
+          <p className="text-display-m font-display text-balance">
+            Przygotuj swój pierwszy krok.
           </p>
+          <p className="text-body-m text-muted-foreground">
+            Zajmie mi to kilka sekund. Dopasujemy tempo do tego, co powiedziałeś w onboardingu.
+          </p>
+          <Button
+            variant="default"
+            size="hero"
+            onClick={generate}
+            disabled={status === 'generating'}
+            className="w-full max-w-xs"
+          >
+            {status === 'generating' ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Przygotowuję plan…
+              </>
+            ) : (
+              <>
+                Przygotuj mój plan
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
         </div>
-        <Button onClick={generate} disabled={status === 'generating'} className="w-full max-w-xs">
-          {status === 'generating' ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Przygotowuję plan…
-            </>
-          ) : (
-            'Przygotuj mój plan'
-          )}
-        </Button>
-      </div>
+      </Card>
     )
   }
 
@@ -156,161 +204,178 @@ export function TodayCard({
   if (version.view_mode === 'guided_beginner_view' || entryPath === 'guided_beginner') {
     if (!todayWorkout) {
       return (
-        <div className="rounded-2xl border bg-card p-5">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Card variant="default" padding="lg">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <ShieldCheck className="h-4 w-4" />
-            Dziś spokojniejszy dzień
+            <span className="text-label uppercase">Dzień spokoju</span>
           </div>
-          <p className="mt-3 text-lg font-semibold">Twoim zadaniem jest po prostu wrócić do rytmu.</p>
-          <p className="mt-2 text-sm text-muted-foreground">{recommendationForPhase(adaptationPhase)}</p>
+          <p className="mt-4 text-display-m font-display text-balance">
+            Twoim zadaniem jest po prostu wrócić do rytmu.
+          </p>
+          <p className="mt-3 text-body-m text-muted-foreground">
+            {recommendationForPhase(adaptationPhase)}
+          </p>
           {nextWorkout && (
             <button
-              className="mt-4 flex w-full items-center justify-between rounded-xl border p-4 text-left transition-colors hover:bg-muted/40"
+              className="mt-5 flex w-full items-center justify-between rounded-lg border border-border p-4 text-left transition-colors hover:border-foreground/30 hover:bg-surface-2"
               onClick={() => router.push(`/app/plan/workout/${nextWorkout.id}`)}
             >
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Najbliższy trening</p>
-                <p className="mt-1 font-medium">{nextWorkout.name}</p>
+                <p className="text-label uppercase text-muted-foreground">Najbliższy trening</p>
+                <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
             </button>
           )}
-        </div>
+        </Card>
       )
     }
 
-    const currentStep = [...(todayWorkout.steps ?? [])].sort((left, right) => left.order_num - right.order_num)[0]
+    const currentStep = [...(todayWorkout.steps ?? [])].sort(
+      (left, right) => left.order_num - right.order_num,
+    )[0]
 
     return (
-      <div className="rounded-2xl border bg-card p-5">
+      <Card variant="hero" padding="lg" className="animate-stagger">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Dzisiejszy krok</p>
-            <h2 className="mt-1 text-xl font-semibold">{todayWorkout.name}</h2>
+          <div className="flex flex-col gap-2">
+            <CardEyebrow>Dzisiejszy krok</CardEyebrow>
+            <CardTitle>{todayWorkout.name}</CardTitle>
           </div>
-          <Badge variant="secondary" className="gap-1">
-            <Clock className="h-3 w-3" />
-            {todayWorkout.duration_min_estimated} min
-          </Badge>
+          <DurationChip minutes={todayWorkout.duration_min_estimated} />
         </div>
 
         {todayWorkout.confidence_goal && (
-          <div className="mt-4 rounded-xl bg-muted/40 p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Cel tej sesji</p>
-            <p className="mt-1 text-sm font-medium">{todayWorkout.confidence_goal}</p>
+          <div className="mt-6 rounded-lg bg-surface-2 p-5">
+            <p className="text-label uppercase text-muted-foreground">Cel sesji</p>
+            <p className="mt-2 text-body-l font-display italic text-foreground text-balance">
+              „{todayWorkout.confidence_goal}”
+            </p>
           </div>
         )}
 
         {currentStep && (
-          <div className="mt-4 rounded-xl border p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Co robimy teraz</p>
-            <p className="mt-1 text-lg font-semibold">{currentStep.title}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{currentStep.instruction_text}</p>
-            {currentStep.duration_min != null && (
-              <p className="mt-3 text-sm">
-                <span className="font-medium">Ile to trwa:</span> około {currentStep.duration_min} min
-              </p>
-            )}
-            {currentStep.setup_instructions && (
-              <p className="mt-2 text-sm">
-                <span className="font-medium">Jak się ustawić:</span> {currentStep.setup_instructions}
-              </p>
-            )}
-            {currentStep.tempo_hint && (
-              <p className="mt-2 text-sm">
-                <span className="font-medium">Tempo:</span> {currentStep.tempo_hint}
-              </p>
-            )}
-            {currentStep.machine_settings && (
-              <p className="mt-2 text-sm">
-                <span className="font-medium">Sprzęt:</span> {currentStep.machine_settings}
-              </p>
-            )}
-          </div>
+          <Card variant="default" padding="lg" className="mt-4">
+            <CardEyebrow>Co robimy teraz</CardEyebrow>
+            <p className="mt-2 text-display-m font-display text-balance">{currentStep.title}</p>
+            <CardDescription className="mt-3 text-body-l">
+              {currentStep.instruction_text}
+            </CardDescription>
+
+            <div className="mt-5 flex flex-col">
+              {currentStep.duration_min != null && (
+                <MetaRow label="Czas" value={`około ${currentStep.duration_min} min`} />
+              )}
+              {currentStep.setup_instructions && (
+                <MetaRow label="Jak się ustawić" value={currentStep.setup_instructions} />
+              )}
+              {currentStep.tempo_hint && (
+                <MetaRow label="Tempo" value={currentStep.tempo_hint} />
+              )}
+              {currentStep.machine_settings && (
+                <MetaRow label="Sprzęt" value={currentStep.machine_settings} />
+              )}
+            </div>
+          </Card>
         )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Ostatni ukończony trening</p>
-            <p className="mt-1 text-sm font-medium">{lastCompletedWorkoutName ?? 'Jeszcze przed Tobą'}</p>
-          </div>
-          <div className="rounded-xl border p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Najważniejsza rekomendacja</p>
-            <p className="mt-1 text-sm font-medium">{recommendationForPhase(adaptationPhase)}</p>
-          </div>
+          <Card variant="recessed" padding="md">
+            <p className="text-label uppercase text-muted-foreground">Ostatni ukończony trening</p>
+            <p className="mt-1.5 text-body-m font-medium">
+              {lastCompletedWorkoutName ?? 'Jeszcze przed Tobą'}
+            </p>
+          </Card>
+          <Card variant="recessed" padding="md">
+            <p className="text-label uppercase text-muted-foreground">Rekomendacja</p>
+            <p className="mt-1.5 text-body-m font-medium text-balance">
+              {recommendationForPhase(adaptationPhase)}
+            </p>
+          </Card>
         </div>
 
         {nextWorkout && (
-          <div className="mt-4 rounded-xl border p-4">
-            <div className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Najbliższy trening</p>
-                <p className="mt-1 text-sm font-medium">{nextWorkout.name}</p>
-              </div>
+          <div className="mt-4 flex items-start gap-3 rounded-lg border border-border p-4">
+            <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
+            <div>
+              <p className="text-label uppercase text-muted-foreground">Najbliższy trening</p>
+              <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
             </div>
           </div>
         )}
 
-        <Button className="mt-4 w-full" onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}>
+        <Button
+          size="hero"
+          className="mt-6 w-full"
+          onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
+        >
           Otwórz dzisiejszy spokojny trening
-          <ChevronRight className="ml-1 h-4 w-4" />
+          <ChevronRight className="h-4 w-4" />
         </Button>
-      </div>
+      </Card>
     )
   }
 
   if (!todayWorkout) {
     return (
-      <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-medium text-muted-foreground">Dziś masz dzień odpoczynku.</p>
+      <Card variant="default" padding="lg">
+        <p className="text-label uppercase text-muted-foreground">Dziś</p>
+        <p className="mt-2 text-display-m font-display text-balance">Dzień odpoczynku.</p>
         {nextWorkout && (
-          <div className="mt-3">
-            <p className="text-xs text-muted-foreground">Następny trening:</p>
-            <button
-              className="mt-1 flex w-full items-center justify-between rounded-lg border p-3 text-left transition-colors hover:bg-muted/50"
-              onClick={() => router.push(`/app/plan/workout/${nextWorkout.id}`)}
-            >
-              <span className="font-medium text-sm">{nextWorkout.name}</span>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          </div>
+          <button
+            className="mt-4 flex w-full items-center justify-between rounded-lg border border-border p-4 text-left transition-colors hover:border-foreground/30 hover:bg-surface-2"
+            onClick={() => router.push(`/app/plan/workout/${nextWorkout.id}`)}
+          >
+            <div>
+              <p className="text-label uppercase text-muted-foreground">Następny trening</p>
+              <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </button>
         )}
-      </div>
+      </Card>
     )
   }
 
   return (
-    <div className="rounded-xl border bg-card p-5">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dzisiejszy trening</p>
-          <h2 className="mt-1 text-xl font-semibold">{todayWorkout.name}</h2>
+    <Card variant="hero" padding="lg" className="animate-stagger">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <CardEyebrow>Dzisiejszy trening</CardEyebrow>
+          <CardTitle>{todayWorkout.name}</CardTitle>
         </div>
-        <Badge variant="secondary" className="flex items-center gap-1">
-          <Clock className="h-3 w-3" />
-          {todayWorkout.duration_min_estimated} min
-        </Badge>
+        <DurationChip minutes={todayWorkout.duration_min_estimated} />
       </div>
 
-      <ul className="mt-4 space-y-2">
+      <ul className="mt-6 flex flex-col">
         {todayWorkout.exercises.slice(0, 4).map((exercise) => (
-          <li key={exercise.id} className="flex items-center justify-between text-sm">
-            <span className="font-medium">{exercise.exercise?.name_pl ?? '—'}</span>
-            <span className="text-muted-foreground">
+          <li
+            key={exercise.id}
+            className="flex items-baseline justify-between gap-3 border-t border-border/60 py-3 first:border-t-0"
+          >
+            <span className="text-body-m font-medium text-foreground">
+              {exercise.exercise?.name_pl ?? '—'}
+            </span>
+            <span className="font-mono text-body-s tabular-nums text-muted-foreground">
               {exercise.sets} × {exercise.reps_min}–{exercise.reps_max}
             </span>
           </li>
         ))}
         {todayWorkout.exercises.length > 4 && (
-          <li className="text-xs text-muted-foreground">+{todayWorkout.exercises.length - 4} więcej…</li>
+          <li className="border-t border-border/60 py-3 text-body-s text-muted-foreground">
+            +{todayWorkout.exercises.length - 4} więcej…
+          </li>
         )}
       </ul>
 
-      <Button className="mt-4 w-full" onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}>
+      <Button
+        size="hero"
+        className="mt-6 w-full"
+        onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
+      >
         Zacznij trening
-        <ChevronRight className="ml-1 h-4 w-4" />
+        <ChevronRight className="h-4 w-4" />
       </Button>
-    </div>
+    </Card>
   )
 }

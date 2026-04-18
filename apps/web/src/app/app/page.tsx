@@ -10,7 +10,7 @@ export default async function TodayPage() {
 
   const firstName =
     (user?.user_metadata?.['full_name'] as string | undefined)?.split(' ')[0] ??
-    'tam'
+    null
 
   // Load today's workout from active plan
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase() // mon, tue, ...
@@ -61,20 +61,37 @@ export default async function TodayPage() {
     .limit(1)
     .maybeSingle()
 
+  const now = new Date()
+  const hour = now.getHours()
+  const greetingPrefix =
+    hour < 5 ? 'Jeszcze noc'
+    : hour < 11 ? 'Dzień dobry'
+    : hour < 17 ? 'Cześć'
+    : hour < 22 ? 'Dobry wieczór'
+    : 'Późno'
+
+  const dateLabel = now.toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+
   return (
-    <div className="flex flex-col gap-6 p-4">
-      <div>
-        <h1 className="text-2xl font-semibold">
-          Dzień dobry, {firstName}!
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {new Date().toLocaleDateString('pl-PL', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <header className="flex flex-col gap-2">
+        <p className="text-label uppercase text-muted-foreground">
+          <span className="tabular-nums">{dateLabel}</span>
         </p>
-      </div>
+        <h1 className="text-balance text-display-xl leading-[1.02] tracking-tight">
+          <span className="font-display italic text-muted-foreground">{greetingPrefix},</span>
+          {firstName && (
+            <>
+              <br />
+              <span className="font-sans font-semibold text-foreground">{firstName}.</span>
+            </>
+          )}
+        </h1>
+      </header>
 
       <TodayCard
         plan={plan as Parameters<typeof TodayCard>[0]['plan']}
