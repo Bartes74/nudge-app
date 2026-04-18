@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Instrument_Serif, Inter_Tight, Geist_Mono } from 'next/font/google'
+import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
@@ -23,7 +23,7 @@ const fontSans = Inter_Tight({
   display: 'swap',
 })
 
-const fontMono = Geist_Mono({
+const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['500'],
   variable: '--font-mono',
