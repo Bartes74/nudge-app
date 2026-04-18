@@ -33,14 +33,14 @@ export function GenerateNutritionButton() {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(`/api/plan/training/tasks/${taskId}`)
-        const body = await res.json()
-        if (body.task?.status === 'completed') {
+        const task = (await res.json()) as { status?: string; error?: string }
+        if (task.status === 'completed') {
           clearInterval(interval)
           router.refresh()
           setState('idle')
-        } else if (body.task?.status === 'failed' || body.task?.status === 'cancelled') {
+        } else if (task.status === 'failed' || task.status === 'cancelled') {
           clearInterval(interval)
-          toast.error(body.task.error ?? 'Nie udało się wygenerować planu')
+          toast.error(task.error ?? 'Nie udało się wygenerować planu')
           setState('idle')
         }
       } catch {
