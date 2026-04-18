@@ -16,6 +16,18 @@ export const analyzeMealPhotoJob = inngest.createFunction(
     name: 'Analyze Meal Photo',
     triggers: [{ event: 'nudge/meal.photo.analyze' }],
     retries: 1,
+    onFailure: async ({ event, error }: { event: { data: { event: { data: Record<string, unknown> } } }; error: Error }) => {
+      const { meal_log_id } = event.data.event.data as { meal_log_id: string }
+      if (!meal_log_id) return
+      const supabase = serviceClient()
+      await supabase
+        .from('meal_logs')
+        .update({
+          status: 'failed',
+          user_warnings: [error.message ?? 'Analiza posiłku nie powiodła się.'],
+        })
+        .eq('id', meal_log_id)
+    },
   },
   async ({
     event,
