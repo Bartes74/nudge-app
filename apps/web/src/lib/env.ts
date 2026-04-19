@@ -43,3 +43,31 @@ export const env = createEnv({
   STRIPE_MONTHLY_PRICE_ID: z.string().min(1, 'STRIPE_MONTHLY_PRICE_ID is required').optional(),
   STRIPE_YEARLY_PRICE_ID: z.string().min(1, 'STRIPE_YEARLY_PRICE_ID is required').optional(),
 })
+
+function isLocalHost(url: string): boolean {
+  const hostname = new URL(url).hostname
+  return hostname === 'localhost' || hostname === '127.0.0.1'
+}
+
+function warnIfLocalWebUsesRemoteSupabase() {
+  if (env.NODE_ENV !== 'development') return
+
+  try {
+    if (
+      isLocalHost(env.NEXT_PUBLIC_APP_URL) &&
+      !isLocalHost(env.NEXT_PUBLIC_SUPABASE_URL)
+    ) {
+      console.warn(
+        [
+          '[env] Local web is configured against a remote Supabase project.',
+          'If you are running localhost, point NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY to the local Supabase instance.',
+          `Current Supabase URL: ${env.NEXT_PUBLIC_SUPABASE_URL}`,
+        ].join(' '),
+      )
+    }
+  } catch {
+    // URL parsing is already validated by zod above.
+  }
+}
+
+warnIfLocalWebUsesRemoteSupabase()
