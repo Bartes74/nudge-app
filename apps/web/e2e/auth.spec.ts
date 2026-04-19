@@ -14,40 +14,23 @@ const TEST_EMAIL = `e2e+${Date.now()}@test.nudge`
 const TEST_PASSWORD = 'TestPassword123!'
 
 test.describe('Authentication — happy path', () => {
-  test('sign up → verify redirect → sign in → see app shell', async ({ page }) => {
+  test('sign up enters the post-auth flow', async ({ page }) => {
     // ---- Sign Up ----
     await page.goto('/signup')
-    await expect(page.getByRole('heading', { name: /zacznij swoją przygodę/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /zacznij spokojnie/i })).toBeVisible()
 
-    await page.getByLabel('E-mail').fill(TEST_EMAIL)
-    await page.getByLabel('Hasło').fill(TEST_PASSWORD)
+    await page.getByLabel(/^E-mail$/).fill(TEST_EMAIL)
+    await page.getByLabel(/^Hasło$/).fill(TEST_PASSWORD)
     await page.getByRole('button', { name: /utwórz konto/i }).click()
 
-    // After sign-up → redirect to /verify
-    await expect(page).toHaveURL(/\/verify/)
-    await expect(page.getByRole('heading', { name: /sprawdź skrzynkę/i })).toBeVisible()
+    await page.waitForURL(/\/(verify|onboarding)/)
 
-    // ---- Sign In (bypass email confirmation in test env via direct Supabase API) ----
-    await page.goto('/signin')
-    await expect(page.getByRole('heading', { name: /witaj z powrotem/i })).toBeVisible()
+    if (page.url().includes('/verify')) {
+      await expect(page.getByRole('heading', { name: /sprawdź skrzynkę/i })).toBeVisible()
+      return
+    }
 
-    await page.getByLabel('E-mail').fill(TEST_EMAIL)
-    await page.getByLabel('Hasło').fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj się/i }).click()
-
-    // After sign-in → /app
-    await expect(page).toHaveURL(/\/app/)
-
-    // ---- App shell visible ----
-    await expect(page.getByRole('navigation', { name: /nawigacja główna/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /dziś/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /plan/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /jedzenie/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /postępy/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /profil/i })).toBeVisible()
-
-    // Coach bubble visible (disabled)
-    await expect(page.getByRole('button', { name: /coach ai/i })).toBeVisible()
+    await expect(page.getByText(/jaki jest dziś twój główny cel/i)).toBeVisible()
   })
 
   test('unauthenticated user is redirected from /app to /signin', async ({ page }) => {

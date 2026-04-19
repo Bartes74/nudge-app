@@ -5,6 +5,13 @@ import { Pencil, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ProfileDataProps {
   profile: {
@@ -63,10 +70,53 @@ const NUTRITION_LABELS: Record<string, string> = {
   exact: 'Dokładny',
 }
 
+const LIFE_CONTEXT_LABELS: Record<string, string> = {
+  desk_job: 'Praca biurowa',
+  high_sitting_time: 'Dużo siedzenia w ciągu dnia',
+  mixed_workday: 'Mieszany tryb pracy',
+  on_feet_often: 'Dużo stania i chodzenia',
+  physically_active_work: 'Praca fizyczna',
+  parent_young_kids: 'Małe dzieci w domu',
+}
+
+const GENDER_OPTIONS = [
+  { value: 'female', label: 'Kobieta' },
+  { value: 'male', label: 'Mężczyzna' },
+  { value: 'other', label: 'Inna' },
+  { value: 'prefer_not_to_say', label: 'Wolę nie podawać' },
+] as const
+
+function toDateInputValue(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+
+  const dotMatch = value.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
+  if (dotMatch) {
+    const [, day, month, year] = dotMatch
+    return `${year}-${month}-${day}`
+  }
+
+  const parsedDate = new Date(value)
+  if (Number.isNaN(parsedDate.getTime())) return value
+
+  const year = parsedDate.getFullYear()
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 function formatValue(key: FieldKey, value: ProfileDataProps['profile'][FieldKey]): string {
   if (value === null || value === undefined) return '—'
   if (Array.isArray(value)) {
-    return value.length === 0 ? '—' : value.join(', ')
+    if (value.length === 0) return '—'
+
+    if (key === 'life_context') {
+      return value
+        .map((entry) => LIFE_CONTEXT_LABELS[entry] ?? entry.replaceAll('_', ' '))
+        .join(', ')
+    }
+
+    return value.join(', ')
   }
   if (key === 'primary_goal') return GOAL_LABELS[value as string] ?? String(value)
   if (key === 'experience_level') return EXPERIENCE_LABELS[value as string] ?? String(value)
@@ -74,16 +124,24 @@ function formatValue(key: FieldKey, value: ProfileDataProps['profile'][FieldKey]
   if (key === 'nutrition_mode') return NUTRITION_LABELS[value as string] ?? String(value)
   if (key === 'height_cm') return `${value} cm`
   if (key === 'current_weight_kg') return `${value} kg`
+  if (key === 'birth_date') {
+    const parsedDate = new Date(String(value))
+    if (Number.isNaN(parsedDate.getTime())) return String(value)
+    return parsedDate.toLocaleDateString('pl-PL')
+  }
   return String(value)
 }
 
 const EDITABLE_TEXT_FIELDS = new Set<FieldKey>([
   'display_name',
   'birth_date',
+  'gender',
   'height_cm',
   'current_weight_kg',
 ])
 const NUMERIC_FIELDS = new Set<FieldKey>(['height_cm', 'current_weight_kg'])
+const DATE_FIELDS = new Set<FieldKey>(['birth_date'])
+const SELECT_FIELDS = new Set<FieldKey>(['gender'])
 
 interface FieldRowProps {
   fieldKey: FieldKey
@@ -97,6 +155,8 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
   const [saving, setSaving] = React.useState(false)
   const isEditable = EDITABLE_TEXT_FIELDS.has(fieldKey)
   const isNumeric = NUMERIC_FIELDS.has(fieldKey)
+  const isDate = DATE_FIELDS.has(fieldKey)
+  const isSelect = SELECT_FIELDS.has(fieldKey)
 
   async function handleSave() {
     if (!draft.trim()) return
@@ -114,16 +174,35 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
       <div className="min-w-0 flex-1">
         <p className="text-label uppercase text-muted-foreground">{LABELS[fieldKey]}</p>
         {editing ? (
-          <Input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSave()
-              if (e.key === 'Escape') setEditing(false)
-            }}
-            autoFocus
-            className={`mt-1 h-9 ${isNumeric ? 'font-mono tabular-nums' : ''}`}
-          />
+          isSelect ? (
+            <div className="mt-1">
+              <Select value={draft || undefined} onValueChange={setDraft}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Wybierz płeć" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENDER_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <Input
+              type={isDate ? 'date' : isNumeric ? 'number' : 'text'}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSave()
+                if (e.key === 'Escape') setEditing(false)
+              }}
+              autoFocus
+              step={isNumeric ? 0.1 : undefined}
+              className={`mt-1 h-9 ${isNumeric ? 'font-mono tabular-nums' : ''}`}
+            />
+          )
         ) : (
           <p
             className={`mt-0.5 truncate text-body-m font-medium tracking-tight ${
@@ -165,7 +244,11 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
               variant="ghost"
               className="h-7 w-7 text-muted-foreground"
               onClick={() => {
-                setDraft(String(value ?? ''))
+                if (fieldKey === 'birth_date' && typeof value === 'string') {
+                  setDraft(toDateInputValue(value))
+                } else {
+                  setDraft(String(value ?? ''))
+                }
                 setEditing(true)
               }}
               aria-label={`Edytuj ${LABELS[fieldKey]}`}

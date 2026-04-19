@@ -42,6 +42,7 @@ export interface CoachStreamResult {
   promptSlug: string
   guardrailFlags: string[]
   guardrailModified: boolean
+  llmMeta: { provider: 'openai'; model: string } | null
   /** Async generator yielding text chunks from the LLM */
   stream: AsyncGenerator<string, void, unknown>
   /** Resolved after stream finishes — contains final assembled text */
@@ -56,6 +57,68 @@ export interface CoachStreamResult {
   tokensOut: Promise<number>
   /** Total latency across fast-path / classification + streaming response, in ms. */
   latencyMs: Promise<number>
+}
+
+function splitIntoChunks(text: string, chunkSize = 120): string[] {
+  if (text.length <= chunkSize) return [text]
+
+  const chunks: string[] = []
+  for (let index = 0; index < text.length; index += chunkSize) {
+    chunks.push(text.slice(index, index + chunkSize))
+  }
+  return chunks
+}
+
+function buildDeterministicCoachReply(intent: CoachIntent, context: CoachContext): string | null {
+  if (intent === 'pain') {
+    const exerciseContext = context.exercise_name
+      ? `Jeśli ból pojawia się przy ćwiczeniu ${context.exercise_name}, przerwij tę serię i nie próbuj go roztrenować.`
+      : 'Jeśli podczas ćwiczenia pojawia się ból, przerwij tę serię i nie próbuj go roztrenować.'
+
+    return [
+      exerciseContext,
+      'Nie mogę postawić diagnozy ani zalecić leczenia — skonsultuj objawy z lekarzem lub fizjoterapeutą.',
+      'Jeśli chcesz, mogę potem pomóc Ci znaleźć spokojniejszy zamiennik albo regresję ruchu.',
+    ].join(' ')
+  }
+
+  if (intent === 'goal_extreme') {
+    return [
+      'To tempo jest zbyt agresywne i nie byłoby bezpieczną rekomendacją.',
+      'Lepiej przyjąć spokojniejszy plan, który da się utrzymać bez skrajnego deficytu i bez ryzyka przeciążenia.',
+      'Jeśli chcesz, rozpiszemy bezpieczniejszy zakres tempa i prosty plan na najbliższe tygodnie.',
+    ].join(' ')
+  }
+
+  return null
+}
+
+function createDeterministicResult(
+  intent: CoachIntent,
+  promptSlug: string,
+  text: string,
+  startedAt: number,
+): CoachStreamResult {
+  const chunks = splitIntoChunks(text)
+
+  async function* streamChunks(): AsyncGenerator<string, void, unknown> {
+    for (const chunk of chunks) {
+      yield chunk
+    }
+  }
+
+  return {
+    intent,
+    promptSlug,
+    guardrailFlags: [],
+    guardrailModified: false,
+    llmMeta: null,
+    stream: streamChunks(),
+    fullText: Promise.resolve(text),
+    tokensIn: Promise.resolve(0),
+    tokensOut: Promise.resolve(0),
+    latencyMs: Promise.resolve(Date.now() - startedAt),
+  }
 }
 
 export function interpolateTemplate(template: string, context: CoachContext & { user_message: string }): string {
@@ -97,6 +160,10 @@ export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResu
   }
 
   const promptSlug = routeToPrompt(intent)
+  const deterministicReply = buildDeterministicCoachReply(intent, context)
+  if (deterministicReply) {
+    return createDeterministicResult(intent, promptSlug, deterministicReply, start)
+  }
 
   const systemPrompt = interpolateTemplate(
     prompt.system_template ?? '',
@@ -170,6 +237,7 @@ export async function callCoach(opts: CoachCallOptions): Promise<CoachStreamResu
     promptSlug,
     guardrailFlags,
     guardrailModified,
+    llmMeta: { provider: 'openai', model },
     stream,
     fullText,
     tokensIn: tokensInPromise,

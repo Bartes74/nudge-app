@@ -33,11 +33,11 @@ export default function NutritionLogPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
       <Link
-        href="/app/nutrition/today"
+        href="/app/nutrition"
         className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
+        Jedzenie
       </Link>
 
       <header className="flex flex-col gap-2">

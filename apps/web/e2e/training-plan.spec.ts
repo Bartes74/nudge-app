@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { signInAs } from './helpers/auth'
 
 // Requires local Supabase + Inngest dev server running.
 // Run with: pnpm e2e
@@ -13,58 +14,42 @@ test.describe('Training plan — Iteration 4', () => {
     const ctx = await browser.newContext()
     const page = await ctx.newPage()
 
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-
-    // Wait for app shell
-    await page.waitForURL('**/app**', { timeout: 10_000 })
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
     await ctx.close()
   })
 
-  test('today page shows generate button when no plan exists', async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**')
+  test('today page shows a plan CTA when no plan exists or plan is ready', async ({ page }) => {
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
 
     await page.goto('/app')
     // Either shows the plan or the generate button
-    const hasGenerateBtn = await page.getByRole('button', { name: /wygeneruj/i }).isVisible().catch(() => false)
-    const hasPlan = await page.getByText(/zacznij trening/i).isVisible().catch(() => false)
+    const hasGenerateBtn = await page
+      .getByRole('button', { name: /przygotuj mój plan|wygeneruj plan/i })
+      .isVisible()
+      .catch(() => false)
+    const hasPlan = await page
+      .getByRole('button', { name: /zacznij trening|otwórz dzisiejszy spokojny trening/i })
+      .isVisible()
+      .catch(() => false)
     expect(hasGenerateBtn || hasPlan).toBe(true)
   })
 
   test('plan page renders week grid or empty state', async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**')
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
 
     await page.goto('/app/plan')
-    await expect(page.getByRole('heading', { name: /plan treningowy/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /tydzień treningowy|plan treningowy/i })).toBeVisible()
   })
 
   test('history page is accessible', async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**')
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
 
     await page.goto('/app/plan/history')
-    await expect(page.getByRole('heading', { name: /historia planu/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /historia|ewolucja planu/i })).toBeVisible()
   })
 
   test('exercise catalog page renders if a slug exists', async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**')
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
 
     // Use a known slug from the mock seed
     await page.goto('/app/plan/exercise/barbell_bench_press')

@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
@@ -15,9 +15,9 @@ type TempoFeedback = 'too_light' | 'just_right' | 'too_hard'
 export default function FinishWorkoutPage({
   params,
 }: {
-  params: Promise<{ workoutLogId: string }>
+  params: { workoutLogId: string }
 }) {
-  const { workoutLogId } = use(params)
+  const { workoutLogId } = params
   const router = useRouter()
   const [isGuidedMode, setIsGuidedMode] = useState(false)
   const [rating, setRating] = useState(0)

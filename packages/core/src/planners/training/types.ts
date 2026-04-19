@@ -21,6 +21,42 @@ export type GuidedStepType =
 
 export type SubstitutionReason = 'machine_busy' | 'unclear' | 'discomfort' | 'too_hard'
 
+export interface GuidedStepVariant {
+  key: string
+  label: string
+  duration_min?: number | null
+  instruction_text?: string | null
+  setup_instructions?: string | null
+  execution_steps?: string[]
+  tempo_hint?: string | null
+  breathing_hint?: string | null
+  safety_notes?: string | null
+  common_mistakes?: string | null
+  machine_settings?: string | null
+  normal_after_effects?: string[]
+  finish_steps?: string[]
+}
+
+export interface GuidedStepMachineBusyPolicy {
+  prompt: string
+  options: GuidedStepVariant[]
+}
+
+export interface GuidedStepSupportPolicy {
+  packlist?: string[]
+  reassurance?: string[]
+  normal_after_effects?: string[]
+  finish_steps?: string[]
+}
+
+export interface GuidedStepSubstitutionPolicy {
+  hide_actions?: boolean
+  auto_variant?: 'easy_when_low_readiness' | null
+  easy?: GuidedStepVariant | string | null
+  machine_busy?: GuidedStepMachineBusyPolicy | string | null
+  support?: GuidedStepSupportPolicy | null
+}
+
 export interface TemplateWorkout {
   day_label: string
   name: string
@@ -88,6 +124,7 @@ export interface GuidedWorkoutStep {
   common_mistakes: string | null
   easy_substitution_slug: string | null
   machine_busy_substitution_slug: string | null
+  substitution_policy?: GuidedStepSubstitutionPolicy | null
   stop_conditions: string[]
   starting_load_guidance: string | null
   machine_settings: string | null

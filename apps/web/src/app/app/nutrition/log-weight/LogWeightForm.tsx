@@ -8,9 +8,19 @@ import { Label } from '@/components/ui/label'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { ChevronDown, AlertTriangle, Save } from 'lucide-react'
 
+function todayDateInputValue(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 export function LogWeightForm() {
   const router = useRouter()
   const [weightKg, setWeightKg] = useState('')
+  const [measuredOn, setMeasuredOn] = useState(todayDateInputValue())
   const [showCircumferences, setShowCircumferences] = useState(false)
   const [circumferences, setCircumferences] = useState({
     waist_cm: '',
@@ -34,10 +44,11 @@ export function LogWeightForm() {
 
     setSubmitting(true)
     try {
+      const measuredAt = measuredOn ? new Date(`${measuredOn}T12:00:00`).toISOString() : undefined
       const weightRes = await fetch('/api/measurements/weight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ weight_kg: weight }),
+        body: JSON.stringify({ weight_kg: weight, measured_at: measuredAt }),
       })
 
       if (!weightRes.ok) {
@@ -75,9 +86,14 @@ export function LogWeightForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-5">
       <Card variant="default" padding="md">
-        <CardEyebrow>Waga ciała</CardEyebrow>
+        <Label
+          htmlFor="weight"
+          className="text-label uppercase text-muted-foreground"
+        >
+          Waga ciała
+        </Label>
         <div className="mt-3 flex items-baseline gap-3">
           <Input
             id="weight"
@@ -93,6 +109,23 @@ export function LogWeightForm() {
             autoFocus
           />
           <span className="text-body-m text-muted-foreground">kg</span>
+        </div>
+
+        <div className="mt-4">
+          <Label
+            htmlFor="measured_on"
+            className="text-label uppercase text-muted-foreground"
+          >
+            Data pomiaru
+          </Label>
+          <Input
+            id="measured_on"
+            type="date"
+            value={measuredOn}
+            max={todayDateInputValue()}
+            onChange={(e) => setMeasuredOn(e.target.value)}
+            className="mt-2 h-11"
+          />
         </div>
       </Card>
 
@@ -146,7 +179,7 @@ export function LogWeightForm() {
       )}
 
       {error && (
-        <Card variant="destructive" padding="sm">
+        <Card variant="destructive" padding="sm" role="alert">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <p className="text-body-m text-foreground">{error}</p>

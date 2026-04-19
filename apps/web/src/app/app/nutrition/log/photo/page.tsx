@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { compressImage } from '@/lib/vision/compressImage'
+import { Card } from '@/components/ui/card'
 
 export default function MealPhotoPage() {
   const router = useRouter()
@@ -19,6 +20,7 @@ export default function MealPhotoPage() {
   const [file, setFile] = useState<File | null>(null)
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0]
@@ -37,6 +39,7 @@ export default function MealPhotoPage() {
   async function handleSubmit() {
     if (!file) return
     setLoading(true)
+    setError(null)
 
     try {
       const compressed = await compressImage(file)
@@ -53,20 +56,27 @@ export default function MealPhotoPage() {
 
       if (res.status === 429) {
         const data = await res.json() as { message?: string }
-        toast.error(data.message ?? 'Dzienny limit zdjęć osiągnięty')
+        const message =
+          data.message ?? 'Możesz dodać maksymalnie 6 zdjęć dziennie. Skorzystaj z opcji ręcznego wpisu.'
+        setError(message)
+        toast.error(message)
         return
       }
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({})) as { error?: string }
-        toast.error(data.error ?? 'Nie udało się przesłać zdjęcia')
+        const message = data.error ?? 'Nie udało się przesłać zdjęcia'
+        setError(message)
+        toast.error(message)
         return
       }
 
       const { meal_log_id } = await res.json() as { meal_log_id: string }
       router.push(`/app/nutrition/log/${meal_log_id}`)
     } catch {
-      toast.error('Wystąpił błąd podczas przesyłania')
+      const message = 'Wystąpił błąd podczas przesyłania'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -146,6 +156,12 @@ export default function MealPhotoPage() {
             className="resize-none"
           />
         </div>
+      )}
+
+      {error && (
+        <Card variant="destructive" padding="sm" role="alert">
+          <p className="text-body-m text-foreground">{error}</p>
+        </Card>
       )}
 
       <Button

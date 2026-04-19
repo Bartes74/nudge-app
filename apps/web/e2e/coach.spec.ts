@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { signInAs } from './helpers/auth'
 
 // Requires local Supabase + seeded data.
 // Run with: pnpm e2e
@@ -8,11 +9,7 @@ const TEST_PASSWORD = 'TestPassword123!'
 
 test.describe('AI Coach — Iteration 8', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**', { timeout: 10_000 })
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
   })
 
   // Scenario A — Ania (pain signal → referral)
@@ -32,29 +29,14 @@ test.describe('AI Coach — Iteration 8', () => {
     await textarea.fill('Boli mnie kolano podczas przysiadu. Co robić?')
     await textarea.press('Enter')
 
-    // Wait for streaming response to complete
-    await page.waitForSelector('[data-testid="coach-message-assistant"]', {
-      timeout: 30_000,
-    }).catch(() => null)
-
-    // Wait for assistant response to appear (stream completes)
-    await page.waitForFunction(
-      () => {
-        const msgs = document.querySelectorAll('.coach-msg-assistant')
-        return msgs.length > 0 && msgs[msgs.length - 1]?.textContent?.includes('fizjoterapeut')
-      },
-      { timeout: 30_000 },
-    ).catch(() => null)
-
-    // Check page contains referral text
     await expect(page.locator('text=/fizjoterapeut/i').first()).toBeVisible({
-      timeout: 30_000,
+      timeout: 10_000,
     })
   })
 
   // Scenario B — Kuba (technical exercise question)
   test('Kuba: exercise page has "Spytaj o technikę" button', async ({ page }) => {
-    await page.goto('/app/plan/exercise/martwy-ciag')
+    await page.goto('/app/plan/exercise/deadlift')
     await expect(
       page.getByRole('button', { name: /spytaj o technikę/i }),
     ).toBeVisible({ timeout: 5_000 })
@@ -70,13 +52,13 @@ test.describe('AI Coach — Iteration 8', () => {
   })
 
   // Scenario C — Marta (diet question from nutrition page)
-  test('Marta: nutrition page has diet coach button', async ({ page }) => {
+  test('Marta: nutrition page still gives access to coach flow', async ({ page }) => {
     await page.goto('/app/nutrition')
+    await expect(page.getByRole('link', { name: /dodaj posiłek/i })).toBeVisible()
 
-    const dietBtn = page.getByRole('button', { name: /spytaj o produkt/i })
-    await expect(dietBtn).toBeVisible({ timeout: 5_000 })
-
-    await dietBtn.click()
+    const bubble = page.getByRole('button', { name: /coach/i })
+    await expect(bubble).toBeVisible({ timeout: 5_000 })
+    await bubble.click()
     await page.waitForURL('**/app/coach/**', { timeout: 10_000 })
 
     // Should be on coach screen

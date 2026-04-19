@@ -14,7 +14,7 @@ Schemat zawiera 18 grup tabel i kilka rozszerzeń wdrożonych po MVP v1, w tym o
 `user_profile_facts` jest źródłem prawdy (każdy fakt z confidence/source/timestamp). `user_profile` to zdenormalizowany cache do szybkich zapytań. Trigger PG lub job aktualizuje cache po zmianach facts.
 
 **2. Wersjonowanie planów, nie nadpisywanie.**
-`training_plans` i `nutrition_plans` to kontenery. Realna treść siedzi w `*_versions`. Każda zmiana planu = nowy version + pointer `current_version_id`. To daje audyt i możliwość „dlaczego tak zmieniliśmy".
+`training_plans` to kontener. Realna treść siedzi w `training_plan_versions`. Każda zmiana planu = nowy version + pointer `current_version_id`. To daje audyt i możliwość „dlaczego tak zmieniliśmy".
 
 **3. RLS na każdej user-scoped tabeli.**
 Supabase RLS z polityką `user_id = auth.uid()` dla wszystkich tabel z kolumną `user_id`. Katalogi (`exercises`, `question_library`, `prompts`, `field_explanations`) są publiczne do czytania.
@@ -156,18 +156,6 @@ To ważne, bo dla `beginner_zero` progresja zależy nie tylko od wykonania treni
 
 ---
 
-## Grupa 9 — Plan żywieniowy z wersjonowaniem
-
-**Tabele:** `nutrition_plans`, `nutrition_plan_versions`
-
-**Po co:** analogicznie do planu treningowego. `mode` określa tryb (simple/ranges/exact — ADR-003, Principles §8).
-
-**`emergency_plan` jako JSONB:** z Twojego szablonu żywieniowego wyciągamy „plan awaryjny" (brak czasu, impreza, głód, spadek energii, stagnacja). To jest jeden z diferenciatorów Nudge — mało apek to ma.
-
-**`supplement_recommendations` jako JSONB:** trzy listy (sensible / optional / unnecessary) zgodnie z Principles §8.
-
----
-
 ## Grupa 10 — Log żywienia (zdjęcia + wpisy)
 
 **Tabele:** `meal_logs`, `meal_log_items`, `meal_images`, `nutrition_daily_totals`
@@ -181,6 +169,8 @@ To ważne, bo dla `beginner_zero` progresja zależy nie tylko od wykonania treni
 **`meal_images`:** osobna tabela z pathą w Supabase Storage. Nie trzymamy base64 w bazie. Liczymy też `original_size_bytes` i `compressed_size_bytes` do monitoringu kosztów (kompresja przed Vision API zmniejsza bill ~70%).
 
 **`nutrition_daily_totals`:** pre-aggregated (materialized view lub trigger-updated). Wyświetlanie dziennych podsumowań nie robi SUM przez 30 posiłków.
+
+**Uwaga produktowa:** stary, wersjonowany nutrition plan został usunięty. Aktualny moduł żywieniowy w aplikacji opiera się na logach posiłków i pomiarach masy ciała, bez generowanego planu.
 
 ---
 
@@ -344,8 +334,8 @@ Grupa 4 (equipment, preferences, health), Grupa 5 (goals), Grupa 13 (question_li
 **Sprint 3 (plan treningowy, 2 tyg):**
 Grupa 6 (exercises catalog — seedowane), Grupa 7 (training_plans z wersjonowaniem), Grupa 15 (ai_tasks, llm_calls, prompts).
 
-**Sprint 4 (log treningu + plan żywieniowy, 2 tyg):**
-Grupa 8 (workout_logs), Grupa 9 (nutrition_plans), Grupa 18 (product_events).
+**Sprint 4 (log treningu + product events, 2 tyg):**
+Grupa 8 (workout_logs), Grupa 18 (product_events).
 
 **Sprint 5 (check-in + sygnały + coach, 2 tyg):**
 Grupa 11 (`checkin_sessions`), Grupa 12 (behavior_signals), Grupa 14 (coach_conversations).

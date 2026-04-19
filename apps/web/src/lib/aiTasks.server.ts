@@ -1,27 +1,38 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database, Enums } from '@nudge/core/types/db'
+import { env } from '@/lib/env'
 import { dispatchInngestEvent } from '@/lib/inngest/dispatchEvent'
 
 type AppSupabaseClient = SupabaseClient<Database>
 type AiTaskType = Enums<'ai_task_type'>
 
 interface QueueAiTaskOptions {
-  supabase: AppSupabaseClient
   userId: string
-  taskType: Extract<AiTaskType, 'generate_training_plan' | 'generate_nutrition_plan'>
+  taskType: Extract<AiTaskType, 'generate_training_plan'>
+  taskFailureMessage: string
+}
+
+interface DispatchAiTaskOptions {
+  taskId: string
+  userId: string
   eventName: string
   eventData?: Record<string, unknown>
   taskFailureMessage: string
 }
 
-export async function queueAiTask({
-  supabase,
+function serviceClient(): AppSupabaseClient {
+  return createClient<Database>(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
+  )
+}
+
+export async function createQueuedAiTask({
   userId,
   taskType,
-  eventName,
-  eventData = {},
-  taskFailureMessage,
-}: QueueAiTaskOptions): Promise<{ taskId: string }> {
+}: Omit<QueueAiTaskOptions, 'taskFailureMessage'>): Promise<{ taskId: string }> {
+  const supabase = serviceClient()
+
   await supabase
     .from('ai_tasks')
     .update({ status: 'cancelled' })
@@ -43,11 +54,23 @@ export async function queueAiTask({
     throw new Error(taskError?.message ?? 'Failed to create AI task.')
   }
 
+  return { taskId: task.id }
+}
+
+export async function dispatchQueuedAiTask({
+  taskId,
+  userId,
+  eventName,
+  eventData = {},
+  taskFailureMessage,
+}: DispatchAiTaskOptions): Promise<void> {
+  const supabase = serviceClient()
+
   try {
     await dispatchInngestEvent({
       name: eventName,
       data: {
-        task_id: task.id,
+        task_id: taskId,
         user_id: userId,
         ...eventData,
       },
@@ -59,10 +82,34 @@ export async function queueAiTask({
         status: 'failed',
         error: taskFailureMessage,
       })
-      .eq('id', task.id)
+      .eq('id', taskId)
 
     throw error
   }
+}
 
-  return { taskId: task.id }
+export async function queueAiTask({
+  userId,
+  taskType,
+  taskFailureMessage,
+  eventName,
+  eventData = {},
+}: QueueAiTaskOptions & {
+  eventName: string
+  eventData?: Record<string, unknown>
+}): Promise<{ taskId: string }> {
+  const { taskId } = await createQueuedAiTask({
+    userId,
+    taskType,
+  })
+
+  await dispatchQueuedAiTask({
+    taskId,
+    userId,
+    eventName,
+    eventData,
+    taskFailureMessage,
+  })
+
+  return { taskId }
 }

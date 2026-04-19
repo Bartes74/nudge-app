@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { WorkoutLogger } from '@/components/workout/WorkoutLogger'
 import { GuidedWorkoutView } from '@/components/workout/GuidedWorkoutView'
+import { normalizeGuidedSteps } from '@/lib/training/weekPlan'
 
 type PlanExercise = {
   id: string
@@ -37,7 +38,7 @@ export default async function WorkoutLoggerPage({
   // Load the workout log + verify ownership
   const { data: log } = await supabase
     .from('workout_logs')
-    .select('id, plan_workout_id, started_at')
+    .select('id, plan_workout_id, started_at, pre_mood, pre_energy')
     .eq('id', workoutLogId)
     .eq('user_id', user.id)
     .is('ended_at', null)
@@ -63,7 +64,7 @@ export default async function WorkoutLoggerPage({
   const { data: planWorkout } = await supabase
     .from('plan_workouts')
     .select(`
-      id, name, confidence_goal,
+      id, name, order_in_week, confidence_goal,
       plan_version:training_plan_versions!plan_workouts_plan_version_id_fkey (
         view_mode, adaptation_phase
       ),
@@ -73,7 +74,7 @@ export default async function WorkoutLoggerPage({
         safety_notes, common_mistakes, starting_load_guidance, stop_conditions,
         machine_settings, substitution_policy,
         exercise:exercises!plan_workout_steps_exercise_id_fkey (
-          slug, name_pl, plain_language_name
+          id, slug, name_pl, plain_language_name
         )
       ),
       exercises:plan_exercises (
@@ -91,8 +92,10 @@ export default async function WorkoutLoggerPage({
 
   const viewMode =
     (planWorkout.plan_version as { view_mode?: string | null } | null)?.view_mode ?? null
-  const guidedSteps =
-    (planWorkout.steps as Parameters<typeof GuidedWorkoutView>[0]['steps'] | null) ?? []
+  const guidedSteps = normalizeGuidedSteps(
+    (planWorkout.steps as Parameters<typeof GuidedWorkoutView>[0]['steps'] | null) ?? [],
+    planWorkout.order_in_week ?? 1,
+  )
 
   if (viewMode === 'guided_beginner_view' || guidedSteps.length > 0) {
     return (
@@ -101,6 +104,8 @@ export default async function WorkoutLoggerPage({
         workoutName={planWorkout.name ?? 'Dzisiejszy spokojny trening'}
         confidenceGoal={planWorkout.confidence_goal as string | null}
         steps={guidedSteps}
+        preMood={log.pre_mood as 'bad' | 'ok' | 'good' | 'great' | null}
+        preEnergy={log.pre_energy as 'low' | 'moderate' | 'high' | 'variable' | null}
       />
     )
   }

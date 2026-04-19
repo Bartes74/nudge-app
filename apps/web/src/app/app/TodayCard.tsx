@@ -19,6 +19,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { useGeneratePlan } from '@/hooks/useGeneratePlan'
+import { workoutDisplayDuration } from '@/lib/training/weekPlan'
 
 interface Exercise {
   id: string
@@ -89,6 +90,10 @@ function recommendationForPhase(adaptationPhase: string | null): string {
   return 'Najważniejsze dziś: zrób realny krok, nie idealny.'
 }
 
+function guidedWorkoutDuration(workout: Workout): number {
+  return workoutDisplayDuration(workout)
+}
+
 function DurationChip({ minutes }: { minutes: number }) {
   return (
     <Badge variant="outline-warm" className="gap-1.5 px-3 py-1 text-body-s tabular-nums">
@@ -128,7 +133,7 @@ export function TodayCard({
           <div className="flex flex-col gap-2">
             <p className="text-label uppercase text-muted-foreground">Pierwszy krok</p>
             <p className="text-display-m font-display text-balance">
-              Ukończ onboarding, żeby dostać swój pierwszy spokojny plan.
+              Ukończ onboarding żeby dostać swój pierwszy plan treningowy.
             </p>
           </div>
           <Button variant="default" size="hero" onClick={() => router.push('/onboarding')}>
@@ -242,7 +247,7 @@ export function TodayCard({
             <CardEyebrow>Dzisiejszy krok</CardEyebrow>
             <CardTitle>{todayWorkout.name}</CardTitle>
           </div>
-          <DurationChip minutes={todayWorkout.duration_min_estimated} />
+          <DurationChip minutes={guidedWorkoutDuration(todayWorkout)} />
         </div>
 
         {todayWorkout.confidence_goal && (

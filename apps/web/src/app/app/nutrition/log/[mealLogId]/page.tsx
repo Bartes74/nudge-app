@@ -189,11 +189,11 @@ export default function MealLogResultPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
       <Link
-        href="/app/nutrition/today"
+        href="/app/nutrition"
         className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
       >
         <ChevronRight className="h-3.5 w-3.5 rotate-180" />
-        Dzisiaj
+        Jedzenie
       </Link>
 
       <header className="flex items-start justify-between gap-4">
@@ -305,14 +305,14 @@ export default function MealLogResultPage() {
         </Card>
       )}
 
-      <Link href="/app/nutrition/today" className="group">
+      <Link href="/app/nutrition" className="group">
         <Card
           variant="default"
           padding="sm"
           className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
         >
           <span className="text-body-m font-semibold tracking-tight">
-            Zobacz dzienne podsumowanie
+            Zobacz podsumowanie jedzenia
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
         </Card>

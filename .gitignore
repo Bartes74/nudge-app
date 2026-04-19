@@ -14,6 +14,9 @@ out/
 .env.local
 .env.*.local
 !.env.example
+*.bak
+*.backup
+*.env.vercel-*
 
 # IDE
 .vscode/
@@ -37,6 +40,7 @@ supabase/.temp/
 coverage/
 playwright-report/
 test-results/
+.playwright-cli/
 
 # Sentry
 .sentryclirc

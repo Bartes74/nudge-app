@@ -209,7 +209,6 @@ export async function POST(
     ) {
       try {
         await queueAiTask({
-          supabase,
           userId: user.id,
           taskType: 'generate_training_plan',
           eventName: 'nudge/plan.training.generate',

@@ -100,27 +100,6 @@ export async function POST(
     }
   }
 
-  // Load nutrition context if relevant
-  if (conversation.context_entity_type === 'meal' || conversation.entry_point === 'meal_shortcut') {
-    const { data: nutrition } = await supabase
-      .from('nutrition_plan_versions')
-      .select('calories_target, protein_g_target, carbs_g_target, fat_g_target, strategy_notes')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (nutrition) {
-      coachContext = {
-        ...coachContext,
-        kcal: nutrition.calories_target,
-        protein_g: nutrition.protein_g_target,
-        carbs_g: nutrition.carbs_g_target,
-        fat_g: nutrition.fat_g_target,
-        strategy_notes: nutrition.strategy_notes,
-      }
-    }
-  }
-
   // Load conversation history (last 10 messages)
   const { data: history } = await supabase
     .from('coach_messages')
@@ -227,21 +206,23 @@ export async function POST(
           env.SUPABASE_SERVICE_ROLE_KEY,
         )
 
-        const llmCallId = await logLlmCall({
-          supabase: serviceSupabase,
-          userId: user.id,
-          meta: {
-            provider: 'openai',
-            model: 'gpt-4o-mini',
-            tokens_in: tokensIn,
-            tokens_out: tokensOut,
-            cost_usd: (tokensIn * 0.15 + tokensOut * 0.6) / 1_000_000,
-            latency_ms: latencyMs,
-          },
-          promptId: promptMap[coachResult.promptSlug]?.id ?? null,
-          promptVersion: 1,
-          usedStructuredOutput: false,
-        })
+        const llmCallId = coachResult.llmMeta
+          ? await logLlmCall({
+              supabase: serviceSupabase,
+              userId: user.id,
+              meta: {
+                provider: coachResult.llmMeta.provider,
+                model: coachResult.llmMeta.model,
+                tokens_in: tokensIn,
+                tokens_out: tokensOut,
+                cost_usd: (tokensIn * 0.15 + tokensOut * 0.6) / 1_000_000,
+                latency_ms: latencyMs,
+              },
+              promptId: promptMap[coachResult.promptSlug]?.id ?? null,
+              promptVersion: 1,
+              usedStructuredOutput: false,
+            })
+          : null
 
         await serviceSupabase.from('coach_messages').insert({
           conversation_id: conversationId,

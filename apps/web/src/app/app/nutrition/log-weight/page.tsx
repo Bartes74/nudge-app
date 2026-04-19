@@ -11,14 +11,40 @@ export default async function LogWeightPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: lastMeasurement } = await supabase
-    .from('body_measurements')
-    .select('weight_kg, measured_at')
-    .eq('user_id', user!.id)
-    .not('weight_kg', 'is', null)
-    .order('measured_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const [lastMeasurementResult, profileResult] = await Promise.all([
+    supabase
+      .from('body_measurements')
+      .select('weight_kg, measured_at')
+      .eq('user_id', user!.id)
+      .not('weight_kg', 'is', null)
+      .order('measured_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('user_profile')
+      .select('current_weight_kg, updated_at, onboarding_completed_at')
+      .eq('user_id', user!.id)
+      .maybeSingle(),
+  ])
+
+  const lastMeasurement = lastMeasurementResult.data
+  const profileWeight = profileResult.data?.current_weight_kg
+  const profileDate =
+    profileResult.data?.updated_at ?? profileResult.data?.onboarding_completed_at ?? null
+  const fallbackWeight =
+    lastMeasurement ?
+      {
+        weight_kg: lastMeasurement.weight_kg,
+        measured_at: lastMeasurement.measured_at,
+        label: 'Poprzedni pomiar',
+      }
+    : profileWeight != null ?
+      {
+        weight_kg: profileWeight,
+        measured_at: profileDate,
+        label: 'Aktualna waga z profilu',
+      }
+    : null
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
@@ -39,20 +65,22 @@ export default async function LogWeightPage() {
         </h1>
       </header>
 
-      {lastMeasurement && (
+      {fallbackWeight && (
         <Card variant="recessed" padding="sm">
-          <CardEyebrow>Poprzedni pomiar</CardEyebrow>
+          <CardEyebrow>{fallbackWeight.label}</CardEyebrow>
           <div className="mt-2 flex items-baseline gap-2">
             <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
-              {Number(lastMeasurement.weight_kg).toFixed(1)}
+              {Number(fallbackWeight.weight_kg).toFixed(1)}
             </span>
             <span className="text-body-s text-muted-foreground">kg</span>
-            <span className="ml-auto font-mono text-body-s tabular-nums text-muted-foreground">
-              {new Date(lastMeasurement.measured_at as string).toLocaleDateString('pl-PL', {
-                day: 'numeric',
-                month: 'long',
-              })}
-            </span>
+            {fallbackWeight.measured_at && (
+              <span className="ml-auto font-mono text-body-s tabular-nums text-muted-foreground">
+                {new Date(fallbackWeight.measured_at as string).toLocaleDateString('pl-PL', {
+                  day: 'numeric',
+                  month: 'long',
+                })}
+              </span>
+            )}
           </div>
         </Card>
       )}

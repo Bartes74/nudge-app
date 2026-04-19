@@ -1,290 +1,191 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
+import { createConfirmedTestUser, deleteTestUser, signInAs } from './helpers/auth'
 
 /**
- * Onboarding E2E specs.
+ * Onboarding E2E specs for the current 10-step required flow.
  *
- * These tests assume a running local Supabase instance with the migration applied.
- * Each test creates a unique test user, runs onboarding, and verifies the outcome.
- *
- * Run with: pnpm e2e --project=chromium
+ * These tests assume a running local Supabase instance with migrations applied.
+ * Each test creates a dedicated user, signs in, completes the wizard, and verifies
+ * that the done page reflects the inferred entry path.
  */
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000'
-
-// Helper: register + confirm a test user via Supabase admin API
-async function createTestUser(email: string, password: string) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321'
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-
-  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-    },
-    body: JSON.stringify({
-      email,
-      password,
-      email_confirm: true,
-    }),
-  })
-
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`Failed to create test user: ${body}`)
-  }
+type OnboardingScenario = {
+  age: number
+  heightCm: number
+  weightKg: number
+  goalLabel: string
+  daysLabel: string
+  locationLabel: string
+  activityLabel: string
+  healthLabel: string
+  jobLabel: string
+  backgroundLabel: string
+  expectedGoal: string
+  expectedExperience: string
 }
 
-async function deleteTestUser(email: string) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'http://127.0.0.1:54321'
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-
-  // Find user by email
-  const listRes = await fetch(
-    `${supabaseUrl}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-    {
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-      },
-    },
-  )
-  if (!listRes.ok) return
-
-  const data = (await listRes.json()) as { users?: { id: string }[] }
-  const userId = data.users?.[0]?.id
-  if (!userId) return
-
-  await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
-    method: 'DELETE',
-    headers: {
-      apikey: serviceKey,
-      Authorization: `Bearer ${serviceKey}`,
-    },
-  })
+async function clickNext(page: Page): Promise<void> {
+  await page
+    .getByRole('button', { name: /^Dalej$|^Zapisz i pokaż kolejny krok$/ })
+    .click()
 }
 
-async function signIn(page: import('@playwright/test').Page, email: string, password: string) {
-  await page.goto(`${BASE}/signin`)
-  await page.fill('input[name="email"]', email)
-  await page.fill('input[name="password"]', password)
-  await page.click('button[type="submit"]')
-  // Should redirect to /onboarding
-  await page.waitForURL(`${BASE}/onboarding`, { timeout: 10_000 })
+async function fillCurrentNumber(page: Page, value: number): Promise<void> {
+  const input = page.locator('input[type="number"]:visible').last()
+  await expect(input).toBeVisible()
+  await input.click()
+  await input.fill(String(value))
+  await expect(input).toHaveValue(String(value))
 }
 
-// ---- Persona: Ania (zero × general_health × female) ----
+async function chooseRadio(page: Page, label: string): Promise<void> {
+  await page.getByRole('radio', { name: label }).click()
+}
 
-test('Ania completes onboarding: zero × general_health × female', async ({ page }) => {
+async function chooseCheckbox(page: Page, label: string): Promise<void> {
+  await page.getByRole('checkbox', { name: label }).click()
+}
+
+async function completeOnboarding(
+  page: Page,
+  email: string,
+  password: string,
+  scenario: OnboardingScenario,
+): Promise<void> {
+  await signInAs(page, email, password, '**/onboarding')
+
+  await expect(page.getByText('Jaki jest dziś Twój główny cel?')).toBeVisible()
+  await chooseRadio(page, scenario.goalLabel)
+  await clickNext(page)
+
+  await fillCurrentNumber(page, scenario.age)
+  await clickNext(page)
+
+  await fillCurrentNumber(page, scenario.heightCm)
+  await clickNext(page)
+
+  await fillCurrentNumber(page, scenario.weightKg)
+  await clickNext(page)
+
+  await chooseRadio(page, scenario.daysLabel)
+  await clickNext(page)
+
+  await chooseRadio(page, scenario.locationLabel)
+  await clickNext(page)
+
+  await chooseRadio(page, scenario.activityLabel)
+  await clickNext(page)
+
+  await chooseCheckbox(page, scenario.healthLabel)
+  await clickNext(page)
+
+  await chooseRadio(page, scenario.jobLabel)
+  await clickNext(page)
+
+  await chooseRadio(page, scenario.backgroundLabel)
+  await clickNext(page)
+
+  await expect(page).toHaveURL(/\/onboarding\/done/)
+  await expect(page.getByText('Profil gotowy', { exact: true })).toBeVisible()
+  await expect(page.getByText(scenario.expectedGoal, { exact: true }).last()).toBeVisible()
+  await expect(page.getByText(scenario.expectedExperience, { exact: true }).last()).toBeVisible()
+}
+
+test('Ania completes onboarding: guided beginner path', async ({ page }) => {
   const email = `e2e-ania-${Date.now()}@test.nudge`
   const password = 'Test1234!'
-  await createTestUser(email, password)
+  await createConfirmedTestUser(email, password)
 
   try {
-    await signIn(page, email, password)
-
-    // Step 0: Goal
-    await expect(page.getByText('Jaki jest Twój główny cel?')).toBeVisible()
-    await page.click('label:has(#goal_general_health)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 1: Birth date (skippable)
-    await page.fill('input[type="date"]', '1990-03-15')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 2: Gender
-    await page.click('label:has(#gender_female)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 3: Height (skip)
-    await page.click('button:has-text("Pomiń")')
-
-    // Step 4: Weight (skip)
-    await page.click('button:has-text("Pomiń")')
-
-    // Step 5: Days/week (required)
-    await page.click('label:has(#days_3)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 6: Location (required)
-    await page.click('label:has(#loc_home)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 7: Equipment (skip)
-    await page.click('button:has-text("Pomiń")')
-
-    // Step 8: Experience
-    await page.click('label:has(#exp_zero)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 9: Health (select "none")
-    await page.click('label:has(#hc_none)')
-    await page.click('button:has-text("Dalej")')
-
-    // Step 10: Pregnancy + nutrition
-    await page.click('label:has(#preg_false)')
-    await page.click('label:has(#nm_simple)')
-    await page.click('button:has-text("Gotowe")')
-
-    // Should end up on /onboarding/done
-    await page.waitForURL(`${BASE}/onboarding/done`, { timeout: 15_000 })
-    await expect(page.getByText('Twój profil jest gotowy!')).toBeVisible()
-    await expect(page.getByText('Zdrowy styl życia')).toBeVisible()
+    await completeOnboarding(page, email, password, {
+      age: 34,
+      heightCm: 168,
+      weightKg: 64,
+      goalLabel: 'Chcę po prostu regularnie się ruszać i czuć się lepiej',
+      daysLabel: '3 treningi tygodniowo',
+      locationLabel: 'W domu albo na zewnątrz',
+      activityLabel: 'Nie miałem/am jeszcze regularnych treningów',
+      healthLabel: 'Nic z tych rzeczy mnie nie dotyczy',
+      jobLabel: 'Głównie siedzę',
+      backgroundLabel: 'Dopiero zaczynam i chcę prostych instrukcji krok po kroku',
+      expectedGoal: 'Zdrowy styl życia',
+      expectedExperience: 'Spokojny start',
+    })
   } finally {
     await deleteTestUser(email)
   }
 })
 
-// ---- Persona: Kuba (beginner × muscle_building × male) ----
-
-test('Kuba completes onboarding: beginner × muscle_building × male', async ({ page }) => {
+test('Kuba completes onboarding: standard training path', async ({ page }) => {
   const email = `e2e-kuba-${Date.now()}@test.nudge`
   const password = 'Test1234!'
-  await createTestUser(email, password)
+  await createConfirmedTestUser(email, password)
 
   try {
-    await signIn(page, email, password)
-
-    await page.click('label:has(#goal_muscle_building)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="date"]', '1998-07-20')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#gender_male)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="number"]', '178')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="number"]', '78')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#days_4)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#loc_gym)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#eq_has_barbell)')
-    await page.click('label:has(#eq_has_dumbbells)')
-    await page.click('label:has(#eq_has_machines)')
-    await page.click('button:has-text("Pomiń")')
-
-    await page.click('label:has(#exp_beginner)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#hc_none)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#preg_false)')
-    await page.click('label:has(#nm_ranges)')
-    await page.click('button:has-text("Gotowe")')
-
-    await page.waitForURL(`${BASE}/onboarding/done`, { timeout: 15_000 })
-    await expect(page.getByText('Masa mięśniowa')).toBeVisible()
+    await completeOnboarding(page, email, password, {
+      age: 28,
+      heightCm: 182,
+      weightKg: 85,
+      goalLabel: 'Chcę zbudować mięśnie i poprawić sylwetkę',
+      daysLabel: '4 treningi tygodniowo',
+      locationLabel: 'Na siłowni',
+      activityLabel: 'Ćwiczę regularnie teraz albo ćwiczyłem/am w ostatnich 3 miesiącach',
+      healthLabel: 'Nic z tych rzeczy mnie nie dotyczy',
+      jobLabel: 'Trochę siedzę, trochę chodzę',
+      backgroundLabel: 'Ćwiczę regularnie',
+      expectedGoal: 'Masa mięśniowa',
+      expectedExperience: 'Średniozaawansowany',
+    })
   } finally {
     await deleteTestUser(email)
   }
 })
 
-// ---- Persona: Marta (amateur × weight_loss × female) ----
-
-test('Marta completes onboarding: amateur × weight_loss × female', async ({ page }) => {
+test('Marta completes onboarding: returning user path', async ({ page }) => {
   const email = `e2e-marta-${Date.now()}@test.nudge`
   const password = 'Test1234!'
-  await createTestUser(email, password)
+  await createConfirmedTestUser(email, password)
 
   try {
-    await signIn(page, email, password)
-
-    await page.click('label:has(#goal_weight_loss)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="date"]', '1984-11-08')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#gender_female)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="number"]', '165')
-    await page.click('button:has-text("Dalej")')
-
-    await page.fill('input[type="number"]', '72')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#days_3)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#loc_home)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#eq_has_dumbbells)')
-    await page.click('button:has-text("Pomiń")')
-
-    await page.click('label:has(#exp_amateur)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#hc_none)')
-    await page.click('button:has-text("Dalej")')
-
-    await page.click('label:has(#preg_false)')
-    await page.click('label:has(#nm_simple)')
-    await page.click('button:has-text("Gotowe")')
-
-    await page.waitForURL(`${BASE}/onboarding/done`, { timeout: 15_000 })
-    await expect(page.getByText('Redukcja')).toBeVisible()
+    await completeOnboarding(page, email, password, {
+      age: 41,
+      heightCm: 165,
+      weightKg: 72,
+      goalLabel: 'Chcę schudnąć lub zmniejszyć ilość tkanki tłuszczowej',
+      daysLabel: '3 treningi tygodniowo',
+      locationLabel: 'W domu albo na zewnątrz',
+      activityLabel: 'W ostatnich 12 miesiącach, ale nie teraz regularnie',
+      healthLabel: 'Nic z tych rzeczy mnie nie dotyczy',
+      jobLabel: 'Głównie stoję albo dużo chodzę',
+      backgroundLabel: 'Wracam po długiej przerwie',
+      expectedGoal: 'Redukcja',
+      expectedExperience: 'Początkujący',
+    })
   } finally {
     await deleteTestUser(email)
   }
 })
 
-// ---- Skip flow ----
-
-test('User can skip optional fields and still complete onboarding', async ({ page }) => {
-  const email = `e2e-skip-${Date.now()}@test.nudge`
+test('User must answer each required step to continue', async ({ page }) => {
+  const email = `e2e-required-${Date.now()}@test.nudge`
   const password = 'Test1234!'
-  await createTestUser(email, password)
+  await createConfirmedTestUser(email, password)
 
   try {
-    await signIn(page, email, password)
+    await signInAs(page, email, password, '**/onboarding')
 
-    // Only answer required fields (goal, days, location)
-    await page.click('label:has(#goal_general_health)')
-    await page.click('button:has-text("Dalej")')
+    const nextButton = page.getByRole('button', { name: /^Dalej$/ })
+    await expect(nextButton).toBeDisabled()
 
-    // Skip birth date
-    await page.click('button:has-text("Pomiń")')
-    // Skip gender
-    await page.click('button:has-text("Pomiń")')
-    // Skip height
-    await page.click('button:has-text("Pomiń")')
-    // Skip weight
-    await page.click('button:has-text("Pomiń")')
+    await chooseRadio(page, 'Chcę po prostu regularnie się ruszać i czuć się lepiej')
+    await expect(nextButton).toBeEnabled()
+    await clickNext(page)
 
-    // Required: days/week
-    await page.click('label:has(#days_2)')
-    await page.click('button:has-text("Dalej")')
+    await expect(page.getByText('Ile masz lat?')).toBeVisible()
+    await expect(nextButton).toBeDisabled()
 
-    // Required: location
-    await page.click('label:has(#loc_home)')
-    await page.click('button:has-text("Dalej")')
-
-    // Skip equipment
-    await page.click('button:has-text("Pomiń")')
-    // Skip experience
-    await page.click('button:has-text("Pomiń")')
-    // Answer health (required to proceed)
-    await page.click('label:has(#hc_none)')
-    await page.click('button:has-text("Dalej")')
-
-    // Last step
-    await page.click('label:has(#preg_false)')
-    await page.click('button:has-text("Gotowe")')
-
-    await page.waitForURL(`${BASE}/onboarding/done`, { timeout: 15_000 })
-    await expect(page.getByText('Twój profil jest gotowy!')).toBeVisible()
+    await fillCurrentNumber(page, 29)
+    await expect(nextButton).toBeEnabled()
   } finally {
     await deleteTestUser(email)
   }

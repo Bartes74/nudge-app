@@ -26,6 +26,45 @@ const PROFILE_FIELD_MAP: Record<string, string> = {
   life_context: 'life_context',
 }
 
+const DATE_ONLY_REGEX = /^\d{4}-\d{2}-\d{2}$/
+
+function validateFieldValue(
+  fieldKey: string,
+  values: {
+    value_text: string | null | undefined
+    value_numeric: number | null | undefined
+    value_bool: boolean | null | undefined
+    value_json: unknown
+  },
+): string | number | boolean | Json | null {
+  if (fieldKey === 'display_name') {
+    return z.string().trim().min(1).max(80).parse(values.value_text ?? '')
+  }
+
+  if (fieldKey === 'birth_date') {
+    return z.string().regex(DATE_ONLY_REGEX).parse(values.value_text ?? '')
+  }
+
+  if (fieldKey === 'gender') {
+    return z.enum(['female', 'male', 'other', 'prefer_not_to_say']).parse(values.value_text ?? '')
+  }
+
+  if (fieldKey === 'height_cm') {
+    return z.number().min(80).max(260).parse(values.value_numeric)
+  }
+
+  if (fieldKey === 'current_weight_kg') {
+    return z.number().min(20).max(500).parse(values.value_numeric)
+  }
+
+  if (values.value_json !== undefined) return (values.value_json ?? null) as Json | null
+  if (values.value_text !== undefined) return values.value_text ?? null
+  if (values.value_numeric !== undefined) return values.value_numeric ?? null
+  if (values.value_bool !== undefined) return values.value_bool ?? null
+
+  return null
+}
+
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient()
 
@@ -47,15 +86,30 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   }
 
   const { field_key, value_text, value_numeric, value_bool, value_json, unit } = parsed.data
+  let validatedValue: string | number | boolean | Json | null
+
+  try {
+    validatedValue = validateFieldValue(field_key, {
+      value_text,
+      value_numeric,
+      value_bool,
+      value_json,
+    })
+  } catch {
+    return NextResponse.json({ error: 'Invalid value for field' }, { status: 400 })
+  }
 
   // --- Append fact (never update, always insert new) ---
   const { error: factError } = await supabase.from('user_profile_facts').insert({
     user_id: user.id,
     field_key,
-    value_text: value_text ?? null,
-    value_numeric: value_numeric ?? null,
-    value_bool: value_bool ?? null,
-    value_json: (value_json ?? null) as Json | null,
+    value_text: typeof validatedValue === 'string' ? validatedValue : null,
+    value_numeric: typeof validatedValue === 'number' ? validatedValue : null,
+    value_bool: typeof validatedValue === 'boolean' ? validatedValue : null,
+    value_json:
+      typeof validatedValue === 'object' && validatedValue !== null
+        ? (validatedValue as Json)
+        : null,
     unit: unit ?? null,
     source: 'user_correction',
     confidence: 1.0,
@@ -69,20 +123,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
   // --- Update denormalized cache in user_profile if it's a mapped field ---
   const profileField = PROFILE_FIELD_MAP[field_key]
   if (profileField) {
-    const profileValue =
-      value_json !== undefined
-        ? value_json
-        : value_text !== undefined
-          ? value_text
-          : value_numeric !== undefined
-            ? value_numeric
-            : value_bool !== undefined
-              ? value_bool
-              : null
-
     // Dynamic key — cast needed because Supabase's typed Update doesn't accept computed keys
     const patch = {
-      [profileField]: profileValue,
+      [profileField]: validatedValue,
       updated_at: new Date().toISOString(),
     } as TablesUpdate<'user_profile'>
     const { error: profileError } = await supabase
@@ -92,6 +135,19 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     if (profileError) {
       return NextResponse.json({ error: 'Failed to update profile cache' }, { status: 500 })
+    }
+  }
+
+  if (field_key === 'current_weight_kg' && typeof validatedValue === 'number') {
+    const { error: measurementError } = await supabase.from('body_measurements').insert({
+      user_id: user.id,
+      weight_kg: validatedValue,
+      measured_at: new Date().toISOString(),
+      source: 'user_correction',
+    })
+
+    if (measurementError) {
+      return NextResponse.json({ error: 'Failed to sync weight history' }, { status: 500 })
     }
   }
 

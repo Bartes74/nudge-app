@@ -4,8 +4,6 @@ import { env } from '@/lib/env'
 type RecoveryConfig = {
   taskId: string
   userFacingError: string
-  planVersionTable: 'training_plan_versions' | 'nutrition_plan_versions'
-  outputPayloadKey: 'plan_version_id' | 'nutrition_plan_version_id'
   userIdForProfileSync?: string
 }
 
@@ -16,15 +14,13 @@ function serviceClient() {
 export async function finalizeAiTaskAfterFailure({
   taskId,
   userFacingError,
-  planVersionTable,
-  outputPayloadKey,
   userIdForProfileSync,
 }: RecoveryConfig): Promise<void> {
   const supabase = serviceClient()
   const completedAt = new Date().toISOString()
 
   const { data: existingVersion } = await supabase
-    .from(planVersionTable)
+    .from('training_plan_versions')
     .select('id')
     .eq('created_by_ai_task_id', taskId)
     .maybeSingle()
@@ -34,7 +30,7 @@ export async function finalizeAiTaskAfterFailure({
       .from('ai_tasks')
       .update({
         status: 'completed',
-        output_payload: { [outputPayloadKey]: existingVersion.id },
+        output_payload: { plan_version_id: existingVersion.id },
         error: null,
         completed_at: completedAt,
       })

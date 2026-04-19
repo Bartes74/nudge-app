@@ -8,10 +8,6 @@ export default async function TodayPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const firstName =
-    (user?.user_metadata?.['full_name'] as string | undefined)?.split(' ')[0] ??
-    null
-
   // Load today's workout from active plan
   const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase() // mon, tue, ...
 
@@ -45,9 +41,14 @@ export default async function TodayPage() {
   // Check if onboarding is done
   const { data: profile } = await supabase
     .from('user_profile')
-    .select('onboarding_layer_1_done, entry_path, adaptation_phase')
+    .select('display_name, onboarding_layer_1_done, entry_path, adaptation_phase')
     .eq('user_id', user!.id)
     .maybeSingle()
+
+  const firstName =
+    profile?.display_name?.trim() ||
+    (user?.user_metadata?.['full_name'] as string | undefined)?.split(' ')[0] ||
+    null
 
   const { data: lastWorkout } = await supabase
     .from('workout_logs')
@@ -84,7 +85,7 @@ export default async function TodayPage() {
         </p>
         <h1 className="text-balance text-display-xl leading-[1.02] tracking-tight">
           <span className="font-display italic text-muted-foreground">{greetingPrefix},</span>
-          {firstName && (
+          {profile?.onboarding_layer_1_done && firstName && (
             <>
               <br />
               <span className="font-sans font-semibold text-foreground">{firstName}.</span>

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { signInAs } from './helpers/auth'
 
 // Requires local Supabase + Inngest dev server + seeded data.
 // Run with: pnpm e2e
@@ -8,11 +9,7 @@ const TEST_PASSWORD = 'TestPassword123!'
 
 test.describe('Workout Logger — Iteration 5', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**', { timeout: 10_000 })
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
   })
 
   test('full workout log under 180 seconds', async ({ page }) => {
@@ -66,7 +63,9 @@ test.describe('Workout Logger — Iteration 5', () => {
     await page.locator('input[type="number"]').nth(3).fill('10')
 
     // Go to next exercise or finish
-    const nextBtn = page.getByRole('button', { name: /następne ćwiczenie|zakończ trening/i })
+    const nextBtn = page
+      .getByRole('button', { name: /następne ćwiczenie →|zakończ trening/i })
+      .last()
     await expect(nextBtn).toBeVisible()
     await nextBtn.click()
 
@@ -108,7 +107,7 @@ test.describe('Workout Logger — Iteration 5', () => {
   })
 
   test('exercise history page shows chart or empty state', async ({ page }) => {
-    await page.goto('/app/plan/exercise/bench_press/history')
+    await page.goto('/app/plan/exercise/barbell_bench_press/history')
     await page.waitForLoadState('networkidle')
 
     const hasChart = await page.locator('.recharts-wrapper').isVisible().catch(() => false)

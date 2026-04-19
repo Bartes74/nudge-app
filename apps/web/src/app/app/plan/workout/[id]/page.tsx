@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, ChevronRight, Clock, Dumbbell } from 'lucide-rea
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import { normalizeGuidedSteps, workoutDisplayDuration } from '@/lib/training/weekPlan'
 
 export const metadata: Metadata = { title: 'Trening' }
 
@@ -21,12 +22,12 @@ export default async function WorkoutPage({
   const { data: workout } = await supabase
     .from('plan_workouts')
     .select(`
-      id, name, day_label, duration_min_estimated, warmup_notes, cooldown_notes, confidence_goal,
+      id, name, day_label, order_in_week, duration_min_estimated, warmup_notes, cooldown_notes, confidence_goal,
       plan_version:training_plan_versions!plan_workouts_plan_version_id_fkey (
         view_mode
       ),
       steps:plan_workout_steps (
-        id, order_num, title, duration_min, instruction_text
+        id, order_num, step_type, title, duration_min, instruction_text
       ),
       exercises:plan_exercises (
         id, order_num, sets, reps_min, reps_max, rir_target, rest_seconds, technique_notes,
@@ -77,8 +78,24 @@ export default async function WorkoutPage({
   const viewMode =
     (workout.plan_version as { view_mode?: string | null } | null)?.view_mode ?? null
   const guidedSteps =
-    ((workout.steps as Array<{ id: string; order_num: number; title: string; duration_min: number | null; instruction_text: string }> | null) ?? [])
-      .sort((a, b) => a.order_num - b.order_num)
+    normalizeGuidedSteps(
+      (((workout.steps as Array<{
+        id: string
+        order_num: number
+        step_type: string
+        title: string
+        duration_min: number | null
+        instruction_text: string
+      }> | null) ?? [])
+        .sort((a, b) => a.order_num - b.order_num)),
+      workout.order_in_week ?? 1,
+    )
+      .map((step, index) => ({ ...step, order_num: index + 1 }))
+  const guidedDuration = workoutDisplayDuration({
+    order_in_week: workout.order_in_week ?? 1,
+    duration_min_estimated: workout.duration_min_estimated ?? 0,
+    steps: guidedSteps,
+  })
 
   if (viewMode === 'guided_beginner_view') {
     return (
@@ -96,7 +113,7 @@ export default async function WorkoutPage({
             <Badge variant="label">Spokojny trening</Badge>
             <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
               <Clock className="h-3 w-3" />
-              {workout.duration_min_estimated} min
+              {guidedDuration} min
             </Badge>
           </div>
           <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">

@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Dumbbell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -26,9 +26,9 @@ const ENERGY_OPTIONS: { value: PreEnergy; label: string }[] = [
 export default function StartWorkoutPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id: planWorkoutId } = use(params)
+  const { id: planWorkoutId } = params
   const router = useRouter()
   const [mood, setMood] = useState<PreMood>('good')
   const [energy, setEnergy] = useState<PreEnergy>('moderate')
@@ -67,7 +67,7 @@ export default function StartWorkoutPage({
             <span className="font-sans font-semibold">jak się czujesz?</span>
           </h1>
           <p className="text-body-m text-muted-foreground">
-            Dzięki temu lepiej dopasujemy intensywność.
+            Kolejność kroków zostaje taka sama. Twoje odpowiedzi pomagają nam dobrać spokojniejsze tempo, jeśli dziś masz mniej energii.
           </p>
         </header>
 

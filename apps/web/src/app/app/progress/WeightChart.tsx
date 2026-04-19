@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import {
   LineChart,
   Line,
@@ -10,7 +11,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import type { WeightDataPoint } from '@/app/api/measurements/weight-history/route'
+import type { WeightDataPoint } from './weightUtils'
 
 interface Props {
   data: WeightDataPoint[]
@@ -39,9 +40,34 @@ export function WeightChart({ data }: Props) {
 
   const chartData = data.map((d) => ({
     date: formatDate(d.date),
-    waga: d.weight_kg,
-    'śr. 7 dni': d.rolling_avg,
+    trend: d.weight_kg,
+    rollingAvg: d.rolling_avg,
+    isMeasurement: d.is_measurement,
+    measurementWeight: d.measurement_weight_kg,
   }))
+
+  const renderMeasurementDot = (
+    props: {
+      cx?: number
+      cy?: number
+      payload?: { isMeasurement?: boolean }
+    },
+  ): React.ReactElement | null => {
+    if (!props.payload?.isMeasurement || props.cx == null || props.cy == null) {
+      return null
+    }
+
+    return (
+      <circle
+        cx={props.cx}
+        cy={props.cy}
+        r={3.5}
+        fill="hsl(var(--brand))"
+        stroke="hsl(var(--background))"
+        strokeWidth={1.5}
+      />
+    )
+  }
 
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -66,7 +92,7 @@ export function WeightChart({ data }: Props) {
         <Tooltip
           formatter={(value, name) => [
             formatWeight(Number(value)),
-            String(name) === 'waga' ? 'Pomiar' : 'Śr. 7 dni',
+            String(name) === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni',
           ]}
           labelClassName="font-semibold"
           contentStyle={{
@@ -78,23 +104,23 @@ export function WeightChart({ data }: Props) {
           }}
         />
         <Legend
-          formatter={(value: string) => (value === 'waga' ? 'Pomiar' : 'Śr. 7 dni')}
+          formatter={(value: string) => (value === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni')}
           iconType="circle"
           iconSize={8}
           wrapperStyle={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
         />
         <Line
           type="monotone"
-          dataKey="waga"
+          dataKey="trend"
           stroke="hsl(var(--brand))"
           strokeWidth={2}
-          dot={{ r: 3, fill: 'hsl(var(--brand))', strokeWidth: 0 }}
+          dot={renderMeasurementDot}
           activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-          connectNulls={false}
+          connectNulls
         />
         <Line
           type="monotone"
-          dataKey="śr. 7 dni"
+          dataKey="rollingAvg"
           stroke="hsl(var(--muted-foreground))"
           strokeWidth={1.5}
           strokeDasharray="4 3"

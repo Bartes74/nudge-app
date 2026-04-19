@@ -149,11 +149,13 @@ export default function ManualMealLogPage() {
 
             <div className="flex flex-col gap-3">
               <Input
+                id={`item-${idx}-label`}
                 placeholder="Nazwa (np. ryż gotowany)"
                 value={item.label}
                 onChange={(e) => updateItem(idx, 'label', e.target.value)}
               />
               <Input
+                id={`item-${idx}-portion`}
                 placeholder="Porcja (np. ~200g, 1 talerz)"
                 value={item.portion_estimate}
                 onChange={(e) => updateItem(idx, 'portion_estimate', e.target.value)}
@@ -161,10 +163,11 @@ export default function ManualMealLogPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-label uppercase text-muted-foreground">
+                  <Label htmlFor={`item-${idx}-kcal`} className="text-label uppercase text-muted-foreground">
                     Kalorie <span className="text-brand">*</span>
                   </Label>
                   <Input
+                    id={`item-${idx}-kcal`}
                     type="number"
                     min="0"
                     placeholder="kcal"
@@ -173,8 +176,11 @@ export default function ManualMealLogPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-label uppercase text-muted-foreground">Białko (g)</Label>
+                  <Label htmlFor={`item-${idx}-protein`} className="text-label uppercase text-muted-foreground">
+                    Białko (g)
+                  </Label>
                   <Input
+                    id={`item-${idx}-protein`}
                     type="number"
                     min="0"
                     placeholder="g"
@@ -183,8 +189,11 @@ export default function ManualMealLogPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-label uppercase text-muted-foreground">Węgle (g)</Label>
+                  <Label htmlFor={`item-${idx}-carbs`} className="text-label uppercase text-muted-foreground">
+                    Węgle (g)
+                  </Label>
                   <Input
+                    id={`item-${idx}-carbs`}
                     type="number"
                     min="0"
                     placeholder="g"
@@ -193,8 +202,11 @@ export default function ManualMealLogPage() {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <Label className="text-label uppercase text-muted-foreground">Tłuszcze (g)</Label>
+                  <Label htmlFor={`item-${idx}-fat`} className="text-label uppercase text-muted-foreground">
+                    Tłuszcze (g)
+                  </Label>
                   <Input
+                    id={`item-${idx}-fat`}
                     type="number"
                     min="0"
                     placeholder="g"

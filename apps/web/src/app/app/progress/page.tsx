@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { TrendingUp, Scale, ChevronRight, ArrowDown, ArrowUp, Minus } from 'lucide-react'
 import { Card, CardEyebrow } from '@/components/ui/card'
-import { computeRollingAverage, computeTrend } from './weightUtils'
+import { buildInterpolatedWeightSeries, buildWeightPointInputs, computeRollingAverage, computeTrend } from './weightUtils'
 
 export const metadata: Metadata = { title: 'Postępy' }
 
@@ -11,20 +11,23 @@ export default async function ProgressPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: rows } = await supabase
-    .from('body_measurements')
-    .select('measured_at, weight_kg')
-    .eq('user_id', user!.id)
-    .not('weight_kg', 'is', null)
-    .order('measured_at', { ascending: true })
-    .limit(30)
+  const [rowsResult, profileResult] = await Promise.all([
+    supabase
+      .from('body_measurements')
+      .select('measured_at, weight_kg')
+      .eq('user_id', user!.id)
+      .not('weight_kg', 'is', null)
+      .order('measured_at', { ascending: true })
+      .limit(30),
+    supabase
+      .from('user_profile')
+      .select('current_weight_kg, updated_at, onboarding_completed_at')
+      .eq('user_id', user!.id)
+      .maybeSingle(),
+  ])
 
-  const points = (rows ?? []).map((r) => ({
-    date: r.measured_at as string,
-    weight_kg: Number(r.weight_kg),
-  }))
-
-  const dataWithRolling = computeRollingAverage(points, 7)
+  const points = buildWeightPointInputs(rowsResult.data ?? [], profileResult.data)
+  const dataWithRolling = computeRollingAverage(buildInterpolatedWeightSeries(points), 7)
   const trend = computeTrend(dataWithRolling)
   const latestWeight = points.length > 0 ? points[points.length - 1]!.weight_kg : null
 

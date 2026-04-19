@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { signInAs } from './helpers/auth'
 
 // Requires local Supabase + seeded user.
 // Run with: pnpm e2e
@@ -8,11 +9,7 @@ const TEST_PASSWORD = 'TestPassword123!'
 
 test.describe('Weight logging & progress chart — Iteration 6', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/signin')
-    await page.getByLabel(/email/i).fill(TEST_EMAIL)
-    await page.getByLabel(/hasło|password/i).fill(TEST_PASSWORD)
-    await page.getByRole('button', { name: /zaloguj|sign in/i }).click()
-    await page.waitForURL('**/app**', { timeout: 10_000 })
+    await signInAs(page, TEST_EMAIL, TEST_PASSWORD)
   })
 
   test('user logs weight 3 times on different days and chart shows data', async ({ page }) => {
@@ -45,10 +42,7 @@ test.describe('Weight logging & progress chart — Iteration 6', () => {
     await expect(svg).toBeVisible({ timeout: 5_000 })
 
     // Trend indicator is shown (we logged 3 points)
-    const trendContainer = page.locator('[class*="rounded-lg"]').filter({
-      hasText: /kg/,
-    })
-    await expect(trendContainer.first()).toBeVisible({ timeout: 3_000 })
+    await expect(page.getByText(/7 dni/i)).toBeVisible({ timeout: 3_000 })
   })
 
   test('log weight form validates input', async ({ page }) => {
@@ -67,7 +61,9 @@ test.describe('Weight logging & progress chart — Iteration 6', () => {
     await submitBtn.click()
 
     // Should show error
-    await expect(page.getByText(/prawidłową wagę/i)).toBeVisible({ timeout: 3_000 })
+    await expect(
+      page.getByRole('alert').filter({ hasText: /prawidłową wagę/i }),
+    ).toContainText(/prawidłową wagę/i, { timeout: 3_000 })
   })
 
   test('log weight form with circumferences', async ({ page }) => {

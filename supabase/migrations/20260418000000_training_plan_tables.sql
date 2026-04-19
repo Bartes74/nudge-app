@@ -20,7 +20,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
   CREATE TYPE ai_task_type AS ENUM (
-    'generate_training_plan','generate_nutrition_plan','analyze_meal_photo',
+    'generate_training_plan','analyze_meal_photo',
     'weekly_checkin_analysis','pick_next_question','classify_intent',
     'proactive_nudge','recalculate_targets'
   );

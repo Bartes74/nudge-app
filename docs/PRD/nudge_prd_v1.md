@@ -749,83 +749,57 @@ DELIVERABLES:
 
 ---
 
-### Iteracja 6 — Plan żywieniowy + log wagi i obwodów
+### Iteracja 6 — Log wagi i obwodów
 
-**Cel:** user widzi proste zalecenia żywieniowe dopasowane do celu i trybu, loguje wagę/obwody, widzi trend.
+**Cel:** user loguje wagę/obwody, widzi trend i ma prosty hub żywieniowy do logowania posiłków.
 
 #### Zakres produktowy
 **User stories:**
-- Jako user w trybie simple chcę talerzowych wytycznych, bez liczenia.
-- Jako user w trybie ranges chcę zakresów kcal i priorytetów (białko, warzywa, woda).
-- Jako user w trybie exact chcę dokładnych makro targets.
 - Jako user chcę logować wagę raz w tygodniu w 10 sekund.
 - Jako user chcę widzieć wykres trendu wagi (z smoothing), a nie skoki dzień do dnia.
-- Jako user chcę widzieć emergency plan (co robić przy imprezie / braku czasu / głodzie).
+- Jako user chcę mieć jedno miejsce do przejścia do logów jedzenia i szybkiego zapisu wagi.
 
 **Funkcje:**
-- Generator planu żywieniowego (nutrition_plan_versions).
-- Ekran `/app/nutrition` — zakładka z planem + log wagi.
+- Ekran `/app/nutrition` — hub logów jedzenia + log wagi.
 - Quick log wagi (1-tap z bottom nav).
 - Obwody pasa/bioder/klatki/uda/ramienia jako optional pola.
 - Wykres trendu wagi z 7-dniową średnią.
-- Emergency plan jako rozwijane karty.
 
 #### Wymagania techniczne
-- Tabele: `nutrition_plans`, `nutrition_plan_versions`, `body_measurements`.
-- `packages/core/planners/nutrition/`:
-  - `generateNutritionPlan(profile, mode, goals): PlanVersion` — reguły (kcal/makro) + LLM (wytyczne, plan awaryjny, suplementy).
-- Prompt `nutrition_plan_fill`.
+- Tabele: `body_measurements`.
 - UI: `/app/nutrition`, `/app/nutrition/log-weight`, `/app/progress/weight`.
 
 #### Kryteria akceptacji
-- [ ] 3 persony dostają plany w 3 trybach (simple dla Ani, ranges dla Marty, ranges/exact dla Kuby).
-- [ ] Każdy plan zawiera emergency plan z minimum 5 scenariuszami.
 - [ ] Log wagi w < 10s.
 - [ ] Wykres wagi pokazuje 7-dniową średnią i trend.
-- [ ] Guardrails: plan z target kcal < 1200 F / 1500 M jest zablokowany (z override'em tylko z podpisem medycznym user).
+- [ ] Ekran `/app/nutrition` daje szybki dostęp do logowania jedzenia i ostatniego pomiaru.
 
 #### Zależności
-Iteracja 3 (kalkulatory), Iteracja 4 (wzorzec planu z wersjonowaniem).
+Iteracja 3 (kalkulatory).
 
 #### Brief dla AI
 ```
-ROLA: Full-stack + AI engineer. Budujesz nutrition plan + weight logging.
+ROLA: Full-stack engineer. Budujesz weight logging + nutrition hub.
 
 KONTEKST:
-- Schema: grupa 9 (nutrition_plans*), grupa 3 (body_measurements).
-- Product Principles §8: 3 tryby dokładności.
-- Szablon zaleceń żywieniowych (patrz /06 Szablony/) jako bazowa struktura pól.
-- Emergency plan jest diferenciatorem Nudge — musi być konkretny.
+- Schema: grupa 3 (body_measurements).
 
 ZADANIE:
-1. Migracje: nutrition_plans, nutrition_plan_versions, body_measurements.
-2. packages/core/planners/nutrition/:
-   - generateNutritionPlan(profile, mode): wyjście z polami: calories_target, protein_g, fat_g, carbs_g, fiber_g, water_ml, meal_distribution, strategy_notes, practical_guidelines, supplement_recommendations (sensible/optional/unnecessary), emergency_plan.
-   - Reguły liczą kcal i makro. LLM wypełnia teksty (strategy_notes, practical_guidelines, emergency_plan, supplements).
-3. Prompt nutrition_plan_fill z JSON Schema dla output.
-4. API:
-   - POST /api/plan/nutrition/generate
-   - GET /api/plan/nutrition/current
+1. Migracje: body_measurements.
+2. API:
    - POST /api/measurements/weight
    - POST /api/measurements/circumference
    - GET /api/measurements/weight-history
-5. UI:
-   - /app/nutrition — zakładka z aktualnym planem: header z targets (jeśli mode != simple), scrollowane sekcje (strategia, wytyczne, suplementy, emergency plan jako akkordeon).
+3. UI:
+   - /app/nutrition — prosty hub z wejściem do logów jedzenia i podglądem ostatniego pomiaru.
    - /app/nutrition/log-weight — szybki input wagi, optional obwody.
    - /app/progress/weight — Recharts line chart z raw + 7-day rolling average + trend arrow.
-6. Empty states: jeśli user nie ma planu żywieniowego (np. nie przeszedł warstwy 2 onboardingu), pokazuj „Odpowiedz na 3 pytania, żeby otrzymać plan".
-
-GUARDRAILS:
-- Przed generacją planu: evaluateGuardrails.
-- Generator NIE daje planu z kcal < limit bez override, jawnie informuje.
 
 TESTY:
-- Unit: generator dla 3 trybów × 3 person.
 - E2E: user loguje wagę 3 razy w różnych dniach → wykres pokazuje dane.
-- Snapshot test: wygenerowane plany dla 3 person (committed fixtures).
 
 DELIVERABLES:
-- PR z kodem + testami + przykładowymi planami w description.
+- PR z kodem + testami + screenshotami flow.
 ```
 
 ---
@@ -1027,7 +1001,7 @@ DELIVERABLES:
 - OpenAI Vision (gpt-4o) z structured output.
 - Zakresy (kcal min/max) + confidence score.
 - Item-by-item korekta.
-- Dzienne podsumowanie na /app/nutrition/today.
+- Dzienne podsumowanie na /app/nutrition.
 - Nutrition_daily_totals aktualizowane triggerem.
 
 #### Wymagania techniczne
@@ -1095,7 +1069,7 @@ output_schema: {
    - /app/nutrition/log/photo — kamera + preview + optional note.
    - /app/nutrition/log/:mealLogId — wynik z zakresem (zawsze min-max, confidence jako stars).
    - /app/nutrition/log/:mealLogId/edit — item-by-item edit.
-   - /app/nutrition/today — card z kcal/protein/carbs/fat jako progress rings (dziennie).
+   - /app/nutrition — card z kcal/protein/carbs/fat jako dzienne podsumowanie logów.
 9. Rate limiting: max 6 zdjęć / dzień per user (z komunikatem jak przekroczone).
 
 KOSZTY:

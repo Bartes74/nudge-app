@@ -128,6 +128,25 @@ function defaultSessionDuration(entryPath: 'guided_beginner' | 'standard_trainin
   return 30
 }
 
+function logDbError(
+  label: string,
+  error: {
+    code?: string
+    message: string
+    details?: string
+    hint?: string
+  },
+  meta?: Record<string, unknown>,
+): void {
+  console.error(label, {
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+    ...meta,
+  })
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const supabase = await createClient()
   const {
@@ -221,6 +240,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { error: factsError } = await supabase.from('user_profile_facts').insert(factsWithUser)
   if (factsError) {
+    logDbError('Failed to save onboarding facts', factsError, { userId: user.id })
     return NextResponse.json({ error: 'Failed to save facts' }, { status: 500 })
   }
 
@@ -282,6 +302,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     .upsert({ user_id: user.id, ...profileUpdate })
 
   if (profileError) {
+    logDbError('Failed to update onboarding profile', profileError, {
+      userId: user.id,
+      profileUpdate,
+    })
     return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 })
   }
 
@@ -290,14 +314,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data.equipment_location as LocationType,
       data.equipment_list ?? [],
     )
-    await supabase.from('user_equipment').upsert({
+    const { error: equipmentError } = await supabase.from('user_equipment').upsert({
       user_id: user.id,
       ...equipment,
       updated_at: new Date().toISOString(),
     })
+
+    if (equipmentError) {
+      logDbError('Failed to upsert onboarding equipment', equipmentError, {
+        userId: user.id,
+        equipmentLocation: data.equipment_location,
+        equipmentList: data.equipment_list ?? [],
+      })
+      return NextResponse.json({ error: 'Failed to save equipment' }, { status: 500 })
+    }
   }
 
-  await supabase.from('user_training_preferences').upsert({
+  const { error: trainingPreferencesError } = await supabase.from('user_training_preferences').upsert({
     user_id: user.id,
     days_per_week: data.days_per_week ?? null,
     session_duration_min: defaultSessionDuration(
@@ -309,7 +342,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     updated_at: new Date().toISOString(),
   })
 
-  await supabase.from('user_nutrition_preferences').upsert({
+  if (trainingPreferencesError) {
+    logDbError('Failed to upsert onboarding training preferences', trainingPreferencesError, {
+      userId: user.id,
+      daysPerWeek: data.days_per_week,
+      preferredLocation: data.equipment_location,
+      entryPath: qualification.entryPath,
+      adaptationPhase: qualification.adaptationPhase,
+    })
+    return NextResponse.json({ error: 'Failed to save training preferences' }, { status: 500 })
+  }
+
+  const { error: nutritionPreferencesError } = await supabase.from('user_nutrition_preferences').upsert({
     user_id: user.id,
     nutrition_mode: qualification.nutritionMode,
     prioritize_regular_meals: true,
@@ -318,8 +362,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     updated_at: new Date().toISOString(),
   })
 
+  if (nutritionPreferencesError) {
+    logDbError('Failed to upsert onboarding nutrition preferences', nutritionPreferencesError, {
+      userId: user.id,
+      nutritionMode: qualification.nutritionMode,
+    })
+    return NextResponse.json({ error: 'Failed to save nutrition preferences' }, { status: 500 })
+  }
+
   const healthWithoutNone = healthConstraints.filter((constraint) => constraint !== 'none')
-  await supabase.from('user_health').upsert({
+  const { error: userHealthError } = await supabase.from('user_health').upsert({
     user_id: user.id,
     injuries: healthWithoutNone.filter((constraint) => constraint === 'pain_or_injury'),
     medical_conditions: healthWithoutNone.filter((constraint) =>
@@ -330,28 +382,63 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     updated_at: new Date().toISOString(),
   })
 
+  if (userHealthError) {
+    logDbError('Failed to upsert onboarding health profile', userHealthError, {
+      userId: user.id,
+      healthConstraints: healthWithoutNone,
+      jobActivity: data.job_activity,
+    })
+    return NextResponse.json({ error: 'Failed to save health profile' }, { status: 500 })
+  }
+
   if (data.primary_goal) {
-    await supabase
+    const { error: closeGoalsError } = await supabase
       .from('user_goals')
       .update({ is_current: false, ended_at: new Date().toISOString() })
       .eq('user_id', user.id)
       .eq('is_current', true)
 
-    await supabase.from('user_goals').insert({
+    if (closeGoalsError) {
+      logDbError('Failed to close previous onboarding goals', closeGoalsError, {
+        userId: user.id,
+        primaryGoal: data.primary_goal,
+      })
+      return NextResponse.json({ error: 'Failed to update goals' }, { status: 500 })
+    }
+
+    const { error: insertGoalError } = await supabase.from('user_goals').insert({
       user_id: user.id,
       goal_type: data.primary_goal,
       is_current: true,
       started_at: new Date().toISOString(),
     })
+
+    if (insertGoalError) {
+      logDbError('Failed to insert onboarding goal', insertGoalError, {
+        userId: user.id,
+        primaryGoal: data.primary_goal,
+      })
+      return NextResponse.json({ error: 'Failed to save goal' }, { status: 500 })
+    }
   }
 
-  await supabase.from('user_segment_snapshots').insert({
+  const { error: segmentSnapshotError } = await supabase.from('user_segment_snapshots').insert({
     user_id: user.id,
     ...segmentResult,
     entry_path: qualification.entryPath,
     adaptation_phase: qualification.adaptationPhase,
     computed_at: new Date().toISOString(),
   })
+
+  if (segmentSnapshotError) {
+    logDbError('Failed to insert onboarding segment snapshot', segmentSnapshotError, {
+      userId: user.id,
+      segmentResult,
+      entryPath: qualification.entryPath,
+      adaptationPhase: qualification.adaptationPhase,
+    })
+    return NextResponse.json({ error: 'Failed to save segment snapshot' }, { status: 500 })
+  }
 
   return NextResponse.json({
     success: true,

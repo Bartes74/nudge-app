@@ -606,44 +606,6 @@ Table workout_log_sets {
 }
 
 
-// ---------- GRUPA 9: PLAN ŻYWIENIOWY ----------
-
-Table nutrition_plans {
-  id uuid [pk]
-  user_id uuid [ref: > users.id, not null]
-  current_version_id uuid [ref: > nutrition_plan_versions.id, note: 'FK DEFERRABLE INITIALLY DEFERRED']
-  started_at timestamptz [not null, default: `now()`]
-  ended_at timestamptz
-  is_active boolean [not null, default: true]
-}
-
-Table nutrition_plan_versions {
-  id uuid [pk]
-  plan_id uuid [ref: > nutrition_plans.id, not null]
-  version_number integer [not null]
-  created_at timestamptz [not null, default: `now()`]
-  created_by_ai_task_id uuid [ref: > ai_tasks.id]
-  change_reason text
-  mode nutrition_mode [not null, default: 'simple']
-  calories_target integer
-  protein_g_target integer
-  fat_g_target integer
-  carbs_g_target integer
-  fiber_g_target integer
-  water_ml_target integer
-  meal_distribution jsonb [note: 'np. [{"meal":1,"kcal_share":0.25,"time":"08:00"}]']
-  strategy_notes text
-  practical_guidelines jsonb [note: 'listy: bazowe produkty, źródła białka, do ograniczenia']
-  supplement_recommendations jsonb [note: '{sensible:[], optional:[], unnecessary:[]}']
-  emergency_plan jsonb [note: 'co robić przy: brak czasu, impreza, głód, spadek energii, stagnacja']
-  llm_call_id uuid [ref: > llm_calls.id]
-
-  indexes {
-    (plan_id, version_number) [unique]
-  }
-}
-
-
 // ---------- GRUPA 10: LOG ŻYWIENIA (ZDJĘCIA + WPISY) ----------
 
 // UWAGA: migracja nie ma `logged_at timestamptz`, tylko `date` — posiłek jest
@@ -1001,7 +963,6 @@ Table ai_tasks {
 
 Enum ai_task_type {
   generate_training_plan
-  generate_nutrition_plan
   analyze_meal_photo
   weekly_checkin_analysis
   pick_next_question

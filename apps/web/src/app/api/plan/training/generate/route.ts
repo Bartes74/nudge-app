@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { queueAiTask } from '@/lib/aiTasks.server'
+import { createQueuedAiTask, queueAiTask } from '@/lib/aiTasks.server'
+import { env } from '@/lib/env'
+import { runGenerateTrainingPlanTask } from '@/lib/training/runGenerateTrainingPlanTask'
+import { finalizeAiTaskAfterFailure } from '@/inngest/jobs/utils/finalizeAiTaskAfterFailure'
 
 const START_ERROR_MESSAGE =
   'Nie udało się uruchomić generowania planu treningowego. Spróbuj ponownie za chwilę.'
+
+function shouldRunTrainingPlanInline() {
+  return env.NODE_ENV === 'development' && env.INNGEST_EVENT_KEY === 'local'
+}
 
 export async function POST(): Promise<NextResponse> {
   const supabase = await createClient()
@@ -37,8 +44,29 @@ export async function POST(): Promise<NextResponse> {
   }
 
   try {
+    if (shouldRunTrainingPlanInline()) {
+      const { taskId } = await createQueuedAiTask({
+        userId: user.id,
+        taskType: 'generate_training_plan',
+      })
+
+      try {
+        await runGenerateTrainingPlanTask({
+          taskId,
+          userId: user.id,
+        })
+      } catch {
+        await finalizeAiTaskAfterFailure({
+          taskId,
+          userFacingError: START_ERROR_MESSAGE,
+          userIdForProfileSync: user.id,
+        })
+      }
+
+      return NextResponse.json({ task_id: taskId }, { status: 202 })
+    }
+
     const { taskId } = await queueAiTask({
-      supabase,
       userId: user.id,
       taskType: 'generate_training_plan',
       eventName: 'nudge/plan.training.generate',
