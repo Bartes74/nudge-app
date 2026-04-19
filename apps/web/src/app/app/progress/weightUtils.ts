@@ -1,6 +1,7 @@
 export interface WeightPointInput {
   date: string
   weight_kg: number
+  source: 'measurement' | 'profile_snapshot'
 }
 
 export interface WeightDataPoint {
@@ -9,6 +10,7 @@ export interface WeightDataPoint {
   rolling_avg: number | null
   is_measurement: boolean
   measurement_weight_kg: number | null
+  point_type: 'measurement' | 'profile_snapshot' | 'interpolated'
 }
 
 export interface WeightTrend {
@@ -26,6 +28,17 @@ interface WeightProfileSnapshot {
   updated_at?: string | null
   onboarding_completed_at?: string | null
 }
+
+export type WeightRangeKey = '7d' | '30d' | '3m' | '6m' | '12m' | '3y'
+
+export const WEIGHT_RANGE_OPTIONS: Array<{ key: WeightRangeKey; label: string }> = [
+  { key: '7d', label: '7 dni' },
+  { key: '30d', label: '30 dni' },
+  { key: '3m', label: '3 mies.' },
+  { key: '6m', label: '6 mies.' },
+  { key: '12m', label: '12 mies.' },
+  { key: '3y', label: '3 lata' },
+]
 
 const DAY_FORMATTER = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Warsaw',
@@ -77,7 +90,7 @@ export function buildWeightPointInputs(
     if (weight == null) continue
 
     const dayKey = toDayKey(row.measured_at)
-    byDay.set(dayKey, { date: dayKey, weight_kg: weight })
+    byDay.set(dayKey, { date: dayKey, weight_kg: weight, source: 'measurement' })
   }
 
   const points = Array.from(byDay.values()).sort((left, right) => left.date.localeCompare(right.date))
@@ -95,12 +108,15 @@ export function buildWeightPointInputs(
   const latestPoint = points[points.length - 1]
 
   if (!latestPoint) {
-    return [{ date: profileDay, weight_kg: profileWeight }]
+    return [{ date: profileDay, weight_kg: profileWeight, source: 'profile_snapshot' }]
   }
 
-  const sameWeight = Math.abs(latestPoint.weight_kg - profileWeight) < 0.05
-  if (!sameWeight && toDayValue(profileDay) >= toDayValue(latestPoint.date)) {
-    byDay.set(profileDay, { date: profileDay, weight_kg: profileWeight })
+  if (toDayValue(profileDay) > toDayValue(latestPoint.date)) {
+    byDay.set(profileDay, {
+      date: profileDay,
+      weight_kg: profileWeight,
+      source: 'profile_snapshot',
+    })
   }
 
   return Array.from(byDay.values()).sort((left, right) => left.date.localeCompare(right.date))
@@ -117,6 +133,7 @@ export function buildInterpolatedWeightSeries(points: WeightPointInput[]): Weigh
         rolling_avg: null,
         is_measurement: true,
         measurement_weight_kg: points[0]!.weight_kg,
+        point_type: points[0]!.source,
       },
     ]
   }
@@ -135,6 +152,7 @@ export function buildInterpolatedWeightSeries(points: WeightPointInput[]): Weigh
       rolling_avg: null,
       is_measurement: true,
       measurement_weight_kg: currentPoint.weight_kg,
+      point_type: currentPoint.source,
     })
 
     if (!nextPoint) continue
@@ -155,6 +173,7 @@ export function buildInterpolatedWeightSeries(points: WeightPointInput[]): Weigh
         rolling_avg: null,
         is_measurement: false,
         measurement_weight_kg: null,
+        point_type: 'interpolated',
       })
     }
   }
@@ -179,9 +198,12 @@ export function computeRollingAverage(points: WeightDataPoint[], windowDays: num
 export function computeTrend(points: WeightDataPoint[]): WeightTrend | null {
   if (points.length < 2) return null
 
-  const recentPoints = points.slice(-7)
+  const newestPoint = points[points.length - 1]
+  if (!newestPoint) return null
+
+  const trendStart = addDays(newestPoint.date, -6)
+  const recentPoints = points.filter((point) => point.date >= trendStart)
   const oldestPoint = recentPoints[0]
-  const newestPoint = recentPoints[recentPoints.length - 1]
 
   if (!oldestPoint || !newestPoint) return null
 
@@ -189,4 +211,50 @@ export function computeTrend(points: WeightDataPoint[]): WeightTrend | null {
   const direction = Math.abs(delta) < 0.3 ? 'stable' : delta > 0 ? 'up' : 'down'
 
   return { direction, delta_kg: delta }
+}
+
+function shiftDayKey(dayKey: string, { days = 0, months = 0, years = 0 }: {
+  days?: number
+  months?: number
+  years?: number
+}): string {
+  const date = new Date(`${dayKey}T12:00:00.000Z`)
+  date.setUTCFullYear(date.getUTCFullYear() + years)
+  date.setUTCMonth(date.getUTCMonth() + months)
+  date.setUTCDate(date.getUTCDate() + days)
+  return date.toISOString().slice(0, 10)
+}
+
+function rangeStart(latestDay: string, range: WeightRangeKey): string {
+  switch (range) {
+    case '7d':
+      return shiftDayKey(latestDay, { days: -6 })
+    case '30d':
+      return shiftDayKey(latestDay, { days: -29 })
+    case '3m':
+      return shiftDayKey(latestDay, { months: -3, days: 1 })
+    case '6m':
+      return shiftDayKey(latestDay, { months: -6, days: 1 })
+    case '12m':
+      return shiftDayKey(latestDay, { years: -1, days: 1 })
+    case '3y':
+      return shiftDayKey(latestDay, { years: -3, days: 1 })
+  }
+}
+
+export function filterWeightSeriesByRange(
+  points: WeightDataPoint[],
+  range: WeightRangeKey,
+): WeightDataPoint[] {
+  if (points.length === 0) return []
+
+  const latestDay = points[points.length - 1]!.date
+  const start = rangeStart(latestDay, range)
+  const filtered = points.filter((point) => point.date >= start)
+
+  if (filtered.length > 0) {
+    return filtered
+  }
+
+  return [points[points.length - 1]!]
 }

@@ -23,7 +23,7 @@ export async function GET(): Promise<NextResponse> {
       .eq('user_id', user.id)
       .not('weight_kg', 'is', null)
       .order('measured_at', { ascending: true })
-      .limit(365),
+      .limit(1500),
     supabase
       .from('user_profile')
       .select('current_weight_kg, updated_at, onboarding_completed_at')

@@ -11,14 +11,30 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import type { WeightDataPoint } from './weightUtils'
+import { Button } from '@/components/ui/button'
+import {
+  WEIGHT_RANGE_OPTIONS,
+  filterWeightSeriesByRange,
+  type WeightDataPoint,
+  type WeightRangeKey,
+} from './weightUtils'
 
 interface Props {
   data: WeightDataPoint[]
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+function formatDate(dateStr: string, range: WeightRangeKey): string {
+  const date = new Date(`${dateStr}T12:00:00`)
+
+  if (range === '7d') {
+    return date.toLocaleDateString('pl-PL', { weekday: 'short' })
+  }
+
+  if (range === '30d' || range === '3m') {
+    return date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+  }
+
+  return date.toLocaleDateString('pl-PL', { month: 'short', year: '2-digit' })
 }
 
 function formatWeight(value: number): string {
@@ -26,6 +42,8 @@ function formatWeight(value: number): string {
 }
 
 export function WeightChart({ data }: Props) {
+  const [range, setRange] = React.useState<WeightRangeKey>('7d')
+
   if (data.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-body-s text-muted-foreground">
@@ -34,16 +52,18 @@ export function WeightChart({ data }: Props) {
     )
   }
 
-  const allWeights = data.map((d) => d.weight_kg)
+  const filteredData = filterWeightSeriesByRange(data, range)
+  const allWeights = filteredData.map((d) => d.weight_kg)
   const minW = Math.floor(Math.min(...allWeights)) - 1
   const maxW = Math.ceil(Math.max(...allWeights)) + 1
 
-  const chartData = data.map((d) => ({
-    date: formatDate(d.date),
+  const chartData = filteredData.map((d) => ({
+    date: d.date,
     trend: d.weight_kg,
     rollingAvg: d.rolling_avg,
     isMeasurement: d.is_measurement,
     measurementWeight: d.measurement_weight_kg,
+    pointType: d.point_type,
   }))
 
   const renderMeasurementDot = (
@@ -70,64 +90,99 @@ export function WeightChart({ data }: Props) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={260}>
-      <LineChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" />
-        <XAxis
-          dataKey="date"
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={false}
-          axisLine={false}
-          interval="preserveStartEnd"
-          className="font-mono tabular-nums"
-        />
-        <YAxis
-          domain={[minW, maxW]}
-          tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-          tickLine={false}
-          axisLine={false}
-          tickFormatter={(v: number) => `${v}`}
-          className="font-mono tabular-nums"
-        />
-        <Tooltip
-          formatter={(value, name) => [
-            formatWeight(Number(value)),
-            String(name) === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni',
-          ]}
-          labelClassName="font-semibold"
-          contentStyle={{
-            borderRadius: '12px',
-            fontSize: '12px',
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--surface-1))',
-            boxShadow: '0 8px 24px -12px rgb(0 0 0 / 0.15)',
-          }}
-        />
-        <Legend
-          formatter={(value: string) => (value === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni')}
-          iconType="circle"
-          iconSize={8}
-          wrapperStyle={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
-        />
-        <Line
-          type="monotone"
-          dataKey="trend"
-          stroke="hsl(var(--brand))"
-          strokeWidth={2}
-          dot={renderMeasurementDot}
-          activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
-          connectNulls
-        />
-        <Line
-          type="monotone"
-          dataKey="rollingAvg"
-          stroke="hsl(var(--muted-foreground))"
-          strokeWidth={1.5}
-          strokeDasharray="4 3"
-          dot={false}
-          connectNulls
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap gap-2">
+        {WEIGHT_RANGE_OPTIONS.map((option) => (
+          <Button
+            key={option.key}
+            type="button"
+            size="sm"
+            variant={range === option.key ? 'default' : 'outline'}
+            onClick={() => setRange(option.key)}
+            className="min-w-[5.25rem]"
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tickLine={false}
+            axisLine={false}
+            interval="preserveStartEnd"
+            minTickGap={24}
+            tickFormatter={(value: string) => formatDate(value, range)}
+            className="font-mono tabular-nums"
+          />
+          <YAxis
+            domain={[minW, maxW]}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tickLine={false}
+            axisLine={false}
+            tickFormatter={(v: number) => `${v}`}
+            className="font-mono tabular-nums"
+          />
+          <Tooltip
+            formatter={(value, name, item) => {
+              if (String(name) === 'trend') {
+                const pointType = (item.payload as { pointType?: string } | undefined)?.pointType
+                const label =
+                  pointType === 'profile_snapshot'
+                    ? 'Ostatni zapisany stan'
+                    : 'Trend dzienny'
+
+                return [formatWeight(Number(value)), label]
+              }
+
+              return [formatWeight(Number(value)), 'Śr. 7 dni']
+            }}
+            labelFormatter={(label) =>
+              new Date(`${String(label)}T12:00:00`).toLocaleDateString('pl-PL', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            }
+            labelClassName="font-semibold"
+            contentStyle={{
+              borderRadius: '12px',
+              fontSize: '12px',
+              border: '1px solid hsl(var(--border))',
+              background: 'hsl(var(--surface-1))',
+              boxShadow: '0 8px 24px -12px rgb(0 0 0 / 0.15)',
+            }}
+          />
+          <Legend
+            formatter={(value: string) => (value === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni')}
+            iconType="circle"
+            iconSize={8}
+            wrapperStyle={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+          />
+          <Line
+            type="monotone"
+            dataKey="trend"
+            stroke="hsl(var(--brand))"
+            strokeWidth={2}
+            dot={renderMeasurementDot}
+            activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+            connectNulls
+          />
+          <Line
+            type="monotone"
+            dataKey="rollingAvg"
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth={1.5}
+            strokeDasharray="4 3"
+            dot={false}
+            connectNulls
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   )
 }
