@@ -5,6 +5,7 @@ import { createClient, getUser } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/card'
 import { ProfileSettings } from './ProfileSettings'
 import { ProfileData } from './ProfileData'
+import { applyProfileFallbacks } from '@/lib/profile/profileFallbacks'
 
 export const metadata: Metadata = { title: 'Profil — Nudge' }
 
@@ -14,7 +15,7 @@ export default async function ProfilePage() {
 
   const supabase = await createClient()
 
-  const [usersResult, profileResult] = await Promise.all([
+  const [usersResult, profileResult, factsResult] = await Promise.all([
     supabase.from('users').select('timezone, locale').eq('id', user.id).single(),
     supabase
       .from('user_profile')
@@ -23,7 +24,28 @@ export default async function ProfilePage() {
       )
       .eq('user_id', user.id)
       .single(),
+    supabase
+      .from('user_profile_facts')
+      .select('field_key, value_text, value_numeric, value_json')
+      .eq('user_id', user.id)
+      .in('field_key', [
+        'display_name',
+        'birth_date',
+        'gender',
+        'height_cm',
+        'current_weight_kg',
+        'experience_level',
+        'primary_goal',
+        'nutrition_mode',
+        'dietary_constraints',
+        'life_context',
+      ])
+      .order('observed_at', { ascending: false }),
   ])
+
+  const profileWithFallbacks = profileResult.data
+    ? applyProfileFallbacks(profileResult.data, factsResult.data ?? [])
+    : null
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
@@ -36,8 +58,8 @@ export default async function ProfilePage() {
         </h1>
       </header>
 
-      {profileResult.data?.onboarding_layer_1_done ? (
-        <ProfileData profile={profileResult.data} />
+      {profileWithFallbacks?.onboarding_layer_1_done ? (
+        <ProfileData profile={profileWithFallbacks} />
       ) : (
         <Card variant="outline" padding="md">
           <p className="text-body-m text-muted-foreground">

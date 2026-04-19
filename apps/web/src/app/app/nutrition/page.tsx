@@ -5,6 +5,7 @@ import { ArrowRight, ChevronRight, PenLine, Scale, UtensilsCrossed } from 'lucid
 import { createClient, getUser } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import { buildWeightPointInputs } from '@/app/app/progress/weightUtils'
 
 export const metadata: Metadata = { title: 'Jedzenie' }
 
@@ -87,7 +88,7 @@ export default async function NutritionPage() {
     month: 'long',
   })
 
-  const [totalsResult, mealsResult, lastMeasurementResult] = await Promise.all([
+  const [totalsResult, mealsResult, measurementsResult, profileResult] = await Promise.all([
     supabase
       .from('nutrition_daily_totals')
       .select('kcal_total, protein_g_total, carbs_g_total, fat_g_total, meal_count')
@@ -109,11 +110,21 @@ export default async function NutritionPage() {
       .order('measured_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('user_profile')
+      .select('current_weight_kg, updated_at, onboarding_completed_at')
+      .eq('user_id', user.id)
+      .maybeSingle(),
   ])
 
   const totals = totalsResult.data as DailyTotals | null
   const meals = (mealsResult.data ?? []) as MealRow[]
-  const lastMeasurement = lastMeasurementResult.data
+  const weightPoints = buildWeightPointInputs(
+    measurementsResult.data ? [measurementsResult.data] : [],
+    profileResult.data,
+  )
+  const latestWeight = weightPoints.length > 0 ? weightPoints[weightPoints.length - 1]!.weight_kg : null
+  const latestWeightDate = weightPoints.length > 0 ? weightPoints[weightPoints.length - 1]!.date : null
   const mealCount = totals?.meal_count ?? meals.length
   const mealCountLabel =
     mealCount === 1 ? 'posiłek' : mealCount > 1 && mealCount < 5 ? 'posiłki' : 'posiłków'
@@ -276,17 +287,19 @@ export default async function NutritionPage() {
             <Link href="/app/progress/weight">Trend</Link>
           </Button>
         </div>
-        {lastMeasurement ? (
+        {latestWeight != null ? (
           <div className="mt-4 flex items-end gap-2">
             <span className="font-mono text-display-l tabular-nums tracking-tight text-foreground">
-              {Number(lastMeasurement.weight_kg).toFixed(1)}
+              {latestWeight.toFixed(1)}
             </span>
             <span className="pb-1 text-body-s text-muted-foreground">kg</span>
             <span className="ml-auto pb-1 font-mono text-body-s tabular-nums text-muted-foreground">
-              {new Date(lastMeasurement.measured_at).toLocaleDateString('pl-PL', {
-                day: 'numeric',
-                month: 'long',
-              })}
+              {latestWeightDate
+                ? new Date(`${latestWeightDate}T00:00:00`).toLocaleDateString('pl-PL', {
+                    day: 'numeric',
+                    month: 'long',
+                  })
+                : null}
             </span>
           </div>
         ) : (
