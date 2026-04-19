@@ -4,6 +4,7 @@ import type { ChangeEvent } from 'react'
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
+import * as Sentry from '@sentry/nextjs'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import {
@@ -40,7 +41,10 @@ import {
   deleteAccountAction,
   updateUserSettingsAction,
 } from '@/app/(auth)/actions'
-import { prepareAvatarImage } from '@/lib/profile/prepareAvatarImage'
+import {
+  AvatarPreparationError,
+  prepareAvatarImage,
+} from '@/lib/profile/prepareAvatarImage'
 
 const TIMEZONES = [
   { value: 'Europe/Warsaw', label: 'Europa/Warszawa (CET/CEST)' },
@@ -117,12 +121,26 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
       const preparedFile = await prepareAvatarImage(file)
       const formData = new FormData()
       formData.set('file', preparedFile)
+      formData.set(
+        'client_meta',
+        JSON.stringify({
+          original_name: file.name,
+          original_type: file.type,
+          original_size: file.size,
+          prepared_type: preparedFile.type,
+          prepared_size: preparedFile.size,
+        }),
+      )
 
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
         body: formData,
       })
-      const json = (await res.json()) as { avatar_url?: string; error?: string }
+      const json = (await res.json()) as {
+        avatar_url?: string
+        error?: string
+        code?: string
+      }
 
       if (!res.ok || !json.avatar_url) {
         throw new Error(json.error ?? 'Nie udało się zapisać zdjęcia profilowego.')
@@ -133,6 +151,21 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
       toast.success('Zapisaliśmy nowe zdjęcie profilowe.')
       router.refresh()
     } catch (error) {
+      if (error instanceof AvatarPreparationError) {
+        toast.error(error.message)
+        return
+      }
+
+      Sentry.captureException(error, {
+        tags: {
+          area: 'profile-avatar',
+        },
+        extra: {
+          originalFileName: file.name,
+          originalFileType: file.type,
+          originalFileSize: file.size,
+        },
+      })
       toast.error(
         error instanceof Error ? error.message : 'Nie udało się zapisać zdjęcia profilowego.',
       )
@@ -332,7 +365,7 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
             ref={cameraInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
+            capture="user"
             className="hidden"
             onChange={(event) => void handleAvatarSelected(event)}
           />

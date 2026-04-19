@@ -1,8 +1,21 @@
 const TARGET_MAX_BYTES = 2.5 * 1024 * 1024
+const UPLOAD_MAX_BYTES = 15 * 1024 * 1024
 const MAX_DIMENSION = 1600
 const MIN_DIMENSION = 512
 const DIMENSION_REDUCTION_FACTOR = 0.85
 const QUALITY_STEPS = [0.9, 0.82, 0.74, 0.66, 0.58]
+
+export class AvatarPreparationError extends Error {
+  constructor(
+    public readonly code:
+      | 'IMAGE_DECODE_FAILED'
+      | 'IMAGE_TOO_LARGE_AFTER_PREPARATION',
+    message: string,
+  ) {
+    super(message)
+    this.name = 'AvatarPreparationError'
+  }
+}
 
 type LoadedImage = {
   width: number
@@ -39,12 +52,16 @@ function blobFromCanvas(
 
 async function loadImage(file: File): Promise<LoadedImage> {
   if (typeof createImageBitmap === 'function') {
-    const bitmap = await createImageBitmap(file)
-    return {
-      width: bitmap.width,
-      height: bitmap.height,
-      source: bitmap,
-      cleanup: () => bitmap.close(),
+    try {
+      const bitmap = await createImageBitmap(file)
+      return {
+        width: bitmap.width,
+        height: bitmap.height,
+        source: bitmap,
+        cleanup: () => bitmap.close(),
+      }
+    } catch {
+      // Fall through to HTML image loading for formats that bitmap decoding rejects.
     }
   }
 
@@ -66,8 +83,41 @@ async function loadImage(file: File): Promise<LoadedImage> {
     }
   } catch (error) {
     URL.revokeObjectURL(objectUrl)
-    throw error
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (typeof reader.result !== 'string') {
+          reject(new Error('Nie udało się odczytać zdjęcia.'))
+          return
+        }
+        resolve(reader.result)
+      }
+      reader.onerror = () => reject(new Error('Nie udało się odczytać zdjęcia.'))
+      reader.readAsDataURL(file)
+    })
+
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(error)
+      img.src = dataUrl
+    })
+
+    return {
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      source: image,
+      cleanup: () => undefined,
+    }
   }
+}
+
+function fileFromBlob(blob: Blob, originalFile: File): File {
+  const fileName = originalFile.name.replace(/\.[^.]+$/, '') || 'avatar'
+  return new File([blob], `${fileName}.jpg`, {
+    type: 'image/jpeg',
+    lastModified: Date.now(),
+  })
 }
 
 export async function prepareAvatarImage(file: File): Promise<File> {
@@ -85,6 +135,7 @@ export async function prepareAvatarImage(file: File): Promise<File> {
       }
 
       let currentMaxDimension = MAX_DIMENSION
+      let bestBlob: Blob | null = null
 
       while (currentMaxDimension >= MIN_DIMENSION) {
         const { width, height } = scaleSize(
@@ -98,20 +149,19 @@ export async function prepareAvatarImage(file: File): Promise<File> {
 
         const context = canvas.getContext('2d')
         if (!context) {
-          return file
+          break
         }
 
         context.drawImage(image.source, 0, 0, width, height)
 
         for (const quality of QUALITY_STEPS) {
           const blob = await blobFromCanvas(canvas, 'image/jpeg', quality)
+          if (!bestBlob || blob.size < bestBlob.size) {
+            bestBlob = blob
+          }
 
           if (blob.size <= TARGET_MAX_BYTES) {
-            const fileName = file.name.replace(/\.[^.]+$/, '') || 'avatar'
-            return new File([blob], `${fileName}.jpg`, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            })
+            return fileFromBlob(blob, file)
           }
         }
 
@@ -120,11 +170,33 @@ export async function prepareAvatarImage(file: File): Promise<File> {
         )
       }
 
-      return file
+      if (bestBlob && bestBlob.size <= UPLOAD_MAX_BYTES) {
+        return fileFromBlob(bestBlob, file)
+      }
+
+      if (file.size <= UPLOAD_MAX_BYTES) {
+        return file
+      }
+
+      throw new AvatarPreparationError(
+        'IMAGE_TOO_LARGE_AFTER_PREPARATION',
+        'Zdjęcie po zmniejszeniu nadal jest za duże. Wybierz inne albo bardziej je przytnij.',
+      )
     } finally {
       image.cleanup()
     }
-  } catch {
-    return file
+  } catch (error) {
+    if (error instanceof AvatarPreparationError) {
+      throw error
+    }
+
+    if (file.size <= UPLOAD_MAX_BYTES) {
+      return file
+    }
+
+    throw new AvatarPreparationError(
+      'IMAGE_DECODE_FAILED',
+      'Nie udało się automatycznie przygotować tego zdjęcia na telefonie. Wybierz inne albo zapisz je wcześniej jako JPG lub PNG.',
+    )
   }
 }

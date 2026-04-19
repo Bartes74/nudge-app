@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -46,16 +47,25 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Wybierz zdjęcie.' }, { status: 400 })
   }
 
+  const clientMeta =
+    typeof formData.get('client_meta') === 'string' ? formData.get('client_meta') : null
+
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return NextResponse.json(
-      { error: 'Obsługujemy tylko pliki JPG, PNG, WEBP, HEIC i HEIF.' },
+      {
+        error: 'Obsługujemy tylko pliki JPG, PNG, WEBP, HEIC i HEIF.',
+        code: 'AVATAR_UNSUPPORTED_FORMAT',
+      },
       { status: 400 },
     )
   }
 
   if (file.size > MAX_AVATAR_SIZE_BYTES) {
     return NextResponse.json(
-      { error: `Zdjęcie jest za duże. Maksymalny rozmiar to ${MAX_AVATAR_SIZE_MB} MB.` },
+      {
+        error: `Zdjęcie jest za duże. Maksymalny rozmiar to ${MAX_AVATAR_SIZE_MB} MB.`,
+        code: 'AVATAR_FILE_TOO_LARGE',
+      },
       { status: 400 },
     )
   }
@@ -74,11 +84,31 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (uploadError) {
     const isSizeLimitError = uploadError.message.includes('maximum allowed size')
+    console.error('[profile-avatar] storage upload failed', {
+      userId: user.id,
+      fileType: file.type,
+      fileSize: file.size,
+      clientMeta,
+      message: uploadError.message,
+    })
+    Sentry.captureException(uploadError, {
+      tags: {
+        area: 'profile-avatar',
+        stage: 'storage-upload',
+      },
+      extra: {
+        userId: user.id,
+        fileType: file.type,
+        fileSize: file.size,
+        clientMeta,
+      },
+    })
     return NextResponse.json(
       {
         error: isSizeLimitError
           ? `Zdjęcie jest za duże. Maksymalny rozmiar to ${MAX_AVATAR_SIZE_MB} MB.`
-          : 'Nie udało się zapisać zdjęcia profilowego.',
+          : 'Nie udało się zapisać zdjęcia profilowego. Spróbuj ponownie albo wybierz inne zdjęcie.',
+        code: isSizeLimitError ? 'AVATAR_FILE_TOO_LARGE' : 'AVATAR_STORAGE_UPLOAD_FAILED',
       },
       { status: isSizeLimitError ? 400 : 500 },
     )
@@ -103,8 +133,30 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (metadataError) {
     await admin.storage.from(AVATAR_BUCKET).remove([storagePath])
+    console.error('[profile-avatar] metadata update failed', {
+      userId: user.id,
+      fileType: file.type,
+      fileSize: file.size,
+      clientMeta,
+      message: metadataError.message,
+    })
+    Sentry.captureException(metadataError, {
+      tags: {
+        area: 'profile-avatar',
+        stage: 'metadata-update',
+      },
+      extra: {
+        userId: user.id,
+        fileType: file.type,
+        fileSize: file.size,
+        clientMeta,
+      },
+    })
     return NextResponse.json(
-      { error: 'Nie udało się zapisać zdjęcia profilowego.' },
+      {
+        error: 'Zdjęcie zostało wysłane, ale nie udało się podpiąć go do profilu. Spróbuj ponownie.',
+        code: 'AVATAR_METADATA_UPDATE_FAILED',
+      },
       { status: 500 },
     )
   }
