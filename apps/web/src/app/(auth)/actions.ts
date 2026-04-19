@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -27,11 +28,12 @@ export async function signUpAction(
   }
 
   const supabase = await createClient()
+  const appUrl = getAppUrl()
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env['NEXT_PUBLIC_APP_URL']}/verify`,
+      emailRedirectTo: `${appUrl}/verify`,
     },
   })
 
@@ -79,10 +81,11 @@ export async function magicLinkAction(
   }
 
   const supabase = await createClient()
+  const appUrl = getAppUrl()
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${process.env['NEXT_PUBLIC_APP_URL']}/app`,
+      emailRedirectTo: `${appUrl}/app`,
     },
   })
 
@@ -104,8 +107,9 @@ export async function forgotPasswordAction(
   }
 
   const supabase = await createClient()
+  const appUrl = getAppUrl()
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env['NEXT_PUBLIC_APP_URL']}/app/profile?tab=password`,
+    redirectTo: `${appUrl}/app/profile?tab=password`,
   })
 
   if (error) return { error: mapAuthError(error.message) }
@@ -118,11 +122,12 @@ export async function forgotPasswordAction(
 
 export async function oauthAction(provider: 'google' | 'apple'): Promise<void> {
   const supabase = await createClient()
+  const appUrl = getAppUrl()
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${process.env['NEXT_PUBLIC_APP_URL']}/app`,
+      redirectTo: `${appUrl}/app`,
     },
   })
 
@@ -217,4 +222,23 @@ function mapAuthError(message: string): string {
     return 'Ten adres e-mail jest już zarejestrowany. Zaloguj się.'
   }
   return 'Coś poszło nie tak. Spróbuj ponownie.'
+}
+
+function getAppUrl(): string {
+  const configuredUrl = process.env['NEXT_PUBLIC_APP_URL']
+  const requestHeaders = headers()
+  const host =
+    requestHeaders.get('x-forwarded-host') ??
+    requestHeaders.get('host') ??
+    process.env['VERCEL_URL'] ??
+    null
+  const proto =
+    requestHeaders.get('x-forwarded-proto') ??
+    (host?.includes('localhost') ? 'http' : 'https')
+
+  if (host) {
+    return `${proto}://${host}`
+  }
+
+  return configuredUrl ?? 'http://localhost:3000'
 }
