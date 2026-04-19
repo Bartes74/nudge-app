@@ -40,6 +40,7 @@ import {
   deleteAccountAction,
   updateUserSettingsAction,
 } from '@/app/(auth)/actions'
+import { prepareAvatarImage } from '@/lib/profile/prepareAvatarImage'
 
 const TIMEZONES = [
   { value: 'Europe/Warsaw', label: 'Europa/Warszawa (CET/CEST)' },
@@ -113,8 +114,9 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
     setIsUploadingAvatar(true)
 
     try {
+      const preparedFile = await prepareAvatarImage(file)
       const formData = new FormData()
-      formData.set('file', file)
+      formData.set('file', preparedFile)
 
       const res = await fetch('/api/profile/avatar', {
         method: 'POST',
@@ -298,6 +300,12 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
               odpowiedni wybór źródła. Obsługujemy JPG, PNG, WEBP, HEIC i HEIF do 15 MB.
             </DialogDescription>
           </DialogHeader>
+
+          {isUploadingAvatar && (
+            <p className="text-body-s text-muted-foreground">
+              Przygotowujemy zdjęcie i zapisujemy je na Twoim profilu…
+            </p>
+          )}
 
           <div className="flex flex-col gap-2">
             <Button
