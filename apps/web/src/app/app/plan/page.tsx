@@ -68,8 +68,8 @@ export default async function PlanPage() {
                 <span className="font-sans font-semibold">Jeszcze nie masz planu.</span>
               </p>
               <p className="text-body-m text-muted-foreground">
-                Wróć do zakładki <span className="font-medium text-foreground">Dziś</span> i wygeneruj go
-                {' '}— dopasujemy ćwiczenia do Twojego celu.
+                Wygeneruj go tutaj od zera, a dopasujemy ćwiczenia do Twojego celu i tego,
+                jak chcesz trenować.
               </p>
             </div>
             <GeneratePlanButton />

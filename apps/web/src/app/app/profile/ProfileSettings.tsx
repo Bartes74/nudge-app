@@ -1,10 +1,21 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import type { ChangeEvent } from 'react'
+import { useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
-import { LogOut, Trash2, Moon, Globe, Clock, AlertTriangle } from 'lucide-react'
+import {
+  LogOut,
+  Trash2,
+  Moon,
+  Globe,
+  Clock,
+  AlertTriangle,
+  Camera,
+  ImagePlus,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -17,6 +28,13 @@ import {
 } from '@/components/ui/select'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   signOutAction,
   deleteAccountAction,
@@ -48,9 +66,17 @@ function getInitials(email: string): string {
 }
 
 export function ProfileSettings({ user, timezone, locale }: Props) {
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const [isPending, startTransition] = useTransition()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(
+    (user.user_metadata?.['avatar_url'] as string | undefined) ?? undefined,
+  )
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const cameraInputRef = useRef<HTMLInputElement | null>(null)
+  const galleryInputRef = useRef<HTMLInputElement | null>(null)
 
   function handleTimezoneChange(value: string) {
     const formData = new FormData()
@@ -78,23 +104,72 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
     })
   }
 
+  async function handleAvatarSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) return
+
+    setIsUploadingAvatar(true)
+
+    try {
+      const formData = new FormData()
+      formData.set('file', file)
+
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        body: formData,
+      })
+      const json = (await res.json()) as { avatar_url?: string; error?: string }
+
+      if (!res.ok || !json.avatar_url) {
+        throw new Error(json.error ?? 'Nie udało się zapisać zdjęcia profilowego.')
+      }
+
+      setAvatarUrl(json.avatar_url)
+      setIsAvatarDialogOpen(false)
+      toast.success('Zapisaliśmy nowe zdjęcie profilowe.')
+      router.refresh()
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Nie udało się zapisać zdjęcia profilowego.',
+      )
+    } finally {
+      setIsUploadingAvatar(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <Card variant="default" padding="md" className="flex items-center gap-4">
-        <Avatar className="h-14 w-14 ring-1 ring-border">
-          <AvatarImage
-            src={user.user_metadata?.['avatar_url'] as string | undefined}
-            alt="Avatar"
-          />
-          <AvatarFallback className="font-display text-display-m">
-            {getInitials(user.email ?? 'NU')}
-          </AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          onClick={() => setIsAvatarDialogOpen(true)}
+          className="relative rounded-full ring-offset-background transition-transform duration-200 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="Dodaj lub zmień zdjęcie profilowe"
+        >
+          <Avatar className="h-14 w-14 ring-1 ring-border">
+            <AvatarImage src={avatarUrl} alt="Zdjęcie profilowe" />
+            <AvatarFallback className="font-display text-display-m">
+              {getInitials(user.email ?? 'NU')}
+            </AvatarFallback>
+          </Avatar>
+          <span className="absolute -right-1 -bottom-1 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface-2 text-foreground shadow-lift-sm">
+            <Camera className="h-3.5 w-3.5" />
+          </span>
+        </button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-body-m font-semibold tracking-tight">
             {(user.user_metadata?.['full_name'] as string | undefined) ?? user.email}
           </p>
           <p className="truncate font-mono text-body-s text-muted-foreground">{user.email}</p>
+          <button
+            type="button"
+            onClick={() => setIsAvatarDialogOpen(true)}
+            className="mt-1 text-body-s text-brand transition-colors hover:text-brand/80"
+          >
+            Dodaj zdjęcie z aparatu lub galerii
+          </button>
         </div>
       </Card>
 
@@ -213,6 +288,55 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
           )}
         </div>
       </Card>
+
+      <Dialog open={isAvatarDialogOpen} onOpenChange={setIsAvatarDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-left">Zdjęcie profilowe</DialogTitle>
+            <DialogDescription className="text-left">
+              Możesz zrobić nowe zdjęcie albo wybrać je z galerii. Na telefonie otworzy się
+              odpowiedni wybór źródła.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => cameraInputRef.current?.click()}
+              isLoading={isUploadingAvatar}
+            >
+              <Camera className="h-4 w-4" />
+              Zrób zdjęcie
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => galleryInputRef.current?.click()}
+              isLoading={isUploadingAvatar}
+            >
+              <ImagePlus className="h-4 w-4" />
+              Wybierz z galerii
+            </Button>
+          </div>
+
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(event) => void handleAvatarSelected(event)}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) => void handleAvatarSelected(event)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

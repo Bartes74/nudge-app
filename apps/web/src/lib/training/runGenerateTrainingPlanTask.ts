@@ -22,6 +22,19 @@ type RunGenerateTrainingPlanTaskInput = {
   runStep?: StepRunner
 }
 
+async function wasTaskCancelled(
+  supabase: ReturnType<typeof serviceClient>,
+  taskId: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('ai_tasks')
+    .select('status')
+    .eq('id', taskId)
+    .maybeSingle()
+
+  return data?.status === 'cancelled'
+}
+
 export async function runGenerateTrainingPlanTask({
   taskId,
   userId,
@@ -29,12 +42,25 @@ export async function runGenerateTrainingPlanTask({
 }: RunGenerateTrainingPlanTaskInput): Promise<{ success: boolean; plan_version_id?: string; blocked?: boolean; reasons?: string[] }> {
   const supabase = serviceClient()
 
-  await runStep('mark-running', async () => {
-    await supabase
+  if (await wasTaskCancelled(supabase, taskId)) {
+    return { success: false }
+  }
+
+  const markedRunning = await runStep('mark-running', async () => {
+    const { data: runningTask } = await supabase
       .from('ai_tasks')
       .update({ status: 'running', started_at: new Date().toISOString() })
       .eq('id', taskId)
+      .neq('status', 'cancelled')
+      .select('id')
+      .maybeSingle()
+
+    return Boolean(runningTask)
   })
+
+  if (!markedRunning) {
+    return { success: false }
+  }
 
   const { profile, equipment, health, goal } = await runStep('load-profile', async () => {
     const [profileRes, equipmentRes, healthRes, goalRes] = await Promise.all([
@@ -243,6 +269,10 @@ export async function runGenerateTrainingPlanTask({
 
     planOutput = llmResult.planOutput
     llmCallId = llmResult.llmCallId
+  }
+
+  if (await wasTaskCancelled(supabase, taskId)) {
+    return { success: false }
   }
 
   const planVersionId = await runStep('save-plan', async () => {

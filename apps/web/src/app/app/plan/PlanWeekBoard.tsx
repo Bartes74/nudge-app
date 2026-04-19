@@ -18,6 +18,8 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import { GeneratePlanButton } from './GeneratePlanButton'
+import { DeleteTrainingPlanButton } from './DeleteTrainingPlanButton'
 import {
   DAY_ORDER,
   DAY_SHORT,
@@ -274,6 +276,23 @@ export function PlanWeekBoard({
           </div>
         </Card>
       )}
+
+      <Card variant="recessed" padding="md">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <CardEyebrow>Zacznij od nowa</CardEyebrow>
+            <p className="text-body-m leading-relaxed text-foreground">
+              Jeśli chcesz ułożyć plan jeszcze raz, możesz wygenerować nowy od zera.
+              Dotychczasowy plan zostanie zachowany w historii do wglądu, a nowy zastąpi go
+              dopiero wtedy, gdy będzie gotowy.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <GeneratePlanButton label="Wygeneruj od nowa" />
+            <DeleteTrainingPlanButton />
+          </div>
+        </div>
+      </Card>
 
       <section className="flex flex-col gap-2.5">
         <Reorder.Group
