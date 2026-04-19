@@ -24,7 +24,7 @@ const OPTIONS = [
     href: '/app/nutrition/log/manual',
     icon: PenLine,
     title: 'Ręcznie',
-    description: 'Wpisz składniki i kalorie samodzielnie',
+    description: 'Wpisz składniki i ilość — resztę oszacujemy',
     tone: 'muted' as const,
   },
 ]

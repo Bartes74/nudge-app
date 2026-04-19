@@ -19,6 +19,7 @@
     "./rules/beginnerZeroProgression": "./src/rules/beginnerZeroProgression.ts",
     "./rules/guardrails": "./src/rules/guardrails/index.ts",
     "./llm/client": "./src/llm/client.ts",
+    "./meal/estimateManualMealItems": "./src/meal/estimateManualMealItems.ts",
     "./planners/training/types": "./src/planners/training/types.ts",
     "./planners/training/selectTemplate": "./src/planners/training/selectTemplate.ts",
     "./planners/training/fillTemplate": "./src/planners/training/fillTemplate.ts",

@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 
+type MealTypeValue = '' | 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'drink' | 'dessert'
+
 interface ItemForm {
   label: string
   portion_estimate: string
@@ -24,19 +26,104 @@ interface ItemForm {
   protein_g: string
   carbs_g: string
   fat_g: string
+  manualNutritionExpanded: boolean
+}
+
+interface MealTypeFieldConfig {
+  entryLabel: string
+  nameLabel: string
+  namePlaceholder: string
+  portionLabel: string
+  portionPlaceholder: string
+  helperText: string
+}
+
+const DEFAULT_FIELD_CONFIG: MealTypeFieldConfig = {
+  entryLabel: 'Składnik',
+  nameLabel: 'Co jesz?',
+  namePlaceholder: 'Np. focaccia, pomidor, mozzarella',
+  portionLabel: 'Ilość',
+  portionPlaceholder: 'Np. 2 kawałki, pół sztuki, 100 g',
+  helperText: 'Wystarczy nazwa i ilość. Jeśli nie znasz kalorii i makro, spróbujemy oszacować je automatycznie.',
+}
+
+const MEAL_TYPE_FIELD_CONFIG: Record<Exclude<MealTypeValue, ''>, MealTypeFieldConfig> = {
+  breakfast: {
+    entryLabel: 'Składnik śniadania',
+    nameLabel: 'Co jesz na śniadanie?',
+    namePlaceholder: 'Np. jajecznica, chleb razowy, twarożek',
+    portionLabel: 'Ilość / porcja',
+    portionPlaceholder: 'Np. 2 jajka, 2 kromki, 150 g',
+    helperText: 'Opisz produkt i porcję. Resztę oszacujemy, jeśli nie chcesz wpisywać makro ręcznie.',
+  },
+  lunch: {
+    entryLabel: 'Składnik obiadu',
+    nameLabel: 'Co jesz na obiad?',
+    namePlaceholder: 'Np. kurczak pieczony, ryż, surówka',
+    portionLabel: 'Ilość / porcja',
+    portionPlaceholder: 'Np. 1 talerz, 200 g, 3 łyżki',
+    helperText: 'Najlepiej wpisz główne składniki i mniej więcej ile ich było.',
+  },
+  dinner: {
+    entryLabel: 'Składnik kolacji',
+    nameLabel: 'Co jesz na kolację?',
+    namePlaceholder: 'Np. kanapka z szynką, sałatka grecka',
+    portionLabel: 'Ilość / porcja',
+    portionPlaceholder: 'Np. 2 kanapki, 1 miska, 150 g',
+    helperText: 'Podaj nazwę i porcję. Jeśli makro zostanie puste, spróbujemy je oszacować.',
+  },
+  snack: {
+    entryLabel: 'Przekąska',
+    nameLabel: 'Co podjadasz?',
+    namePlaceholder: 'Np. banan, garść orzechów, batonik',
+    portionLabel: 'Ilość',
+    portionPlaceholder: 'Np. 1 sztuka, 1 garść, 45 g',
+    helperText: 'Dla przekąsek wystarczy prosty opis i ilość.',
+  },
+  drink: {
+    entryLabel: 'Napój',
+    nameLabel: 'Co pijesz?',
+    namePlaceholder: 'Np. latte, sok pomarańczowy, cola',
+    portionLabel: 'Objętość',
+    portionPlaceholder: 'Np. 250 ml, 1 szklanka, 1 puszka',
+    helperText: 'Dla napojów najważniejsza jest nazwa i objętość.',
+  },
+  dessert: {
+    entryLabel: 'Deser',
+    nameLabel: 'Co to za deser?',
+    namePlaceholder: 'Np. tiramisu, lody waniliowe, sernik',
+    portionLabel: 'Porcja',
+    portionPlaceholder: 'Np. 1 kawałek, 2 gałki, 150 g',
+    helperText: 'Podaj nazwę deseru i porcję. Makro oszacujemy, jeśli go nie znasz.',
+  },
 }
 
 function emptyItem(): ItemForm {
-  return { label: '', portion_estimate: '', kcal_estimate: '', protein_g: '', carbs_g: '', fat_g: '' }
+  return {
+    label: '',
+    portion_estimate: '',
+    kcal_estimate: '',
+    protein_g: '',
+    carbs_g: '',
+    fat_g: '',
+    manualNutritionExpanded: false,
+  }
+}
+
+function fieldConfigForMealType(mealType: MealTypeValue): MealTypeFieldConfig {
+  if (!mealType) return DEFAULT_FIELD_CONFIG
+  return MEAL_TYPE_FIELD_CONFIG[mealType]
 }
 
 export default function ManualMealLogPage() {
   const router = useRouter()
-  const [mealType, setMealType] = useState<string>('')
+  const [mealType, setMealType] = useState<MealTypeValue>('')
   const [items, setItems] = useState<ItemForm[]>([emptyItem()])
   const [loading, setLoading] = useState(false)
 
-  function updateItem(idx: number, field: keyof ItemForm, value: string) {
+  const fieldConfig = fieldConfigForMealType(mealType)
+
+  function updateItem(idx: number, field: keyof ItemForm, value: string | boolean) {
     setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, [field]: value } : item)))
   }
 
@@ -49,9 +136,9 @@ export default function ManualMealLogPage() {
   }
 
   async function handleSubmit() {
-    const validItems = items.filter((i) => i.label.trim() && i.kcal_estimate)
+    const validItems = items.filter((item) => item.label.trim() && item.portion_estimate.trim())
     if (validItems.length === 0) {
-      toast.error('Dodaj przynajmniej jeden składnik z kaloriami')
+      toast.error('Dodaj przynajmniej jeden składnik z nazwą i ilością')
       return
     }
 
@@ -62,13 +149,13 @@ export default function ManualMealLogPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           meal_type: mealType || undefined,
-          items: validItems.map((i) => ({
-            label: i.label.trim(),
-            portion_estimate: i.portion_estimate.trim() || undefined,
-            kcal_estimate: Number(i.kcal_estimate),
-            protein_g: i.protein_g ? Number(i.protein_g) : undefined,
-            carbs_g: i.carbs_g ? Number(i.carbs_g) : undefined,
-            fat_g: i.fat_g ? Number(i.fat_g) : undefined,
+          items: validItems.map((item) => ({
+            label: item.label.trim(),
+            portion_estimate: item.portion_estimate.trim(),
+            kcal_estimate: item.kcal_estimate ? Number(item.kcal_estimate) : undefined,
+            protein_g: item.protein_g ? Number(item.protein_g) : undefined,
+            carbs_g: item.carbs_g ? Number(item.carbs_g) : undefined,
+            fat_g: item.fat_g ? Number(item.fat_g) : undefined,
           })),
         }),
       })
@@ -110,7 +197,7 @@ export default function ManualMealLogPage() {
         <Label className="text-label uppercase text-muted-foreground">
           Typ posiłku <span className="normal-case tracking-tight">(opcjonalnie)</span>
         </Label>
-        <Select value={mealType} onValueChange={setMealType}>
+        <Select value={mealType} onValueChange={(value) => setMealType(value as MealTypeValue)}>
           <SelectTrigger>
             <SelectValue placeholder="Wybierz typ" />
           </SelectTrigger>
@@ -123,6 +210,7 @@ export default function ManualMealLogPage() {
             <SelectItem value="dessert">Deser</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-body-s text-muted-foreground">{fieldConfig.helperText}</p>
       </div>
 
       <div className="flex flex-col gap-3">
@@ -130,7 +218,7 @@ export default function ManualMealLogPage() {
           <Card key={idx} variant="default" padding="md">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-label uppercase text-muted-foreground">
-                Składnik{' '}
+                {fieldConfig.entryLabel}{' '}
                 <span className="font-mono tabular-nums text-foreground">
                   {String(idx + 1).padStart(2, '0')}
                 </span>
@@ -148,73 +236,115 @@ export default function ManualMealLogPage() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <Input
-                id={`item-${idx}-label`}
-                placeholder="Nazwa (np. ryż gotowany)"
-                value={item.label}
-                onChange={(e) => updateItem(idx, 'label', e.target.value)}
-              />
-              <Input
-                id={`item-${idx}-portion`}
-                placeholder="Porcja (np. ~200g, 1 talerz)"
-                value={item.portion_estimate}
-                onChange={(e) => updateItem(idx, 'portion_estimate', e.target.value)}
-              />
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`item-${idx}-kcal`} className="text-label uppercase text-muted-foreground">
-                    Kalorie <span className="text-brand">*</span>
-                  </Label>
-                  <Input
-                    id={`item-${idx}-kcal`}
-                    type="number"
-                    min="0"
-                    placeholder="kcal"
-                    value={item.kcal_estimate}
-                    onChange={(e) => updateItem(idx, 'kcal_estimate', e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`item-${idx}-protein`} className="text-label uppercase text-muted-foreground">
-                    Białko (g)
-                  </Label>
-                  <Input
-                    id={`item-${idx}-protein`}
-                    type="number"
-                    min="0"
-                    placeholder="g"
-                    value={item.protein_g}
-                    onChange={(e) => updateItem(idx, 'protein_g', e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`item-${idx}-carbs`} className="text-label uppercase text-muted-foreground">
-                    Węgle (g)
-                  </Label>
-                  <Input
-                    id={`item-${idx}-carbs`}
-                    type="number"
-                    min="0"
-                    placeholder="g"
-                    value={item.carbs_g}
-                    onChange={(e) => updateItem(idx, 'carbs_g', e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <Label htmlFor={`item-${idx}-fat`} className="text-label uppercase text-muted-foreground">
-                    Tłuszcze (g)
-                  </Label>
-                  <Input
-                    id={`item-${idx}-fat`}
-                    type="number"
-                    min="0"
-                    placeholder="g"
-                    value={item.fat_g}
-                    onChange={(e) => updateItem(idx, 'fat_g', e.target.value)}
-                  />
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`item-${idx}-label`} className="text-label uppercase text-muted-foreground">
+                  {fieldConfig.nameLabel}
+                </Label>
+                <Input
+                  id={`item-${idx}-label`}
+                  placeholder={fieldConfig.namePlaceholder}
+                  value={item.label}
+                  onChange={(e) => updateItem(idx, 'label', e.target.value)}
+                />
               </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`item-${idx}-portion`} className="text-label uppercase text-muted-foreground">
+                  {fieldConfig.portionLabel}
+                </Label>
+                <Input
+                  id={`item-${idx}-portion`}
+                  placeholder={fieldConfig.portionPlaceholder}
+                  value={item.portion_estimate}
+                  onChange={(e) => updateItem(idx, 'portion_estimate', e.target.value)}
+                />
+              </div>
+
+              {item.manualNutritionExpanded ? (
+                <div className="rounded-xl border border-border/60 bg-surface-2/40 p-3">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-label uppercase text-muted-foreground">
+                        Własne wartości <span className="normal-case tracking-tight">(opcjonalnie)</span>
+                      </p>
+                      <p className="mt-1 text-body-s text-muted-foreground">
+                        Jeśli znasz kalorie albo makro, wpisz je tutaj. Puste pola spróbujemy oszacować.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateItem(idx, 'manualNutritionExpanded', false)}
+                      className="text-body-s text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Ukryj
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`item-${idx}-kcal`} className="text-label uppercase text-muted-foreground">
+                        Kalorie
+                      </Label>
+                      <Input
+                        id={`item-${idx}-kcal`}
+                        type="number"
+                        min="0"
+                        placeholder="kcal"
+                        value={item.kcal_estimate}
+                        onChange={(e) => updateItem(idx, 'kcal_estimate', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`item-${idx}-protein`} className="text-label uppercase text-muted-foreground">
+                        Białko (g)
+                      </Label>
+                      <Input
+                        id={`item-${idx}-protein`}
+                        type="number"
+                        min="0"
+                        placeholder="g"
+                        value={item.protein_g}
+                        onChange={(e) => updateItem(idx, 'protein_g', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`item-${idx}-carbs`} className="text-label uppercase text-muted-foreground">
+                        Węgle (g)
+                      </Label>
+                      <Input
+                        id={`item-${idx}-carbs`}
+                        type="number"
+                        min="0"
+                        placeholder="g"
+                        value={item.carbs_g}
+                        onChange={(e) => updateItem(idx, 'carbs_g', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <Label htmlFor={`item-${idx}-fat`} className="text-label uppercase text-muted-foreground">
+                        Tłuszcze (g)
+                      </Label>
+                      <Input
+                        id={`item-${idx}-fat`}
+                        type="number"
+                        min="0"
+                        placeholder="g"
+                        value={item.fat_g}
+                        onChange={(e) => updateItem(idx, 'fat_g', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => updateItem(idx, 'manualNutritionExpanded', true)}
+                >
+                  Mam własne kalorie i makro
+                </Button>
+              )}
             </div>
           </Card>
         ))}

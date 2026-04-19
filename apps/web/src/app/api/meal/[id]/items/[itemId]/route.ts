@@ -4,12 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 
 const patchSchema = z.object({
   label: z.string().min(1).max(200).optional(),
-  portion_estimate: z.string().max(100).optional(),
-  grams_estimate: z.number().positive().optional(),
-  kcal_estimate: z.number().int().min(0).optional(),
-  protein_g: z.number().min(0).optional(),
-  carbs_g: z.number().min(0).optional(),
-  fat_g: z.number().min(0).optional(),
+  portion_estimate: z.string().max(100).nullable().optional(),
+  grams_estimate: z.number().positive().nullable().optional(),
+  kcal_estimate: z.number().int().min(0).nullable().optional(),
+  protein_g: z.number().min(0).nullable().optional(),
+  carbs_g: z.number().min(0).nullable().optional(),
+  fat_g: z.number().min(0).nullable().optional(),
 })
 
 export async function PATCH(

@@ -75,14 +75,25 @@ function MacroRange({
   unit: string
 }) {
   if (min == null || max == null) return null
+
+  const roundedMin = Math.round(min)
+  const roundedMax = Math.round(max)
+  const showSingleValue = roundedMin === roundedMax
+
   return (
     <div className="flex flex-col gap-1 rounded-xl bg-surface-2 px-3 py-3">
       <span className="text-label uppercase text-muted-foreground">{label}</span>
       <div className="flex items-baseline gap-1">
         <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
-          {Math.round(min)}
-          <span className="text-muted-foreground">–</span>
-          {Math.round(max)}
+          {showSingleValue ? (
+            roundedMin
+          ) : (
+            <>
+              {roundedMin}
+              <span className="text-muted-foreground">–</span>
+              {roundedMax}
+            </>
+          )}
         </span>
         <span className="text-body-s text-muted-foreground">{unit}</span>
       </div>
@@ -185,6 +196,15 @@ export default function MealLogResultPage() {
   }
 
   const items = mealLog.meal_log_items
+  const hasMacroSummary =
+    mealLog.kcal_estimate_min != null
+    || mealLog.kcal_estimate_max != null
+    || mealLog.protein_g_min != null
+    || mealLog.protein_g_max != null
+    || mealLog.carbs_g_min != null
+    || mealLog.carbs_g_max != null
+    || mealLog.fat_g_min != null
+    || mealLog.fat_g_max != null
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
@@ -219,9 +239,11 @@ export default function MealLogResultPage() {
         </Button>
       </header>
 
-      {mealLog.status === 'analyzed' && (
+      {hasMacroSummary && (
         <Card variant="default" padding="md">
-          <CardEyebrow>Szacowane wartości (zakres)</CardEyebrow>
+          <CardEyebrow>
+            {mealLog.status === 'manual' ? 'Wartości wpisu' : 'Szacowane wartości (zakres)'}
+          </CardEyebrow>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <MacroRange
               label="Kalorie"
