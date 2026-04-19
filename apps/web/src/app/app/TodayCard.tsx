@@ -19,7 +19,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { useGeneratePlan } from '@/hooks/useGeneratePlan'
-import { workoutDisplayDuration } from '@/lib/training/weekPlan'
+import { DAY_LABELS, DAY_ORDER, workoutDisplayDuration } from '@/lib/training/weekPlan'
 
 interface Exercise {
   id: string
@@ -77,6 +77,8 @@ interface TodayCardProps {
   lastCompletedWorkoutName: string | null
 }
 
+type WeekDayLabel = (typeof DAY_ORDER)[number]
+
 function recommendationForPhase(adaptationPhase: string | null): string {
   if (adaptationPhase === 'phase_0_familiarization') {
     return 'Najważniejsze dziś: spokojnie przejść przez kolejne kroki i oswoić miejsce.'
@@ -88,6 +90,59 @@ function recommendationForPhase(adaptationPhase: string | null): string {
     return 'Najważniejsze dziś: utrzymać regularność i budować podstawy bez presji na wynik.'
   }
   return 'Najważniejsze dziś: zrób realny krok, nie idealny.'
+}
+
+function recoveryRecommendationForPhase(adaptationPhase: string | null): string {
+  if (adaptationPhase === 'phase_0_familiarization') {
+    return 'Dziś wystarczy spokojny spacer, trochę wody i przygotowanie rzeczy na następną wizytę.'
+  }
+  if (adaptationPhase === 'phase_1_adaptation') {
+    return 'W dzień wolny postaw na regenerację: trochę ruchu, sen i brak presji na dokładanie więcej.'
+  }
+  if (adaptationPhase === 'phase_2_foundations') {
+    return 'Dzień bez treningu pomaga utrzymać regularność. Lekki ruch jest OK, ale nie musisz niczego nadrabiać.'
+  }
+  return 'Regeneracja też jest częścią planu. Nie musisz wypełniać dnia dodatkowym treningiem.'
+}
+
+function asWeekDayLabel(value: string): WeekDayLabel | null {
+  return DAY_ORDER.includes(value as WeekDayLabel) ? (value as WeekDayLabel) : null
+}
+
+function nextWorkoutDayLabel(todayDayLabel: string, nextWorkout: Workout | null): string | null {
+  if (!nextWorkout) return null
+
+  const today = asWeekDayLabel(todayDayLabel)
+  const nextDay = asWeekDayLabel(nextWorkout.day_label)
+
+  if (!today || !nextDay) return null
+
+  const todayIndex = DAY_ORDER.indexOf(today)
+  const nextIndex = DAY_ORDER.indexOf(nextDay)
+  const distance = (nextIndex - todayIndex + 7) % 7
+
+  if (distance === 0) return 'W przyszłym tygodniu'
+  if (distance === 1) return 'Jutro'
+  return DAY_LABELS[nextDay]
+}
+
+function findNextWorkout(workouts: Workout[], todayDayLabel: string): Workout | null {
+  if (workouts.length === 0) return null
+
+  const orderedWorkouts = [...workouts].sort((left, right) => left.order_in_week - right.order_in_week)
+  const today = asWeekDayLabel(todayDayLabel)
+
+  if (!today) return orderedWorkouts[0] ?? null
+
+  const todayIndex = DAY_ORDER.indexOf(today)
+
+  for (let offset = 1; offset <= 7; offset += 1) {
+    const candidateDay = DAY_ORDER[(todayIndex + offset) % DAY_ORDER.length]
+    const workout = orderedWorkouts.find((entry) => entry.day_label === candidateDay)
+    if (workout) return workout
+  }
+
+  return orderedWorkouts[0] ?? null
 }
 
 function guidedWorkoutDuration(workout: Workout): number {
@@ -109,6 +164,77 @@ function MetaRow({ label, value }: { label: string; value: string }) {
       <span className="text-label uppercase text-muted-foreground">{label}</span>
       <span className="text-body-m text-foreground">{value}</span>
     </div>
+  )
+}
+
+function RestDayCard({
+  title,
+  description,
+  recommendation,
+  nextWorkout,
+  nextWorkoutLabel,
+  lastCompletedWorkoutName,
+  onOpenNextWorkout,
+  onOpenPlan,
+}: {
+  title: string
+  description: string
+  recommendation: string
+  nextWorkout: Workout | null
+  nextWorkoutLabel: string | null
+  lastCompletedWorkoutName: string | null
+  onOpenNextWorkout: () => void
+  onOpenPlan: () => void
+}) {
+  return (
+    <Card variant="default" padding="lg" className="animate-stagger">
+      <div className="flex flex-col gap-2">
+        <CardEyebrow>Dziś bez treningu</CardEyebrow>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription className="text-body-m">{description}</CardDescription>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Card variant="recessed" padding="md">
+          <p className="text-label uppercase text-muted-foreground">Na dziś</p>
+          <p className="mt-1.5 text-body-m font-medium text-balance">{recommendation}</p>
+        </Card>
+        <Card variant="recessed" padding="md">
+          <p className="text-label uppercase text-muted-foreground">Ostatni ukończony trening</p>
+          <p className="mt-1.5 text-body-m font-medium">
+            {lastCompletedWorkoutName ?? 'Jeszcze przed Tobą'}
+          </p>
+        </Card>
+      </div>
+
+      {nextWorkout && (
+        <button
+          className="mt-4 flex w-full items-center justify-between rounded-lg border border-border p-4 text-left transition-colors hover:border-foreground/30 hover:bg-surface-2"
+          onClick={onOpenNextWorkout}
+        >
+          <div className="flex flex-col gap-1">
+            <p className="text-label uppercase text-muted-foreground">
+              {nextWorkoutLabel ? `Najbliższy trening · ${nextWorkoutLabel}` : 'Najbliższy trening'}
+            </p>
+            <p className="text-body-m font-medium">{nextWorkout.name}</p>
+            <p className="text-body-s text-muted-foreground">
+              Około {workoutDisplayDuration(nextWorkout)} min
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
+
+      <Button
+        size="hero"
+        variant={nextWorkout ? 'outline' : 'default'}
+        className="mt-6 w-full"
+        onClick={onOpenPlan}
+      >
+        Otwórz plan tygodnia
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </Card>
   )
 }
 
@@ -201,38 +327,22 @@ export function TodayCard({
 
   const version = plan.current_version
   const todayWorkout = version.workouts.find((workout) => workout.day_label === todayDayLabel)
-  const nextWorkout =
-    version.workouts
-      .sort((left, right) => left.order_in_week - right.order_in_week)
-      .find((workout) => workout.day_label !== todayDayLabel) ?? version.workouts[0]
+  const nextWorkout = findNextWorkout(version.workouts, todayDayLabel)
+  const nextWorkoutLabel = nextWorkoutDayLabel(todayDayLabel, nextWorkout)
 
   if (version.view_mode === 'guided_beginner_view' || entryPath === 'guided_beginner') {
     if (!todayWorkout) {
       return (
-        <Card variant="default" padding="lg">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <ShieldCheck className="h-4 w-4" />
-            <span className="text-label uppercase">Dzień spokoju</span>
-          </div>
-          <p className="mt-4 text-display-m font-display text-balance">
-            Twoim zadaniem jest po prostu wrócić do rytmu.
-          </p>
-          <p className="mt-3 text-body-m text-muted-foreground">
-            {recommendationForPhase(adaptationPhase)}
-          </p>
-          {nextWorkout && (
-            <button
-              className="mt-5 flex w-full items-center justify-between rounded-lg border border-border p-4 text-left transition-colors hover:border-foreground/30 hover:bg-surface-2"
-              onClick={() => router.push(`/app/plan/workout/${nextWorkout.id}`)}
-            >
-              <div>
-                <p className="text-label uppercase text-muted-foreground">Najbliższy trening</p>
-                <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-        </Card>
+        <RestDayCard
+          title="Dzień regeneracji i oswajania rytmu."
+          description="Dziś nie masz zaplanowanej sesji. To celowa przerwa, żeby ciało i głowa spokojnie przyswoiły poprzedni krok."
+          recommendation={recoveryRecommendationForPhase(adaptationPhase)}
+          nextWorkout={nextWorkout}
+          nextWorkoutLabel={nextWorkoutLabel}
+          lastCompletedWorkoutName={lastCompletedWorkoutName}
+          onOpenNextWorkout={() => nextWorkout && router.push(`/app/plan/workout/${nextWorkout.id}`)}
+          onOpenPlan={() => router.push('/app/plan')}
+        />
       )
     }
 
@@ -244,8 +354,14 @@ export function TodayCard({
       <Card variant="hero" padding="lg" className="animate-stagger">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-2">
-            <CardEyebrow>Dzisiejszy krok</CardEyebrow>
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ShieldCheck className="h-4 w-4" />
+              <CardEyebrow>Dziś trenujesz</CardEyebrow>
+            </div>
             <CardTitle>{todayWorkout.name}</CardTitle>
+            <CardDescription className="text-body-m">
+              Masz dziś zaplanowaną spokojną sesję. Otwórz ją i skup się tylko na najbliższym kroku.
+            </CardDescription>
           </div>
           <DurationChip minutes={guidedWorkoutDuration(todayWorkout)} />
         </div>
@@ -303,7 +419,9 @@ export function TodayCard({
           <div className="mt-4 flex items-start gap-3 rounded-lg border border-border p-4">
             <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-label uppercase text-muted-foreground">Najbliższy trening</p>
+              <p className="text-label uppercase text-muted-foreground">
+                {nextWorkoutLabel ? `Potem · ${nextWorkoutLabel}` : 'Potem'}
+              </p>
               <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
             </div>
           </div>
@@ -323,22 +441,16 @@ export function TodayCard({
 
   if (!todayWorkout) {
     return (
-      <Card variant="default" padding="lg">
-        <p className="text-label uppercase text-muted-foreground">Dziś</p>
-        <p className="mt-2 text-display-m font-display text-balance">Dzień odpoczynku.</p>
-        {nextWorkout && (
-          <button
-            className="mt-4 flex w-full items-center justify-between rounded-lg border border-border p-4 text-left transition-colors hover:border-foreground/30 hover:bg-surface-2"
-            onClick={() => router.push(`/app/plan/workout/${nextWorkout.id}`)}
-          >
-            <div>
-              <p className="text-label uppercase text-muted-foreground">Następny trening</p>
-              <p className="mt-1 text-body-m font-medium">{nextWorkout.name}</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          </button>
-        )}
-      </Card>
+      <RestDayCard
+        title="Dzień regeneracji."
+        description="Dzisiaj plan nie przewiduje treningu. To normalna część tygodnia i miejsce na odpoczynek między sesjami."
+        recommendation="Skup się na śnie, jedzeniu i lekkim ruchu. Nie musisz niczego nadrabiać."
+        nextWorkout={nextWorkout}
+        nextWorkoutLabel={nextWorkoutLabel}
+        lastCompletedWorkoutName={lastCompletedWorkoutName}
+        onOpenNextWorkout={() => nextWorkout && router.push(`/app/plan/workout/${nextWorkout.id}`)}
+        onOpenPlan={() => router.push('/app/plan')}
+      />
     )
   }
 
@@ -346,10 +458,28 @@ export function TodayCard({
     <Card variant="hero" padding="lg" className="animate-stagger">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-2">
-          <CardEyebrow>Dzisiejszy trening</CardEyebrow>
+          <CardEyebrow>Dziś trenujesz</CardEyebrow>
           <CardTitle>{todayWorkout.name}</CardTitle>
+          <CardDescription className="text-body-m">
+            To jest dzień treningowy. Otwórz sesję, żeby zobaczyć ćwiczenia i przejść przez plan bez zgadywania.
+          </CardDescription>
         </div>
-        <DurationChip minutes={todayWorkout.duration_min_estimated} />
+        <DurationChip minutes={workoutDisplayDuration(todayWorkout)} />
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Card variant="recessed" padding="md">
+          <p className="text-label uppercase text-muted-foreground">Dziś</p>
+          <p className="mt-1.5 text-body-m font-medium text-balance">
+            Najpierw uruchom trening, a potem skup się na pierwszym ćwiczeniu z listy.
+          </p>
+        </Card>
+        <Card variant="recessed" padding="md">
+          <p className="text-label uppercase text-muted-foreground">Ostatni ukończony trening</p>
+          <p className="mt-1.5 text-body-m font-medium">
+            {lastCompletedWorkoutName ?? 'Jeszcze przed Tobą'}
+          </p>
+        </Card>
       </div>
 
       <ul className="mt-6 flex flex-col">
@@ -378,7 +508,7 @@ export function TodayCard({
         className="mt-6 w-full"
         onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
       >
-        Zacznij trening
+        Otwórz dzisiejszy trening
         <ChevronRight className="h-4 w-4" />
       </Button>
     </Card>
