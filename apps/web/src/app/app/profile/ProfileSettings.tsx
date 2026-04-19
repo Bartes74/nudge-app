@@ -295,7 +295,7 @@ export function ProfileSettings({ user, timezone, locale }: Props) {
             <DialogTitle className="text-left">Zdjęcie profilowe</DialogTitle>
             <DialogDescription className="text-left">
               Możesz zrobić nowe zdjęcie albo wybrać je z galerii. Na telefonie otworzy się
-              odpowiedni wybór źródła.
+              odpowiedni wybór źródła. Obsługujemy JPG, PNG, WEBP, HEIC i HEIF do 15 MB.
             </DialogDescription>
           </DialogHeader>
 

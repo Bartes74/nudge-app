@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const AVATAR_BUCKET = 'profile_avatars'
-const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_AVATAR_SIZE_BYTES = 15 * 1024 * 1024
+const MAX_AVATAR_SIZE_MB = 15
 const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg',
   'image/png',
@@ -54,7 +55,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (file.size > MAX_AVATAR_SIZE_BYTES) {
     return NextResponse.json(
-      { error: 'Zdjęcie jest za duże. Maksymalny rozmiar to 5 MB.' },
+      { error: `Zdjęcie jest za duże. Maksymalny rozmiar to ${MAX_AVATAR_SIZE_MB} MB.` },
       { status: 400 },
     )
   }
@@ -72,9 +73,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     })
 
   if (uploadError) {
+    const isSizeLimitError = uploadError.message.includes('maximum allowed size')
     return NextResponse.json(
-      { error: 'Nie udało się zapisać zdjęcia profilowego.' },
-      { status: 500 },
+      {
+        error: isSizeLimitError
+          ? `Zdjęcie jest za duże. Maksymalny rozmiar to ${MAX_AVATAR_SIZE_MB} MB.`
+          : 'Nie udało się zapisać zdjęcia profilowego.',
+      },
+      { status: isSizeLimitError ? 400 : 500 },
     )
   }
 
