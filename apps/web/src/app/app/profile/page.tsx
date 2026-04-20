@@ -46,6 +46,7 @@ export default async function ProfilePage() {
   const profileWithFallbacks = profileResult.data
     ? applyProfileFallbacks(profileResult.data, factsResult.data ?? [])
     : null
+  const locale = usersResult.data?.locale ?? 'pl-PL'
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
@@ -59,7 +60,7 @@ export default async function ProfilePage() {
       </header>
 
       {profileWithFallbacks?.onboarding_layer_1_done ? (
-        <ProfileData profile={profileWithFallbacks} />
+        <ProfileData profile={profileWithFallbacks} locale={locale} />
       ) : (
         <Card variant="outline" padding="md">
           <p className="text-body-m text-muted-foreground">
@@ -74,7 +75,7 @@ export default async function ProfilePage() {
       <ProfileSettings
         user={user}
         timezone={usersResult.data?.timezone ?? 'Europe/Warsaw'}
-        locale={usersResult.data?.locale ?? 'pl-PL'}
+        locale={locale}
       />
     </div>
   )

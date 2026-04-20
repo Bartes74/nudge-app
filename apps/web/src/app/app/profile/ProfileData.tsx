@@ -26,6 +26,7 @@ interface ProfileDataProps {
     dietary_constraints: string[] | null
     life_context: string[] | null
   }
+  locale: string
 }
 
 type FieldKey = keyof ProfileDataProps['profile']
@@ -105,7 +106,26 @@ function toDateInputValue(value: string): string {
   return `${year}-${month}-${day}`
 }
 
-function formatValue(key: FieldKey, value: ProfileDataProps['profile'][FieldKey]): string {
+function formatBirthDate(value: string, locale: string): string {
+  const parsedDate = new Date(value)
+  if (Number.isNaN(parsedDate.getTime())) return value
+
+  const month = String(parsedDate.getMonth() + 1).padStart(2, '0')
+  const day = String(parsedDate.getDate()).padStart(2, '0')
+  const year = String(parsedDate.getFullYear())
+
+  if (locale.toLowerCase().startsWith('en')) {
+    return `${month}.${day}.${year}`
+  }
+
+  return `${day}.${month}.${year}`
+}
+
+function formatValue(
+  key: FieldKey,
+  value: ProfileDataProps['profile'][FieldKey],
+  locale: string,
+): string {
   if (value === null || value === undefined) return '—'
   if (Array.isArray(value)) {
     if (value.length === 0) return '—'
@@ -125,9 +145,7 @@ function formatValue(key: FieldKey, value: ProfileDataProps['profile'][FieldKey]
   if (key === 'height_cm') return `${value} cm`
   if (key === 'current_weight_kg') return `${value} kg`
   if (key === 'birth_date') {
-    const parsedDate = new Date(String(value))
-    if (Number.isNaN(parsedDate.getTime())) return String(value)
-    return parsedDate.toLocaleDateString('pl-PL')
+    return formatBirthDate(String(value), locale)
   }
   return String(value)
 }
@@ -146,10 +164,11 @@ const SELECT_FIELDS = new Set<FieldKey>(['gender'])
 interface FieldRowProps {
   fieldKey: FieldKey
   value: ProfileDataProps['profile'][FieldKey]
+  locale: string
   onSave: (key: FieldKey, newValue: string) => Promise<void>
 }
 
-function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
+function FieldRow({ fieldKey, value, locale, onSave }: FieldRowProps) {
   const [editing, setEditing] = React.useState(false)
   const [draft, setDraft] = React.useState(String(value ?? ''))
   const [saving, setSaving] = React.useState(false)
@@ -209,7 +228,7 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
               isNumeric ? 'font-mono tabular-nums' : ''
             }`}
           >
-            {formatValue(fieldKey, value)}
+            {formatValue(fieldKey, value, locale)}
           </p>
         )}
       </div>
@@ -262,7 +281,7 @@ function FieldRow({ fieldKey, value, onSave }: FieldRowProps) {
   )
 }
 
-export function ProfileData({ profile }: ProfileDataProps) {
+export function ProfileData({ profile, locale }: ProfileDataProps) {
   const [localProfile, setLocalProfile] = React.useState(profile)
   const [flashMessage, setFlashMessage] = React.useState<string | null>(null)
 
@@ -333,6 +352,7 @@ export function ProfileData({ profile }: ProfileDataProps) {
                 key={key}
                 fieldKey={key}
                 value={localProfile[key]}
+                locale={locale}
                 onSave={handleSave}
               />
             ))}
