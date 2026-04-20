@@ -1,6 +1,15 @@
 import { createEnv } from '@nudge/config/env'
 import { z } from 'zod'
 
+const emptyStringToUndefined = (value: unknown) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value
+
+const optionalUrl = (message: string) =>
+  z.preprocess(emptyStringToUndefined, z.string().url(message).optional())
+
+const optionalNonEmptyString = (message: string) =>
+  z.preprocess(emptyStringToUndefined, z.string().min(1, message).optional())
+
 export const env = createEnv({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url('NEXT_PUBLIC_SUPABASE_URL must be a valid URL'),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z
@@ -10,10 +19,7 @@ export const env = createEnv({
     .string()
     .url('NEXT_PUBLIC_APP_URL must be a valid URL')
     .default('http://localhost:3000'),
-  NEXT_PUBLIC_SENTRY_DSN: z
-    .string()
-    .url('NEXT_PUBLIC_SENTRY_DSN must be a valid URL')
-    .optional(),
+  NEXT_PUBLIC_SENTRY_DSN: optionalUrl('NEXT_PUBLIC_SENTRY_DSN must be a valid URL'),
   NEXT_PUBLIC_POSTHOG_KEY: z
     .string()
     .min(1, 'NEXT_PUBLIC_POSTHOG_KEY is required'),
@@ -21,10 +27,7 @@ export const env = createEnv({
     .string()
     .url()
     .default('https://app.posthog.com'),
-  NEXT_PUBLIC_API_URL: z
-    .string()
-    .url('NEXT_PUBLIC_API_URL must be a valid URL')
-    .optional(),
+  NEXT_PUBLIC_API_URL: optionalUrl('NEXT_PUBLIC_API_URL must be a valid URL'),
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
@@ -35,13 +38,12 @@ export const env = createEnv({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, 'SUPABASE_SERVICE_ROLE_KEY is required'),
   OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
   INNGEST_EVENT_KEY: z.string().min(1, 'INNGEST_EVENT_KEY is required').default('local'),
-  INNGEST_SIGNING_KEY: z.string().optional(),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z
-    .string()
-    .min(1, 'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is required')
-    .optional(),
-  STRIPE_MONTHLY_PRICE_ID: z.string().min(1, 'STRIPE_MONTHLY_PRICE_ID is required').optional(),
-  STRIPE_YEARLY_PRICE_ID: z.string().min(1, 'STRIPE_YEARLY_PRICE_ID is required').optional(),
+  INNGEST_SIGNING_KEY: optionalNonEmptyString('INNGEST_SIGNING_KEY is required'),
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalNonEmptyString(
+    'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is required',
+  ),
+  STRIPE_MONTHLY_PRICE_ID: optionalNonEmptyString('STRIPE_MONTHLY_PRICE_ID is required'),
+  STRIPE_YEARLY_PRICE_ID: optionalNonEmptyString('STRIPE_YEARLY_PRICE_ID is required'),
 })
 
 function isLocalHost(url: string): boolean {
