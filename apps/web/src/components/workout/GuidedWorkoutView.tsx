@@ -83,13 +83,30 @@ export interface GuidedWorkoutStepView {
 interface GuidedWorkoutViewProps {
   workoutLogId: string
   workoutName: string
-  confidenceGoal: string | null
   steps: GuidedWorkoutStepView[]
   preMood: PreMood | null
   preEnergy: PreEnergy | null
 }
 
 const SESSION_KEY_PREFIX = 'guided_workout_state_'
+
+const ARRIVAL_GUIDE = {
+  packlist: [
+    'Weź wodę albo bidon.',
+    'Jeśli lubisz, weź mały ręcznik.',
+    'Załóż wygodne buty i strój, w którym możesz swobodnie chodzić.',
+  ],
+  firstSteps: [
+    'Rozejrzyj się i sprawdź, gdzie na bieżni są przyciski start i stop.',
+    'Postaw wodę i ręcznik tak, żeby były pod ręką.',
+    'Zanim ruszysz, przeczytaj spokojnie kolejny krok w aplikacji.',
+  ],
+  reassurance: [
+    'To normalne, jeśli na początku czujesz lekki stres albo niepewność.',
+    'Na dzisiaj interesuje Cię tylko pierwszy krok, nie cała siłownia.',
+    'Jeśli potrzebujesz chwili, zatrzymaj się, napij wody i dopiero potem rusz dalej.',
+  ],
+} as const
 
 function recordProductEvent(eventName: string, properties: Record<string, unknown>): void {
   void fetch('/api/product-events', {
@@ -156,7 +173,6 @@ function detailButtonLabel(stepType: string): string {
 export function GuidedWorkoutView({
   workoutLogId,
   workoutName,
-  confidenceGoal,
   steps,
   preMood,
   preEnergy,
@@ -343,14 +359,7 @@ export function GuidedWorkoutView({
       </div>
 
       <div className="flex-1 px-4 py-5">
-        {confidenceGoal && (
-          <div className="rounded-xl bg-muted/40 p-4">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Cel tej sesji</p>
-            <p className="mt-1 text-sm font-medium">{confidenceGoal}</p>
-          </div>
-        )}
-
-        <div className="mt-4 rounded-2xl border bg-card p-5">
+        <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">Co robimy teraz</p>
@@ -380,7 +389,7 @@ export function GuidedWorkoutView({
             </div>
           )}
 
-          {activeStep.setup_instructions && (
+          {activeStep.setup_instructions && !isArrivalStep && (
             <div className="mt-4 rounded-xl bg-muted/40 p-4">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 {isArrivalStep ? 'Na czym się dziś skupiamy' : 'Jak ustawić sprzęt'}
@@ -428,21 +437,21 @@ export function GuidedWorkoutView({
 
           {showDetailCard && (
             <div className="mt-4 space-y-4 rounded-xl border p-4">
-              {isArrivalStep && currentStep.substitution_policy?.support?.packlist && (
+              {isArrivalStep && (
                 <div>
                   <p className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                     <ShoppingBag className="h-3.5 w-3.5" />
                     Co zabrać
                   </p>
                   <ul className="mt-2 space-y-2 text-sm">
-                    {currentStep.substitution_policy.support.packlist.map((item) => (
+                    {ARRIVAL_GUIDE.packlist.map((item) => (
                       <li key={item}>• {item}</li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {currentStep.execution_steps.length > 0 && (
+              {currentStep.execution_steps.length > 0 && !isArrivalStep && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
                     {isArrivalStep ? 'Pierwsze spokojne kroki' : detailButtonLabel(activeStep.step_type)}
@@ -455,14 +464,27 @@ export function GuidedWorkoutView({
                 </div>
               )}
 
-              {isArrivalStep && currentStep.substitution_policy?.support?.reassurance && (
+              {isArrivalStep && (
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Jak spokojnie zacząć
+                  </p>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    {ARRIVAL_GUIDE.firstSteps.map((item) => (
+                      <li key={item}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {isArrivalStep && (
                 <div>
                   <p className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
                     <Footprints className="h-3.5 w-3.5" />
                     Co może pomóc poczuć się pewniej
                   </p>
                   <ul className="mt-2 space-y-2 text-sm">
-                    {currentStep.substitution_policy.support.reassurance.map((item) => (
+                    {ARRIVAL_GUIDE.reassurance.map((item) => (
                       <li key={item}>• {item}</li>
                     ))}
                   </ul>

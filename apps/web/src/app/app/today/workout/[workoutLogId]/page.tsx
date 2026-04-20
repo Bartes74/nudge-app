@@ -102,7 +102,6 @@ export default async function WorkoutLoggerPage({
       <GuidedWorkoutView
         workoutLogId={workoutLogId}
         workoutName={planWorkout.name ?? 'Dzisiejszy spokojny trening'}
-        confidenceGoal={planWorkout.confidence_goal as string | null}
         steps={guidedSteps}
         preMood={log.pre_mood as 'bad' | 'ok' | 'good' | 'great' | null}
         preEnergy={log.pre_energy as 'low' | 'moderate' | 'high' | 'variable' | null}
