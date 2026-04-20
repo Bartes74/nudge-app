@@ -5,12 +5,17 @@ import { TodayCard } from './TodayCard'
 
 export const metadata: Metadata = { title: 'Dziś' }
 
+const POLAND_TIME_ZONE = 'Europe/Warsaw'
+
 export default async function TodayPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Load today's workout from active plan
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'short' }).toLowerCase() // mon, tue, ...
+  const now = new Date()
+  const today = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    timeZone: POLAND_TIME_ZONE,
+  }).format(now).toLowerCase() // mon, tue, ...
 
   const { data: plan } = await supabase
     .from('training_plans')
@@ -63,24 +68,30 @@ export default async function TodayPage() {
     .limit(1)
     .maybeSingle()
 
-  const now = new Date()
-  const hour = now.getHours()
+  const hour = Number(
+    new Intl.DateTimeFormat('en-GB', {
+      hour: 'numeric',
+      hourCycle: 'h23',
+      timeZone: POLAND_TIME_ZONE,
+    }).format(now),
+  )
   const greetingPrefix =
     hour < 11 ? 'Dzień dobry'
     : hour < 18 ? 'Cześć'
     : 'Dobry wieczór'
 
-  const dateLabel = now.toLocaleDateString('pl-PL', {
+  const dateLabel = new Intl.DateTimeFormat('pl-PL', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-  })
+    timeZone: POLAND_TIME_ZONE,
+  }).format(now)
 
   return (
     <div className="flex flex-col gap-12">
       <PageHero
-        eyebrow={<span className="tabular-nums">{dateLabel}</span>}
-        titleEmphasis={`${greetingPrefix},`}
+        eyebrow={<span suppressHydrationWarning className="tabular-nums">{dateLabel}</span>}
+        titleEmphasis={<span suppressHydrationWarning>{`${greetingPrefix},`}</span>}
         titleMain={profile?.onboarding_layer_1_done && firstName ? `${firstName}.` : 'Dziś.'}
       />
 
