@@ -664,4 +664,8 @@
   .ds-grid--3 {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .app-mobile-main .page-back-link {
+    display: none;
+  }
 }

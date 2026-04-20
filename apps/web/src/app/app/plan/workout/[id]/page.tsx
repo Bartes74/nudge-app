@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, ArrowRight, ChevronRight, Clock, Dumbbell } from 'lucide-react'
-import { PageHero, SectionHeader } from '@/components/layout/PageHero'
+import { ArrowRight, ChevronRight, Clock, Dumbbell } from 'lucide-react'
+import { PageBackLink, PageHero, SectionHeader } from '@/components/layout/PageHero'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
@@ -121,13 +121,7 @@ export default async function WorkoutPage({
   if (viewMode === 'guided_beginner_view') {
     return (
       <div className="flex flex-col gap-12">
-        <Link
-          href="/app/plan"
-          className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Plan
-        </Link>
+        <PageBackLink href="/app/plan" label="Plan" />
 
         <PageHero
           eyebrow="Dzisiejszy trening"
@@ -184,13 +178,7 @@ export default async function WorkoutPage({
 
   return (
     <div className="flex flex-col gap-12">
-      <Link
-        href="/app/plan"
-        className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Plan
-      </Link>
+      <PageBackLink href="/app/plan" label="Plan" />
 
       <PageHero
         eyebrow="Trening"

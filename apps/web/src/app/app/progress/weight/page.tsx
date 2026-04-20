@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, ArrowUp, ArrowDown, Minus, Scale } from 'lucide-react'
-import { PageHero } from '@/components/layout/PageHero'
+import { ArrowUp, ArrowDown, Minus, Scale } from 'lucide-react'
+import { PageBackLink, PageHero } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { WeightChart } from '../WeightChart'
@@ -36,13 +36,7 @@ export default async function WeightProgressPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <Link
-        href="/app/progress"
-        className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Postępy
-      </Link>
+      <PageBackLink href="/app/progress" label="Postępy" />
 
       <PageHero
         eyebrow="Waga"

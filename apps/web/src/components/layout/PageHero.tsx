@@ -110,7 +110,7 @@ export function PageBackLink({
   return (
     <Link
       href={href}
-      className="ds-label inline-flex w-fit items-center gap-2 text-[var(--fg-secondary)] transition-colors hover:text-[var(--fg-primary)]"
+      className="page-back-link ds-label inline-flex w-fit items-center gap-2 text-[var(--fg-secondary)] transition-colors hover:text-[var(--fg-primary)]"
     >
       <Icon className="h-3.5 w-3.5" />
       {label}
