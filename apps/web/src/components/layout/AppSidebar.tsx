@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import type { User } from '@supabase/supabase-js'
@@ -28,8 +29,15 @@ export function AppSidebar({
 }) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
-  const nextTheme = theme === 'dark' ? 'light' : 'dark'
-  const themeLabel = theme === 'dark' ? '◑ Tryb jasny' : '◐ Tryb ciemny'
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const activeTheme = mounted && theme === 'dark' ? 'dark' : 'light'
+  const nextTheme = activeTheme === 'dark' ? 'light' : 'dark'
+  const themeLabel = activeTheme === 'dark' ? '◑ Tryb jasny' : '◐ Tryb ciemny'
 
   return (
     <aside className="ds-sidebar">
@@ -66,7 +74,12 @@ export function AppSidebar({
       )}
 
       <div className="ds-sidebar__footer">
-        <button type="button" className="ds-theme-toggle" onClick={() => setTheme(nextTheme)}>
+        <button
+          type="button"
+          className="ds-theme-toggle"
+          onClick={() => setTheme(nextTheme)}
+          suppressHydrationWarning
+        >
           {themeLabel}
         </button>
         <div className="text-[11px] leading-relaxed text-[var(--fg-tertiary)]">
