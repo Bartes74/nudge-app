@@ -10,6 +10,26 @@ import { normalizeGuidedSteps, workoutDisplayDuration } from '@/lib/training/wee
 
 export const metadata: Metadata = { title: 'Trening' }
 
+function guidedWorkoutDisplayName(name: string): string {
+  if (/^spokojny trening wprowadzający/i.test(name)) {
+    return 'Trening wprowadzający - przegląd'
+  }
+
+  return name
+}
+
+function guidedWorkoutGoal(goal: string | null): string {
+  if (!goal) {
+    return 'Celem tego treningu jest spokojnie zapoznać się z planem i zrobić pierwszy trening bez pośpiechu.'
+  }
+
+  if (goal.includes('miejscem') || goal.includes('tempem wizyty')) {
+    return 'Celem tego treningu jest spokojnie wejść w plan, oswoić pierwszą wizytę i wiedzieć, co robić po kolei.'
+  }
+
+  return goal
+}
+
 export default async function WorkoutPage({
   params,
 }: {
@@ -110,25 +130,27 @@ export default async function WorkoutPage({
 
         <header className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Badge variant="label">Spokojny trening</Badge>
+            <Badge variant="label">Dzisiejszy trening</Badge>
             <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
               <Clock className="h-3 w-3" />
               {guidedDuration} min
             </Badge>
           </div>
           <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-sans font-semibold">{workout.name}</span>
+            <span className="font-sans font-semibold">
+              {guidedWorkoutDisplayName(workout.name ?? 'Trening wprowadzający - przegląd')}
+            </span>
           </h1>
           <p className="text-body-m text-muted-foreground">
-            Prowadzimy Cię krok po kroku.
+            Poprowadzę Cię krok po kroku.
           </p>
         </header>
 
-        {workout.confidence_goal && (
+        {(workout.confidence_goal || viewMode === 'guided_beginner_view') && (
           <Card variant="recessed" padding="lg">
-            <CardEyebrow>Cel tej sesji</CardEyebrow>
-            <p className="mt-3 text-display-m font-display italic leading-snug text-balance text-foreground">
-              „{workout.confidence_goal}”
+            <CardEyebrow>Cel tego treningu</CardEyebrow>
+            <p className="mt-3 text-body-l leading-relaxed text-balance text-foreground">
+              {guidedWorkoutGoal(workout.confidence_goal)}
             </p>
           </Card>
         )}
@@ -161,7 +183,7 @@ export default async function WorkoutPage({
         <Button asChild size="hero" className="w-full gap-2">
           <Link href={`/app/plan/workout/${id}/start`}>
             <Dumbbell className="h-4 w-4" />
-            Otwórz dzisiejszy spokojny trening
+            Otwórz dzisiejszy trening
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
