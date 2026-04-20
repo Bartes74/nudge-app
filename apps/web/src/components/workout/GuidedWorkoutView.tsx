@@ -165,7 +165,7 @@ function isLowReadiness(preMood: PreMood | null, preEnergy: PreEnergy | null): b
 }
 
 function detailButtonLabel(stepType: string): string {
-  if (stepType === 'warmup' || stepType === 'main_block') return 'Pokaż dokładnie ten krok'
+  if (stepType === 'warmup' || stepType === 'main_block') return 'Pokaż szczegóły'
   if (stepType === 'cooldown') return 'Pokaż dokładnie, jak kończyć'
   return 'Pokaż dokładnie, jak to zrobić'
 }
@@ -323,7 +323,7 @@ export function GuidedWorkoutView({
     setTooHardFlag(true)
 
     if (!easyVariant) {
-      toast.message('Zwolnij tempo i skróć ten krok o 1-2 minuty.')
+      toast.message('Dla tego kroku nie mamy dziś gotowej zamiany. Zwolnij tempo i skróć ten krok o 1-2 minuty.')
       return
     }
 
@@ -338,7 +338,17 @@ export function GuidedWorkoutView({
       reason: 'too_hard',
       substitute: easyVariant.label,
     })
-    toast.success('Pokazaliśmy łagodniejszą wersję tego kroku.')
+    toast.success('Pokazaliśmy zamiennik tego ćwiczenia.')
+  }
+
+  function handleStepTooDifficult(): void {
+    setTooHardFlag(true)
+    recordProductEvent('guided_step_flagged_too_difficult', {
+      workout_log_id: workoutLogId,
+      step_id: activeStep.id,
+      exercise_slug: activeStep.exercise?.slug ?? null,
+    })
+    toast.message('Zaznaczyliśmy, że ten krok jest dziś za trudny. Uwzględnię to w kolejnych treningach.')
   }
 
   function goNext(): void {
@@ -425,19 +435,21 @@ export function GuidedWorkoutView({
 
           {activeStep.tempo_hint && (
             <p className="mt-4 text-sm">
-              <span className="font-medium">Jak rozpoznać dobre tempo:</span> {activeStep.tempo_hint}
+              <span className="font-semibold text-brand">Jak rozpoznać dobre tempo:</span>{' '}
+              {activeStep.tempo_hint}
             </p>
           )}
 
           {activeStep.breathing_hint && (
             <p className="mt-2 text-sm">
-              <span className="font-medium">Oddech:</span> {activeStep.breathing_hint}
+              <span className="font-semibold text-brand">Oddech:</span> {activeStep.breathing_hint}
             </p>
           )}
 
           {activeStep.machine_settings && (
             <p className="mt-2 text-sm">
-              <span className="font-medium">Ustawienie sprzętu:</span> {activeStep.machine_settings}
+              <span className="font-semibold text-brand">Ustawienie sprzętu:</span>{' '}
+              {activeStep.machine_settings}
             </p>
           )}
 
@@ -586,11 +598,11 @@ export function GuidedWorkoutView({
 
       <div className="border-t bg-background px-4 pb-6 pt-3">
         {!hideActions && (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={markExerciseHelpOpened}
-              className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium"
+              className="flex min-h-14 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-[13px] font-medium leading-tight"
             >
               <Info className="h-4 w-4" />
               {detailButtonLabel(activeStep.step_type)}
@@ -598,30 +610,26 @@ export function GuidedWorkoutView({
             <button
               type="button"
               onClick={handleMachineBusy}
-              className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium"
+              className="flex min-h-14 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-[13px] font-medium leading-tight"
             >
               <Wrench className="h-4 w-4" />
               To urządzenie jest zajęte
             </button>
             <button
               type="button"
-              onClick={() => {
-                setExerciseConfusionFlag(true)
-                setShowDetails(true)
-                toast.message('Najpierw rozwiń dokładny opis tego kroku. Jeśli nadal coś będzie niejasne, wrócimy do tego w kolejnej iteracji.')
-              }}
-              className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium"
+              onClick={handleStepTooDifficult}
+              className="flex min-h-14 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-[13px] font-medium leading-tight"
             >
               <Lightbulb className="h-4 w-4" />
-              To ćwiczenie jest dla mnie niejasne
+              To ćwiczenie jest dla mnie za trudne
             </button>
             <button
               type="button"
               onClick={handleTooHard}
-              className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium"
+              className="flex min-h-14 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-[13px] font-medium leading-tight"
             >
               <ChevronLeft className="h-4 w-4 rotate-90" />
-              Potrzebuję łatwiejszej wersji
+              Wymień to ćwiczenie
             </button>
           </div>
         )}
