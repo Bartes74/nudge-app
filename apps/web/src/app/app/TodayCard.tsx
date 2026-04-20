@@ -81,28 +81,41 @@ type WeekDayLabel = (typeof DAY_ORDER)[number]
 
 function recommendationForPhase(adaptationPhase: string | null): string {
   if (adaptationPhase === 'phase_0_familiarization') {
-    return 'Najważniejsze dziś: spokojnie przejść przez kolejne kroki i oswoić miejsce.'
+    return 'Otwórz plan treningu i zobacz po kolei, co będziesz dziś robić.'
   }
   if (adaptationPhase === 'phase_1_adaptation') {
-    return 'Najważniejsze dziś: zrozumieć 1-2 proste ruchy i skończyć trening bez pośpiechu.'
+    return 'Sprawdź plan przed startem i skup się na spokojnym wykonaniu pierwszych ćwiczeń.'
   }
   if (adaptationPhase === 'phase_2_foundations') {
-    return 'Najważniejsze dziś: utrzymać regularność i budować podstawy bez presji na wynik.'
+    return 'Otwórz plan, wykonaj trening bez pośpiechu i trzymaj się prostych wskazówek.'
   }
-  return 'Najważniejsze dziś: zrób realny krok, nie idealny.'
+  return 'Otwórz plan i przejdź przez dzisiejszy trening krok po kroku.'
+}
+
+function sessionGoalForPhase(adaptationPhase: string | null): string {
+  if (adaptationPhase === 'phase_0_familiarization') {
+    return 'Dziś celem jest spokojnie zapoznać się z planem treningu i bez pośpiechu zrobić pierwszy krok.'
+  }
+  if (adaptationPhase === 'phase_1_adaptation') {
+    return 'Dziś celem jest spokojnie wejść w rytm treningu i dokładnie wykonać najważniejsze ćwiczenia.'
+  }
+  if (adaptationPhase === 'phase_2_foundations') {
+    return 'Dziś celem jest zrobić pełny trening zgodnie z planem i utrzymać regularność.'
+  }
+  return 'Dziś celem jest zrobić zaplanowany trening spokojnie i bez zgadywania.'
 }
 
 function recoveryRecommendationForPhase(adaptationPhase: string | null): string {
   if (adaptationPhase === 'phase_0_familiarization') {
-    return 'Dziś wystarczy spokojny spacer, trochę wody i przygotowanie rzeczy na następną wizytę.'
+    return 'Dziś wystarczy lekki spacer, chwila odpoczynku i przygotowanie się do kolejnego treningu.'
   }
   if (adaptationPhase === 'phase_1_adaptation') {
-    return 'W dzień wolny postaw na regenerację: trochę ruchu, sen i brak presji na dokładanie więcej.'
+    return 'To dobry moment na regenerację: trochę lekkiego ruchu, więcej snu i spokojny dzień bez presji.'
   }
   if (adaptationPhase === 'phase_2_foundations') {
-    return 'Dzień bez treningu pomaga utrzymać regularność. Lekki ruch jest OK, ale nie musisz niczego nadrabiać.'
+    return 'Dziś postaw na odpoczynek albo lekki ruch. Nie musisz niczego nadrabiać.'
   }
-  return 'Regeneracja też jest częścią planu. Nie musisz wypełniać dnia dodatkowym treningiem.'
+  return 'Regeneracja też jest częścią planu. Odpocznij albo wybierz lekki spacer.'
 }
 
 function asWeekDayLabel(value: string): WeekDayLabel | null {
@@ -158,19 +171,9 @@ function DurationChip({ minutes }: { minutes: number }) {
   )
 }
 
-function MetaRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1 border-t border-border/60 py-3 first:border-t-0 first:pt-0 last:pb-0">
-      <span className="text-label uppercase text-muted-foreground">{label}</span>
-      <span className="text-body-m text-foreground">{value}</span>
-    </div>
-  )
-}
-
 function RestDayCard({
   title,
   description,
-  recommendation,
   nextWorkout,
   nextWorkoutLabel,
   lastCompletedWorkoutName,
@@ -179,7 +182,6 @@ function RestDayCard({
 }: {
   title: string
   description: string
-  recommendation: string
   nextWorkout: Workout | null
   nextWorkoutLabel: string | null
   lastCompletedWorkoutName: string | null
@@ -194,11 +196,7 @@ function RestDayCard({
         <CardDescription className="text-body-m">{description}</CardDescription>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <Card variant="recessed" padding="md">
-          <p className="text-label uppercase text-muted-foreground">Na dziś</p>
-          <p className="mt-1.5 text-body-m font-medium text-balance">{recommendation}</p>
-        </Card>
+      <div className="mt-5 grid gap-3">
         <Card variant="recessed" padding="md">
           <p className="text-label uppercase text-muted-foreground">Ostatni ukończony trening</p>
           <p className="mt-1.5 text-body-m font-medium">
@@ -335,8 +333,7 @@ export function TodayCard({
       return (
         <RestDayCard
           title="Dzień regeneracji i oswajania rytmu."
-          description="Dziś nie masz zaplanowanej sesji. To celowa przerwa, żeby ciało i głowa spokojnie przyswoiły poprzedni krok."
-          recommendation={recoveryRecommendationForPhase(adaptationPhase)}
+          description={`Dziś nie masz zaplanowanej sesji. ${recoveryRecommendationForPhase(adaptationPhase)}`}
           nextWorkout={nextWorkout}
           nextWorkoutLabel={nextWorkoutLabel}
           lastCompletedWorkoutName={lastCompletedWorkoutName}
@@ -345,10 +342,6 @@ export function TodayCard({
         />
       )
     }
-
-    const currentStep = [...(todayWorkout.steps ?? [])].sort(
-      (left, right) => left.order_num - right.order_num,
-    )[0]
 
     return (
       <Card variant="hero" padding="lg" className="animate-stagger">
@@ -360,44 +353,19 @@ export function TodayCard({
             </div>
             <CardTitle>{todayWorkout.name}</CardTitle>
             <CardDescription className="text-body-m">
-              Masz dziś zaplanowaną spokojną sesję. Otwórz ją i skup się tylko na najbliższym kroku.
+              Masz dziś zaplanowany trening. Otwórz go i skup się na tym, co masz zrobić krok po kroku.
             </CardDescription>
           </div>
           <DurationChip minutes={guidedWorkoutDuration(todayWorkout)} />
         </div>
 
-        {todayWorkout.confidence_goal && (
+        {(todayWorkout.confidence_goal || adaptationPhase) && (
           <div className="mt-6 rounded-lg bg-surface-2 p-5">
-            <p className="text-label uppercase text-muted-foreground">Cel sesji</p>
-            <p className="mt-2 text-body-l font-display italic text-foreground text-balance">
-              „{todayWorkout.confidence_goal}”
+            <p className="text-label uppercase text-muted-foreground">Cel na dziś</p>
+            <p className="mt-2 text-body-l text-foreground text-balance">
+              {sessionGoalForPhase(adaptationPhase)}
             </p>
           </div>
-        )}
-
-        {currentStep && (
-          <Card variant="default" padding="lg" className="mt-4">
-            <CardEyebrow>Co robimy teraz</CardEyebrow>
-            <p className="mt-2 text-display-m font-display text-balance">{currentStep.title}</p>
-            <CardDescription className="mt-3 text-body-l">
-              {currentStep.instruction_text}
-            </CardDescription>
-
-            <div className="mt-5 flex flex-col">
-              {currentStep.duration_min != null && (
-                <MetaRow label="Czas" value={`około ${currentStep.duration_min} min`} />
-              )}
-              {currentStep.setup_instructions && (
-                <MetaRow label="Jak się ustawić" value={currentStep.setup_instructions} />
-              )}
-              {currentStep.tempo_hint && (
-                <MetaRow label="Tempo" value={currentStep.tempo_hint} />
-              )}
-              {currentStep.machine_settings && (
-                <MetaRow label="Sprzęt" value={currentStep.machine_settings} />
-              )}
-            </div>
-          </Card>
         )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -408,7 +376,7 @@ export function TodayCard({
             </p>
           </Card>
           <Card variant="recessed" padding="md">
-            <p className="text-label uppercase text-muted-foreground">Rekomendacja</p>
+            <p className="text-label uppercase text-muted-foreground">Najważniejsze dziś</p>
             <p className="mt-1.5 text-body-m font-medium text-balance">
               {recommendationForPhase(adaptationPhase)}
             </p>
@@ -432,7 +400,7 @@ export function TodayCard({
           className="mt-6 w-full"
           onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
         >
-          Otwórz dzisiejszy spokojny trening
+          Otwórz dzisiejszy trening
           <ChevronRight className="h-4 w-4" />
         </Button>
       </Card>
@@ -443,8 +411,7 @@ export function TodayCard({
     return (
       <RestDayCard
         title="Dzień regeneracji."
-        description="Dzisiaj plan nie przewiduje treningu. To normalna część tygodnia i miejsce na odpoczynek między sesjami."
-        recommendation="Skup się na śnie, jedzeniu i lekkim ruchu. Nie musisz niczego nadrabiać."
+        description="Dzisiaj plan nie przewiduje treningu. To normalna część tygodnia i dobry moment na odpoczynek, sen i lekki ruch."
         nextWorkout={nextWorkout}
         nextWorkoutLabel={nextWorkoutLabel}
         lastCompletedWorkoutName={lastCompletedWorkoutName}
