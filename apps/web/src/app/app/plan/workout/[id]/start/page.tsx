@@ -95,7 +95,7 @@ export default function StartWorkoutPage({
 
         <section className="flex flex-col gap-4">
           <p className="text-label uppercase text-muted-foreground">Energia</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {ENERGY_OPTIONS.map((o) => (
               <button
                 key={o.value}
