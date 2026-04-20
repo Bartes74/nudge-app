@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 type PreMood = 'bad' | 'ok' | 'good' | 'great'
-type PreEnergy = 'low' | 'moderate' | 'high' | 'variable'
+type PreEnergy = 'low' | 'moderate' | 'high'
 
 const MOOD_OPTIONS: { value: PreMood; label: string; emoji: string }[] = [
   { value: 'bad', label: 'Słabo', emoji: '😔' },
@@ -20,7 +20,6 @@ const ENERGY_OPTIONS: { value: PreEnergy; label: string }[] = [
   { value: 'low', label: 'Niska' },
   { value: 'moderate', label: 'Średnia' },
   { value: 'high', label: 'Wysoka' },
-  { value: 'variable', label: 'Zmienna' },
 ]
 
 export default function StartWorkoutPage({
@@ -64,10 +63,10 @@ export default function StartWorkoutPage({
           <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
             <span className="font-display italic text-muted-foreground">Zanim zaczniemy —</span>
             <br />
-            <span className="font-sans font-semibold">jak się czujesz?</span>
+            <span className="font-sans font-semibold">Jak się dzisiaj czujesz?</span>
           </h1>
           <p className="text-body-m text-muted-foreground">
-            Kolejność kroków zostaje taka sama. Twoje odpowiedzi pomagają nam dobrać spokojniejsze tempo, jeśli dziś masz mniej energii.
+            Na podstawie odpowiedzi, dostosuję intensywność treningu.
           </p>
         </header>
 
