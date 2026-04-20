@@ -18,7 +18,8 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-background/80 backdrop-blur-xl safe-bottom"
+      className="fixed left-0 right-0 z-40 border-t border-border/60 bg-background/80 backdrop-blur-xl safe-bottom"
+      style={{ bottom: 'max(env(safe-area-inset-bottom), 0.375rem)' }}
       aria-label="Nawigacja główna"
     >
       <ul className="flex h-[var(--bottom-nav-height)] items-stretch">
