@@ -170,6 +170,29 @@ function detailButtonLabel(stepType: string): string {
   return 'Pokaż dokładnie, jak to zrobić'
 }
 
+function guidedStepSafetyNotes(step: GuidedWorkoutStepView, isArrivalStep: boolean): string | null {
+  if (isArrivalStep) {
+    return 'Zacznij dopiero wtedy, kiedy czujesz się stabilnie i możesz spokojnie wejść w bardzo lekką rozgrzewkę.'
+  }
+
+  return step.safety_notes
+}
+
+function guidedStepStopConditions(
+  step: GuidedWorkoutStepView,
+  isArrivalStep: boolean,
+): string[] {
+  if (isArrivalStep) {
+    return [
+      'ból, który pojawia się jeszcze przed startem',
+      'wyraźne osłabienie już na wejściu',
+      'brak poczucia stabilności przed wejściem na bieżnię',
+    ]
+  }
+
+  return step.stop_conditions
+}
+
 export function GuidedWorkoutView({
   workoutLogId,
   workoutName,
@@ -244,6 +267,8 @@ export function GuidedWorkoutView({
   const hideActions = currentStep.substitution_policy?.hide_actions === true
   const selectedVariant = selectedVariants[currentStep.id] ?? null
   const activeStep = mergeStepWithVariant(currentStep, selectedVariant)
+  const safetyNotes = guidedStepSafetyNotes(activeStep, isArrivalStep)
+  const stopConditions = guidedStepStopConditions(activeStep, isArrivalStep)
   const machineBusyPolicy = isGuidedStepMachineBusyPolicy(
     currentStep.substitution_policy?.machine_busy,
   )
@@ -505,10 +530,10 @@ export function GuidedWorkoutView({
                 </div>
               )}
 
-              {activeStep.safety_notes && (
+              {safetyNotes && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Bezpieczeństwo</p>
-                  <p className="mt-2 text-sm">{activeStep.safety_notes}</p>
+                  <p className="mt-2 text-sm">{safetyNotes}</p>
                 </div>
               )}
 
@@ -537,11 +562,11 @@ export function GuidedWorkoutView({
                 </div>
               )}
 
-              {activeStep.stop_conditions.length > 0 && (
+              {stopConditions.length > 0 && (
                 <div>
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">Przerwij i odpocznij, jeśli...</p>
                   <ul className="mt-2 space-y-2 text-sm">
-                    {activeStep.stop_conditions.map((condition) => (
+                    {stopConditions.map((condition) => (
                       <li key={condition}>• {condition}</li>
                     ))}
                   </ul>
