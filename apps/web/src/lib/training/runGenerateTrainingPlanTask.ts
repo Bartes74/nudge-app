@@ -187,6 +187,8 @@ export async function runGenerateTrainingPlanTask({
   let planOutput: TrainingPlanOutput | GuidedTrainingPlanOutput
   let llmCallId: string | null = null
   let contentLlmCallId: string | null = null
+  let secondPassApplied = false
+  let secondPassError: string | null = null
 
   if (isGuidedBeginner) {
     planOutput = await runStep('generate-guided-beginner-plan', async () =>
@@ -248,56 +250,82 @@ export async function runGenerateTrainingPlanTask({
   let preparedGuidedContentByKey = new Map<string, GuidedWorkoutContent>()
 
   if (isGuidedBeginner && 'guided_mode' in planOutput) {
-    const preparedGuidedContent = await runStep('prepare-guided-content', async () =>
-      prepareGuidedPlanContent({
-        apiKey: env.OPENAI_API_KEY,
-        model: 'gpt-4o-mini',
-        context: plannerContext,
-        plan: planOutput,
-      }),
-    )
+    try {
+      const preparedGuidedContent = await runStep('prepare-guided-content', async () =>
+        prepareGuidedPlanContent({
+          apiKey: env.OPENAI_API_KEY,
+          model: 'gpt-4o-mini',
+          context: plannerContext,
+          plan: planOutput,
+        }),
+      )
 
-    contentLlmCallId = await logLlmCall({
-      supabase,
-      userId,
-      meta: preparedGuidedContent.meta,
-      aiTaskId: taskId,
-      promptId: null,
-      promptVersion: null,
-    })
+      contentLlmCallId = await logLlmCall({
+        supabase,
+        userId,
+        meta: preparedGuidedContent.meta,
+        aiTaskId: taskId,
+        promptId: null,
+        promptVersion: null,
+      })
 
-    preparedGuidedContentByKey = new Map(
-      preparedGuidedContent.workouts.map((workout) => [
-        `${workout.day_label}:${workout.order_in_week}`,
-        workout,
-      ]),
-    )
+      preparedGuidedContentByKey = new Map(
+        preparedGuidedContent.workouts.map((workout) => [
+          `${workout.day_label}:${workout.order_in_week}`,
+          workout,
+        ]),
+      )
+      secondPassApplied = true
+    } catch (error) {
+      secondPassError =
+        error instanceof Error
+          ? error.message
+          : 'Guided preparation second pass failed.'
+      console.error('[training-plan] Guided preparation second pass failed. Falling back to frozen plan copy.', {
+        taskId,
+        userId,
+        error: secondPassError,
+      })
+    }
   } else {
-    const preparedStandardContent = await runStep('prepare-standard-content', async () =>
-      prepareStandardPlanContent({
-        apiKey: env.OPENAI_API_KEY,
-        model: 'gpt-4o-mini',
-        context: plannerContext,
-        plan: planOutput as TrainingPlanOutput,
-        catalog,
-      }),
-    )
+    try {
+      const preparedStandardContent = await runStep('prepare-standard-content', async () =>
+        prepareStandardPlanContent({
+          apiKey: env.OPENAI_API_KEY,
+          model: 'gpt-4o-mini',
+          context: plannerContext,
+          plan: planOutput as TrainingPlanOutput,
+          catalog,
+        }),
+      )
 
-    contentLlmCallId = await logLlmCall({
-      supabase,
-      userId,
-      meta: preparedStandardContent.meta,
-      aiTaskId: taskId,
-      promptId: null,
-      promptVersion: null,
-    })
+      contentLlmCallId = await logLlmCall({
+        supabase,
+        userId,
+        meta: preparedStandardContent.meta,
+        aiTaskId: taskId,
+        promptId: null,
+        promptVersion: null,
+      })
 
-    preparedWorkoutBriefsByKey = new Map(
-      preparedStandardContent.workouts.map((workout) => [
-        `${workout.day_label}:${workout.order_in_week}`,
-        workout,
-      ]),
-    )
+      preparedWorkoutBriefsByKey = new Map(
+        preparedStandardContent.workouts.map((workout) => [
+          `${workout.day_label}:${workout.order_in_week}`,
+          workout,
+        ]),
+      )
+      secondPassApplied = true
+    } catch (error) {
+      secondPassError =
+        error instanceof Error
+          ? error.message
+          : 'Standard preparation second pass failed.'
+      console.error('[training-plan] Standard preparation second pass failed. Falling back to frozen plan copy.', {
+        taskId,
+        userId,
+        error: secondPassError,
+      })
+    }
   }
 
   if (await wasTaskCancelled(supabase, taskId)) {
@@ -483,7 +511,8 @@ export async function runGenerateTrainingPlanTask({
       decision_payload: {
         adaptation: plannerContext.adaptation,
         muscle_balance: plannerContext.muscle_balance,
-        second_pass_applied: true,
+        second_pass_applied: secondPassApplied,
+        second_pass_error: secondPassError,
         plan_version_id: planVersionId,
         plan_view_mode: 'view_mode' in planOutput ? planOutput.view_mode : 'standard_training_view',
         llm_call_ids: [llmCallId, contentLlmCallId].filter(Boolean),
