@@ -18,6 +18,7 @@ import { posthog } from '@/lib/posthog'
 
 type PreMood = 'bad' | 'ok' | 'good' | 'great'
 type PreEnergy = 'low' | 'moderate' | 'high' | 'variable'
+type UserGender = 'female' | 'male' | 'other' | 'prefer_not_to_say' | null
 
 interface GuidedStepVariant {
   key: string
@@ -86,6 +87,7 @@ interface GuidedWorkoutViewProps {
   steps: GuidedWorkoutStepView[]
   preMood: PreMood | null
   preEnergy: PreEnergy | null
+  userGender: UserGender
 }
 
 const SESSION_KEY_PREFIX = 'guided_workout_state_'
@@ -199,6 +201,7 @@ export function GuidedWorkoutView({
   steps,
   preMood,
   preEnergy,
+  userGender,
 }: GuidedWorkoutViewProps) {
   const router = useRouter()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -208,6 +211,8 @@ export function GuidedWorkoutView({
   const [tooHardFlag, setTooHardFlag] = useState(false)
   const [selectedVariants, setSelectedVariants] = useState<Record<string, GuidedStepVariant>>({})
   const [showMachineOptionsForStep, setShowMachineOptionsForStep] = useState<string | null>(null)
+  const [isNavigatingToFinish, setIsNavigatingToFinish] = useState(false)
+  const finishHref = `/app/today/workout/${workoutLogId}/finish`
 
   const sortedSteps = useMemo(
     () => [...steps].sort((left, right) => left.order_num - right.order_num),
@@ -234,14 +239,25 @@ export function GuidedWorkoutView({
   }, [workoutLogId, workoutName])
 
   useEffect(() => {
+    router.prefetch(finishHref)
+  }, [finishHref, router])
+
+  useEffect(() => {
     const payload = {
       guided_mode: true,
       machine_confusion_flag: machineConfusionFlag,
       exercise_confusion_flag: exerciseConfusionFlag,
       too_hard_flag: tooHardFlag,
+      user_gender: userGender,
     }
     sessionStorage.setItem(`${SESSION_KEY_PREFIX}${workoutLogId}`, JSON.stringify(payload))
-  }, [exerciseConfusionFlag, machineConfusionFlag, tooHardFlag, workoutLogId])
+  }, [
+    exerciseConfusionFlag,
+    machineConfusionFlag,
+    tooHardFlag,
+    userGender,
+    workoutLogId,
+  ])
 
   useEffect(() => {
     if (!currentStep) return
@@ -353,7 +369,8 @@ export function GuidedWorkoutView({
 
   function goNext(): void {
     if (isLast) {
-      router.push(`/app/today/workout/${workoutLogId}/finish`)
+      setIsNavigatingToFinish(true)
+      router.push(finishHref)
       return
     }
     setCurrentIndex((index) => Math.min(index + 1, sortedSteps.length - 1))
@@ -386,7 +403,8 @@ export function GuidedWorkoutView({
         <button
           type="button"
           onClick={goNext}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-muted"
+          disabled={isNavigatingToFinish}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-muted disabled:opacity-40"
           aria-label="Następny krok"
         >
           <ChevronRight className="h-4 w-4" />
@@ -637,9 +655,14 @@ export function GuidedWorkoutView({
         <button
           type="button"
           onClick={goNext}
-          className="mt-3 w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90"
+          disabled={isNavigatingToFinish}
+          className="mt-3 w-full rounded-xl bg-primary py-4 text-base font-semibold text-primary-foreground active:bg-primary/90 disabled:opacity-70"
         >
-          {isLast ? 'Przejdź do podsumowania treningu' : 'Dalej'}
+          {isLast
+            ? isNavigatingToFinish
+              ? 'Otwieram podsumowanie treningu...'
+              : 'Przejdź do podsumowania treningu'
+            : 'Dalej'}
         </button>
       </div>
     </div>

@@ -22,6 +22,7 @@
     "./meal/estimateManualMealItems": "./src/meal/estimateManualMealItems.ts",
     "./planners/training/types": "./src/planners/training/types.ts",
     "./planners/training/adaptation": "./src/planners/training/adaptation.ts",
+    "./planners/training/feedbackGuardrails": "./src/planners/training/feedbackGuardrails.ts",
     "./planners/training/extractWorkoutFeedback": "./src/planners/training/extractWorkoutFeedback.ts",
     "./planners/training/preparePlanContent": "./src/planners/training/preparePlanContent.ts",
     "./planners/training/selectTemplate": "./src/planners/training/selectTemplate.ts",

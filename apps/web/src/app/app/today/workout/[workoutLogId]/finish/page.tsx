@@ -11,6 +11,34 @@ import { Textarea } from '@/components/ui/textarea'
 const SESSION_KEY_PREFIX = 'guided_workout_state_'
 
 type TempoFeedback = 'too_light' | 'just_right' | 'too_hard'
+type UserGender = 'female' | 'male' | 'other' | 'prefer_not_to_say' | null
+
+function guidedFinishCopy(userGender: UserGender) {
+  if (userGender === 'male') {
+    return {
+      clarityTitle: 'Czy wiedziałeś, co robić?',
+      confidenceTitle: 'Na ile pewnie czułeś się podczas treningu?',
+      feltSafeTitle: 'Czy czułeś się bezpiecznie podczas treningu?',
+      readyTitle: 'Czy jesteś gotowy na kolejny trening?',
+    }
+  }
+
+  if (userGender === 'female') {
+    return {
+      clarityTitle: 'Czy wiedziałaś, co robić?',
+      confidenceTitle: 'Na ile pewnie czułaś się podczas treningu?',
+      feltSafeTitle: 'Czy czułaś się bezpiecznie podczas treningu?',
+      readyTitle: 'Czy jesteś gotowa na kolejny trening?',
+    }
+  }
+
+  return {
+    clarityTitle: 'Czy było jasne, co robić?',
+    confidenceTitle: 'Na ile pewnie czułeś/aś się podczas treningu?',
+    feltSafeTitle: 'Czy podczas treningu czułeś/aś się bezpiecznie?',
+    readyTitle: 'Czy czujesz się gotowy/a na kolejny trening?',
+  }
+}
 
 export default function FinishWorkoutPage({
   params,
@@ -34,6 +62,7 @@ export default function FinishWorkoutPage({
   const [redFlagSymptoms, setRedFlagSymptoms] = useState<string[]>([])
   const [guidedImprovementNote, setGuidedImprovementNote] = useState('')
   const [loading, setLoading] = useState(false)
+  const [userGender, setUserGender] = useState<UserGender>(null)
 
   useEffect(() => {
     const raw = sessionStorage.getItem(`${SESSION_KEY_PREFIX}${workoutLogId}`)
@@ -44,12 +73,16 @@ export default function FinishWorkoutPage({
         exercise_confusion_flag?: boolean
         machine_confusion_flag?: boolean
         too_hard_flag?: boolean
+        user_gender?: UserGender
       }
       if (parsed.too_hard_flag) setTempoFeedback('too_hard')
+      setUserGender(parsed.user_gender ?? null)
     } catch {
       // ignore invalid state
     }
   }, [workoutLogId])
+
+  const copy = guidedFinishCopy(userGender)
 
   async function handleSubmit(): Promise<void> {
     if (isGuidedMode) {
@@ -168,19 +201,19 @@ export default function FinishWorkoutPage({
 
         <div className="flex flex-col gap-5">
           <ScaleQuestion
-            title="Czy wiedziałeś/aś, co robić?"
+            title={copy.clarityTitle}
             value={clarityScore}
             onChange={setClarityScore}
           />
 
           <ScaleQuestion
-            title="Na ile pewnie się czułeś/aś?"
+            title={copy.confidenceTitle}
             value={confidenceScore}
             onChange={setConfidenceScore}
           />
 
           <BooleanQuestion
-            title="Czy trening czuł się bezpiecznie?"
+            title={copy.feltSafeTitle}
             value={feltSafe}
             onChange={setFeltSafe}
           />
@@ -205,7 +238,7 @@ export default function FinishWorkoutPage({
           </div>
 
           <BooleanQuestion
-            title="Czy coś bolało?"
+            title="Czy coś Cię bolało?"
             value={painFlag}
             onChange={setPainFlag}
           />
@@ -247,7 +280,7 @@ export default function FinishWorkoutPage({
           )}
 
           <BooleanQuestion
-            title="Gotowy/a na kolejny trening?"
+            title={copy.readyTitle}
             value={readyForNextWorkout}
             onChange={setReadyForNextWorkout}
           />

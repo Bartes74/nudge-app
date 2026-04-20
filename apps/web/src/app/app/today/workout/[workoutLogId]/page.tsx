@@ -35,14 +35,20 @@ export default async function WorkoutLoggerPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) notFound()
 
-  // Load the workout log + verify ownership
-  const { data: log } = await supabase
-    .from('workout_logs')
-    .select('id, plan_workout_id, started_at, pre_mood, pre_energy')
-    .eq('id', workoutLogId)
-    .eq('user_id', user.id)
-    .is('ended_at', null)
-    .single()
+  const [{ data: log }, { data: userProfile }] = await Promise.all([
+    supabase
+      .from('workout_logs')
+      .select('id, plan_workout_id, started_at, pre_mood, pre_energy')
+      .eq('id', workoutLogId)
+      .eq('user_id', user.id)
+      .is('ended_at', null)
+      .single(),
+    supabase
+      .from('user_profile')
+      .select('gender')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+  ])
 
   if (!log) notFound()
 
@@ -105,6 +111,7 @@ export default async function WorkoutLoggerPage({
         steps={guidedSteps}
         preMood={log.pre_mood as 'bad' | 'ok' | 'good' | 'great' | null}
         preEnergy={log.pre_energy as 'low' | 'moderate' | 'high' | 'variable' | null}
+        userGender={userProfile?.gender ?? null}
       />
     )
   }

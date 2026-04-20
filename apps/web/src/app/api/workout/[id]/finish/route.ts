@@ -13,6 +13,7 @@ import {
   deriveCommunicationProfile,
 } from '@nudge/core/planners/training/adaptation'
 import { extractWorkoutFeedback } from '@nudge/core/planners/training/extractWorkoutFeedback'
+import { guardWorkoutFeedbackInput } from '@nudge/core/planners/training/feedbackGuardrails'
 import { logLlmCall } from '@nudge/core/llm/client'
 import type { Database, Json, TablesInsert, TablesUpdate } from '@nudge/core/types/db'
 import { loadPlannerProfile } from '@/lib/training/loadPlannerProfile'
@@ -78,6 +79,11 @@ export async function POST(
   const startedAt = new Date(log.started_at as string)
   const durationMin = Math.round((endedAt.getTime() - startedAt.getTime()) / 60000)
   const redFlagEvaluation = evaluateRedFlagSymptoms(parsed.data.red_flag_symptoms ?? [])
+  const guardedFeedbackInput = guardWorkoutFeedbackInput({
+    wentWell: parsed.data.went_well ?? null,
+    wentPoorly: parsed.data.went_poorly ?? null,
+    whatToImprove: parsed.data.what_to_improve ?? null,
+  })
 
   const { error: updateErr } = await supabase
     .from('workout_logs')
@@ -85,9 +91,9 @@ export async function POST(
       ended_at: endedAt.toISOString(),
       duration_min: durationMin,
       overall_rating: parsed.data.overall_rating,
-      went_well: parsed.data.went_well ?? null,
-      went_poorly: parsed.data.went_poorly ?? null,
-      what_to_improve: parsed.data.what_to_improve ?? null,
+      went_well: guardedFeedbackInput.wentWell,
+      went_poorly: guardedFeedbackInput.wentPoorly,
+      what_to_improve: guardedFeedbackInput.whatToImprove,
       clarity_score: parsed.data.clarity_score ?? null,
       confidence_score: parsed.data.confidence_score ?? null,
       felt_safe: parsed.data.felt_safe ?? null,
@@ -157,9 +163,9 @@ export async function POST(
     painFlag: parsed.data.pain_flag ?? false,
     readyForNextWorkout: parsed.data.ready_for_next_workout ?? null,
     sourceExerciseSlugs,
-    wentWell: parsed.data.went_well ?? null,
-    wentPoorly: parsed.data.went_poorly ?? null,
-    whatToImprove: parsed.data.what_to_improve ?? null,
+    wentWell: guardedFeedbackInput.wentWell,
+    wentPoorly: guardedFeedbackInput.wentPoorly,
+    whatToImprove: guardedFeedbackInput.whatToImprove,
   })
 
   const feedbackLlmCallId = feedbackExtraction.meta
@@ -325,6 +331,11 @@ export async function POST(
       ready_for_next_workout: parsed.data.ready_for_next_workout ?? null,
       red_flag_symptoms: redFlagEvaluation.symptoms,
       source_exercise_slugs: sourceExerciseSlugs,
+      feedback_guardrails: {
+        blocked_for_llm: feedbackExtraction.guardrails.blockedForLlm,
+        reasons: feedbackExtraction.guardrails.reasons,
+        sanitized_text_present: feedbackExtraction.guardrails.sanitizedText.length > 0,
+      },
       planner_context_summary: {
         communication: plannerContext.communication,
         adaptation: plannerContext.adaptation,
@@ -345,6 +356,10 @@ export async function POST(
       adaptation_snapshot: plannerContext.adaptation,
       communication_profile: plannerContext.communication,
       muscle_balance: plannerContext.muscle_balance,
+      feedback_guardrails: {
+        blocked_for_llm: feedbackExtraction.guardrails.blockedForLlm,
+        reasons: feedbackExtraction.guardrails.reasons,
+      },
     } as unknown as Json,
     rationale: progressionDecision?.reason ?? regenerationDecision.rationale,
   }
