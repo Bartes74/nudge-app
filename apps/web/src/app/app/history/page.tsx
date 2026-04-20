@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { HistoryList } from './HistoryList'
 
 export const metadata: Metadata = { title: 'Historia treningów' }
@@ -30,28 +29,26 @@ export default async function HistoryPage() {
   const nextCursor = hasMore ? items[items.length - 1]?.started_at : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/progress"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Postępy
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/progress" label="Postępy" />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Log</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twoja</span>
-          <br />
-          <span className="font-sans font-semibold">historia.</span>
-        </h1>
-      </header>
-
-      <HistoryList
-        initialItems={items as Parameters<typeof HistoryList>[0]['initialItems']}
-        initialNextCursor={nextCursor ?? null}
+      <PageHero
+        eyebrow="Log"
+        titleEmphasis="Twoja"
+        titleMain="historia."
+        lede="Tutaj zobaczysz ostatnie treningi, oceny i szczegóły wykonanych sesji."
       />
+
+      <PageSection
+        number="01 — Ostatnie sesje"
+        title="Historia treningów"
+        description="Najświeższe wpisy są na górze. Możesz przewijać w dół, żeby zobaczyć starsze sesje."
+      >
+        <HistoryList
+          initialItems={items as Parameters<typeof HistoryList>[0]['initialItems']}
+          initialNextCursor={nextCursor ?? null}
+        />
+      </PageSection>
     </div>
   )
 }

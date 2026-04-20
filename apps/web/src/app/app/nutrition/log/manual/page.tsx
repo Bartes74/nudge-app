@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -175,47 +175,52 @@ export default function ManualMealLogPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/nutrition/log"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/nutrition/log" label="Jedzenie" />
+
+      <PageHero
+        eyebrow="Ręczny wpis"
+        titleEmphasis="Wpisz"
+        titleMain="składniki."
+        lede="Podaj nazwę i ilość. Jeśli nie znasz kalorii i makro, spróbujemy oszacować je automatycznie."
+      />
+
+      <PageSection
+        number="01 — Typ"
+        title="Typ posiłku"
+        description="To pole jest opcjonalne. Pomaga tylko lepiej opisać wpis."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Wróć
-      </Link>
+        <div className="flex flex-col gap-2">
+          <Label className="text-label uppercase text-muted-foreground">
+            Typ posiłku <span className="normal-case tracking-tight">(opcjonalnie)</span>
+          </Label>
+          <Select value={mealType} onValueChange={(value) => setMealType(value as MealTypeValue)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Wybierz typ" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="breakfast">Śniadanie</SelectItem>
+              <SelectItem value="lunch">Obiad</SelectItem>
+              <SelectItem value="dinner">Kolacja</SelectItem>
+              <SelectItem value="snack">Przekąska</SelectItem>
+              <SelectItem value="drink">Napój</SelectItem>
+              <SelectItem value="dessert">Deser</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-body-s text-[var(--fg-secondary)]">{fieldConfig.helperText}</p>
+        </div>
+      </PageSection>
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Ręczny wpis</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Wpisz</span>
-          <br />
-          <span className="font-sans font-semibold">składniki.</span>
-        </h1>
-      </header>
-
-      <div className="flex flex-col gap-2">
-        <Label className="text-label uppercase text-muted-foreground">
-          Typ posiłku <span className="normal-case tracking-tight">(opcjonalnie)</span>
-        </Label>
-        <Select value={mealType} onValueChange={(value) => setMealType(value as MealTypeValue)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Wybierz typ" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="breakfast">Śniadanie</SelectItem>
-            <SelectItem value="lunch">Obiad</SelectItem>
-            <SelectItem value="dinner">Kolacja</SelectItem>
-            <SelectItem value="snack">Przekąska</SelectItem>
-            <SelectItem value="drink">Napój</SelectItem>
-            <SelectItem value="dessert">Deser</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-body-s text-muted-foreground">{fieldConfig.helperText}</p>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {items.map((item, idx) => (
-          <Card key={idx} variant="default" padding="md">
+      <PageSection
+        number="02 — Składniki"
+        title="Dodaj składniki"
+        description="Każdy wpis powinien zawierać nazwę i ilość. Własne kalorie i makro możesz dopisać tylko wtedy, gdy je znasz."
+        className="gap-4"
+      >
+        <div className="flex flex-col gap-4">
+          {items.map((item, idx) => (
+            <Card key={idx} variant="default" padding="md">
             <div className="mb-4 flex items-center justify-between">
               <p className="text-label uppercase text-muted-foreground">
                 {fieldConfig.entryLabel}{' '}
@@ -346,14 +351,15 @@ export default function ManualMealLogPage() {
                 </Button>
               )}
             </div>
-          </Card>
-        ))}
+            </Card>
+          ))}
 
-        <Button type="button" variant="outline" className="gap-2" onClick={addItem}>
-          <Plus className="h-4 w-4" />
-          Dodaj składnik
-        </Button>
-      </div>
+          <Button type="button" variant="outline" className="gap-2" onClick={addItem}>
+            <Plus className="h-4 w-4" />
+            Dodaj składnik
+          </Button>
+        </div>
+      </PageSection>
 
       <Button
         onClick={handleSubmit}

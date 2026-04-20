@@ -2,11 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import type { AccessResult } from '@nudge/core/billing'
 import {
-  ArrowLeft,
   CreditCard,
   PauseCircle,
   XCircle,
@@ -14,6 +12,7 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardEyebrow } from '@/components/ui/card'
@@ -92,25 +91,22 @@ export function BillingClient({
   const trialEnd = sub?.trial_ends_at ? formatDate(sub.trial_ends_at) : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/profile"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/profile" label="Profil" />
+
+      <PageHero
+        eyebrow="Konto"
+        titleEmphasis="Twoja"
+        titleMain="subskrypcja."
+        lede="Tutaj sprawdzisz status planu, termin odnowienia i dostęp do zarządzania płatnościami."
+      />
+
+      <PageSection
+        number="01 — Status"
+        title="Stan subskrypcji"
+        description="Najważniejsze informacje o Twoim planie i dostępie."
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Profil
-      </Link>
-
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Konto</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twoja</span>
-          <br />
-          <span className="font-sans font-semibold">subskrypcja.</span>
-        </h1>
-      </header>
-
-      <Card variant="default" padding="md">
+        <Card variant="default" padding="md">
         <CardEyebrow>Status</CardEyebrow>
         <div className="mt-3 flex items-center justify-between">
           <span className="text-body-m text-muted-foreground">Aktualny plan</span>
@@ -159,7 +155,8 @@ export function BillingClient({
             </p>
           </div>
         )}
-      </Card>
+        </Card>
+      </PageSection>
 
       {!billingEnabled && (
         <Card
@@ -175,57 +172,63 @@ export function BillingClient({
         </Card>
       )}
 
-      <div className="flex flex-col gap-2">
-        {(access.status === 'full' || access.status === 'paused') &&
-          sub?.provider_customer_id && (
-            <>
-              <Button
-                size="hero"
-                variant="outline"
-                className="w-full gap-2"
-                onClick={openPortal}
-                disabled={loading || !billingEnabled}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Przekierowuję…
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="h-4 w-4" />
-                    Zarządzaj subskrypcją
-                  </>
-                )}
-              </Button>
-              <p className="text-center text-label uppercase text-muted-foreground">
-                Zmień plan · Zaktualizuj kartę · Pobierz faktury · Wstrzymaj
-              </p>
-            </>
+      <PageSection
+        number="02 — Akcje"
+        title="Co możesz zrobić"
+        description="Najważniejsze działania związane z planem i płatnościami."
+      >
+        <div className="flex flex-col gap-2">
+          {(access.status === 'full' || access.status === 'paused') &&
+            sub?.provider_customer_id && (
+              <>
+                <Button
+                  size="hero"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={openPortal}
+                  disabled={loading || !billingEnabled}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Przekierowuję…
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4" />
+                      Zarządzaj subskrypcją
+                    </>
+                  )}
+                </Button>
+                <p className="ds-label text-center text-[var(--fg-secondary)]">
+                  Zmień plan · Zaktualizuj kartę · Pobierz faktury · Wstrzymaj
+                </p>
+              </>
+            )}
+
+          {access.status === 'trial' && (
+            <Button
+              size="hero"
+              className="w-full"
+              disabled={!billingEnabled}
+              onClick={() => router.push('/paywall')}
+            >
+              {billingEnabled ? 'Aktywuj plan przed końcem trialu' : 'Płatności wkrótce'}
+            </Button>
           )}
 
-        {access.status === 'trial' && (
-          <Button
-            size="hero"
-            className="w-full"
-            disabled={!billingEnabled}
-            onClick={() => router.push('/paywall')}
-          >
-            {billingEnabled ? 'Aktywuj plan przed końcem trialu' : 'Płatności wkrótce'}
-          </Button>
-        )}
-
-        {access.status === 'paywall' && (
-          <Button
-            size="hero"
-            className="w-full"
-            disabled={!billingEnabled}
-            onClick={() => router.push('/paywall')}
-          >
-            {billingEnabled ? 'Wybierz plan' : 'Płatności wkrótce'}
-          </Button>
-        )}
-      </div>
+          {access.status === 'paywall' && (
+            <Button
+              size="hero"
+              className="w-full"
+              disabled={!billingEnabled}
+              onClick={() => router.push('/paywall')}
+            >
+              {billingEnabled ? 'Wybierz plan' : 'Płatności wkrótce'}
+            </Button>
+          )}
+        </div>
+      </PageSection>
 
       {(access.status === 'paywall' || access.status === 'paused') && (
         <Card variant="recessed" padding="md">

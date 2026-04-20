@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, ArrowUp, ArrowDown, Minus, Scale } from 'lucide-react'
+import { PageHero } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { WeightChart } from '../WeightChart'
@@ -34,23 +35,21 @@ export default async function WeightProgressPage() {
   const latestWeight = points.length > 0 ? points[points.length - 1]!.weight_kg : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+    <div className="flex flex-col gap-12">
       <Link
         href="/app/progress"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Postępy
       </Link>
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Waga</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Trend</span>
-          <br />
-          <span className="font-sans font-semibold">masy ciała.</span>
-        </h1>
-      </header>
+      <PageHero
+        eyebrow="Waga"
+        titleEmphasis="Trend"
+        titleMain="masy ciała."
+        lede="Zobacz bieżący odczyt, zmianę w czasie i pełniejszy wykres historii wagi."
+      />
 
       <div className="flex items-end justify-between gap-4">
         <div className="flex flex-col gap-1">

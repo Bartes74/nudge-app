@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Card } from '@/components/ui/card'
 import { ExerciseHistoryChart } from './ExerciseHistoryChart'
 
@@ -22,7 +21,9 @@ export default async function ExerciseHistoryPage({
 }) {
   const { slug } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) notFound()
 
   const { data: exercise } = await supabase
@@ -50,41 +51,39 @@ export default async function ExerciseHistoryPage({
   type LogExercise = {
     id: string
     workout_log: { id: string; started_at: string; ended_at: string | null } | null
-    sets: Array<{ weight_kg: number | null; reps: number | null; rir: number | null; set_number: number }>
+    sets: Array<{
+      weight_kg: number | null
+      reps: number | null
+      rir: number | null
+      set_number: number
+    }>
   }
 
-  const sessions = (logExercises as LogExercise[] ?? [])
+  const sessions = ((logExercises as LogExercise[] | null) ?? [])
     .filter((le) => le.workout_log != null)
     .map((le) => ({
       workout_log_id: le.workout_log!.id,
       started_at: le.workout_log!.started_at,
-      max_weight_kg: le.sets.reduce(
-        (max, s) => (s.weight_kg != null && s.weight_kg > max ? s.weight_kg : max),
-        0,
-      ) || null,
+      max_weight_kg:
+        le.sets.reduce(
+          (max, s) => (s.weight_kg != null && s.weight_kg > max ? s.weight_kg : max),
+          0,
+        ) || null,
       total_sets: le.sets.length,
       sets: le.sets.sort((a, b) => a.set_number - b.set_number),
     }))
     .sort((a, b) => new Date(a.started_at).getTime() - new Date(b.started_at).getTime())
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href={`/app/plan/exercise/${slug}`}
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        {exercise.name_pl}
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href={`/app/plan/exercise/${slug}`} label={exercise.name_pl} />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Historia</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twoje sesje —</span>
-          <br />
-          <span className="font-sans font-semibold">{exercise.name_pl}.</span>
-        </h1>
-      </header>
+      <PageHero
+        eyebrow="Historia"
+        titleEmphasis="Twoje sesje —"
+        titleMain={`${exercise.name_pl}.`}
+        lede="Wykres i lista poniżej pokazują, jak zmieniały się serie, ciężar i liczba powtórzeń."
+      />
 
       {sessions.length === 0 ? (
         <Card variant="outline" padding="xl" className="text-center">
@@ -94,9 +93,20 @@ export default async function ExerciseHistoryPage({
         </Card>
       ) : (
         <>
-          <ExerciseHistoryChart sessions={sessions} />
+          <PageSection
+            number="01 — Wykres"
+            title="Przebieg w czasie"
+            description="Najpierw zobaczysz ogólny trend, a niżej dokładne sesje."
+          >
+            <ExerciseHistoryChart sessions={sessions} />
+          </PageSection>
 
-          <section className="flex flex-col gap-2.5">
+          <PageSection
+            number="02 — Sesje"
+            title="Szczegóły wykonania"
+            description="Każdy wpis pokazuje serię po serii, jak wyglądało to ćwiczenie."
+            className="gap-4"
+          >
             {[...sessions].reverse().map((session) => (
               <Card key={session.workout_log_id} variant="default" padding="sm">
                 <div className="flex items-center justify-between gap-3">
@@ -119,23 +129,23 @@ export default async function ExerciseHistoryPage({
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {session.sets.map((s, i) => (
+                  {session.sets.map((setItem, index) => (
                     <span
-                      key={i}
-                      className="rounded-md bg-surface-2 px-2 py-0.5 font-mono text-body-s tabular-nums text-foreground"
+                      key={`${session.workout_log_id}-${index}`}
+                      className="rounded-[var(--radius-sm)] bg-[var(--bg-inset)] px-2 py-1 font-mono text-body-s tabular-nums text-foreground"
                     >
-                      {s.weight_kg != null ? `${s.weight_kg}kg` : '—'}
+                      {setItem.weight_kg != null ? `${setItem.weight_kg}kg` : '—'}
                       <span className="mx-1 opacity-40">×</span>
-                      {s.reps != null ? s.reps : '—'}
-                      {s.rir != null ? (
-                        <span className="ml-1 text-muted-foreground">@{s.rir}</span>
+                      {setItem.reps != null ? setItem.reps : '—'}
+                      {setItem.rir != null ? (
+                        <span className="ml-1 text-muted-foreground">@{setItem.rir}</span>
                       ) : null}
                     </span>
                   ))}
                 </div>
               </Card>
             ))}
-          </section>
+          </PageSection>
         </>
       )}
     </div>

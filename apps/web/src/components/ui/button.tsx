@@ -4,31 +4,37 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium tracking-tight transition-[background-color,color,box-shadow,transform] duration-200 ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap border font-medium transition-[background-color,color,border-color] duration-[var(--dur-fast)] ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-strong)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-canvas)] disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
         default:
-          'bg-primary text-primary-foreground shadow-lift-sm hover:bg-primary/90 hover:shadow-lift',
+          "border-transparent bg-[var(--action-primary-bg)] text-[var(--action-primary-fg)]",
         success:
-          'bg-success text-success-foreground shadow-lift-sm hover:bg-success/90 hover:shadow-lift',
+          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)]',
         destructive:
-          'bg-destructive text-destructive-foreground shadow-lift-sm hover:bg-destructive/90',
+          'border-transparent bg-[var(--clay-500)] text-[var(--oatmeal-50)]',
         outline:
-          'border border-border bg-surface-1 text-foreground shadow-lift-sm hover:border-foreground/30 hover:bg-surface-2',
+          'border-[var(--border-strong)] bg-transparent text-[var(--fg-primary)]',
         secondary:
-          'bg-surface-2 text-foreground hover:bg-surface-2/70',
+          'border-transparent bg-[var(--bg-inset)] text-[var(--fg-primary)]',
         ghost:
-          'text-foreground hover:bg-surface-2 hover:text-foreground',
+          'border-transparent bg-transparent text-[var(--fg-primary)]',
         link:
-          'text-brand underline-offset-4 hover:underline',
+          'border-transparent bg-transparent px-0 text-[var(--fg-primary)] underline-offset-4 hover:underline',
+        sage:
+          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)]',
+        copper:
+          'border-transparent bg-[var(--copper-500)] text-white',
+        subtle:
+          'border-transparent bg-[var(--bg-inset)] text-[var(--fg-primary)]',
       },
       size: {
-        default: 'h-10 px-4 py-2 text-sm',
-        sm: 'h-9 rounded-md px-3 text-[13px]',
-        lg: 'h-12 rounded-md px-6 text-base',
-        hero: 'h-14 rounded-lg px-7 text-base font-semibold',
-        icon: 'h-10 w-10',
+        default: 'h-[42px] rounded-[var(--radius-md)] px-[18px] py-[10px] text-[14px]',
+        sm: 'h-[34px] rounded-[var(--radius-md)] px-[14px] py-[8px] text-[13px]',
+        lg: 'h-[52px] rounded-[var(--radius-md)] px-[24px] py-[14px] text-[15px]',
+        hero: 'h-[52px] rounded-[var(--radius-md)] px-[24px] py-[14px] text-[15px]',
+        icon: 'h-[42px] w-[42px] rounded-[var(--radius-md)] p-0',
       },
     },
     defaultVariants: {
@@ -50,7 +56,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button'
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn("font-sans font-medium", buttonVariants({ variant, size, className }))}
         ref={ref}
         disabled={disabled ?? isLoading}
         aria-busy={isLoading}

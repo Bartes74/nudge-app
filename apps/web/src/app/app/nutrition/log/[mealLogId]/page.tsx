@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Loader2, Star, AlertTriangle, Pencil, ChevronRight } from 'lucide-react'
+import { Loader2, Star, AlertTriangle, Pencil } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
@@ -148,13 +149,19 @@ export default function MealLogResultPage() {
 
   if (error) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
-        <AlertTriangle className="h-10 w-10 text-destructive" />
-        <p className="text-display-m font-display text-balance">
-          <span className="font-sans font-semibold">{error}</span>
-        </p>
+      <div className="flex flex-col gap-12">
+        <PageBackLink href="/app/nutrition/log" label="Jedzenie" />
+        <PageHero
+          eyebrow="Posiłek"
+          titleMain={error}
+          lede="Nie udało się wczytać tego wpisu."
+        />
+        <Card variant="destructive" padding="md" className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+          <p className="text-body-m text-foreground">Wróć do listy wpisów i spróbuj ponownie.</p>
+        </Card>
         <Button asChild variant="outline">
-          <Link href="/app/nutrition/log">Wróć</Link>
+          <Link href="/app/nutrition/log">Wróć do jedzenia</Link>
         </Button>
       </div>
     )
@@ -162,32 +169,39 @@ export default function MealLogResultPage() {
 
   if (!mealLog || mealLog.status === 'pending_analysis') {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
-        <Loader2 className="h-10 w-10 animate-spin text-brand" />
-        <div className="flex flex-col gap-2">
-          <p className="text-display-m font-display text-balance">
-            <span className="font-display italic text-muted-foreground">Analizuję —</span>
-            <br />
-            <span className="font-sans font-semibold">chwilę.</span>
+      <div className="flex flex-col gap-12">
+        <PageBackLink href="/app/nutrition/log" label="Jedzenie" />
+        <PageHero
+          eyebrow="Analiza"
+          titleEmphasis="Analizuję"
+          titleMain="posiłek."
+          lede="Zazwyczaj zajmuje to kilka sekund."
+        />
+        <Card variant="default" padding="md" className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-[var(--copper-500)]" />
+          <p className="text-body-m text-[var(--fg-secondary)]">
+            Sprawdzam składniki i próbuję oszacować wartości odżywcze.
           </p>
-          <p className="text-body-m text-muted-foreground">
-            Zazwyczaj zajmuje to kilka sekund.
-          </p>
-        </div>
+        </Card>
       </div>
     )
   }
 
   if (mealLog.status === 'failed') {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
-        <AlertTriangle className="h-10 w-10 text-warning" />
-        <div className="flex flex-col gap-2">
-          <p className="text-display-m font-display text-balance">
-            <span className="font-sans font-semibold">Nie udało się przeanalizować.</span>
+      <div className="flex flex-col gap-12">
+        <PageBackLink href="/app/nutrition/log" label="Jedzenie" />
+        <PageHero
+          eyebrow="Analiza"
+          titleMain="Nie udało się przeanalizować."
+          lede="Możesz dodać ten posiłek ręcznie."
+        />
+        <Card variant="destructive" padding="md" className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+          <p className="text-body-m text-foreground">
+            Spróbuj jeszcze raz ze zdjęciem albo przejdź do ręcznego wpisu.
           </p>
-          <p className="text-body-m text-muted-foreground">Możesz dodać posiłek ręcznie.</p>
-        </div>
+        </Card>
         <Button asChild size="lg">
           <Link href="/app/nutrition/log/manual">Dodaj ręcznie</Link>
         </Button>
@@ -207,138 +221,152 @@ export default function MealLogResultPage() {
     || mealLog.fat_g_max != null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/nutrition"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronRight className="h-3.5 w-3.5 rotate-180" />
-        Jedzenie
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/nutrition" label="Jedzenie" />
 
-      <header className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-label uppercase text-muted-foreground">Posiłek</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-sans font-semibold">
-              {mealLog.meal_type ? (MEAL_TYPE_LABELS[mealLog.meal_type] ?? mealLog.meal_type) : 'Posiłek'}
-            </span>
-          </h1>
-          {mealLog.confidence_score != null && (
-            <div className="mt-1 flex items-center gap-2">
-              <ConfidenceStars score={mealLog.confidence_score} />
-              <span className="text-body-s text-muted-foreground">pewność analizy</span>
-            </div>
-          )}
-        </div>
-        <Button asChild variant="outline" size="sm" className="gap-1.5">
+      <PageHero
+        eyebrow="Posiłek"
+        titleMain={mealLog.meal_type ? (MEAL_TYPE_LABELS[mealLog.meal_type] ?? mealLog.meal_type) : 'Posiłek'}
+        lede={mealLog.status === 'manual' ? 'To jest wpis ręczny.' : 'To jest zapis z analizy zdjęcia lub ręcznej korekty.'}
+      />
+
+      <PageSection
+        number="01 — Akcje"
+        title="Zarządzaj wpisem"
+        description="Możesz poprawić składniki i wartości, jeśli chcesz doprecyzować zapis posiłku."
+      >
+        <Button asChild variant="outline" size="sm" className="gap-1.5 w-full sm:w-auto">
           <Link href={`/app/nutrition/log/${mealLogId}/edit`}>
             <Pencil className="h-3.5 w-3.5" />
-            Edytuj
+            Edytuj posiłek
           </Link>
         </Button>
-      </header>
+      </PageSection>
+
+      {mealLog.confidence_score != null && (
+        <PageSection
+          number="02 — Pewność"
+          title="Pewność analizy"
+          description="To tylko wskazówka, jak bardzo pewnie aplikacja rozpoznała składniki."
+        >
+          <Card variant="default" padding="md" className="flex items-center justify-between gap-4">
+            <ConfidenceStars score={mealLog.confidence_score} />
+            <span className="text-body-s text-[var(--fg-secondary)]">pewność analizy</span>
+          </Card>
+        </PageSection>
+      )}
 
       {hasMacroSummary && (
-        <Card variant="default" padding="md">
-          <CardEyebrow>
-            {mealLog.status === 'manual' ? 'Wartości wpisu' : 'Szacowane wartości (zakres)'}
-          </CardEyebrow>
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <MacroRange
-              label="Kalorie"
-              min={mealLog.kcal_estimate_min}
-              max={mealLog.kcal_estimate_max}
-              unit="kcal"
-            />
-            <MacroRange
-              label="Białko"
-              min={mealLog.protein_g_min}
-              max={mealLog.protein_g_max}
-              unit="g"
-            />
-            <MacroRange
-              label="Węgle"
-              min={mealLog.carbs_g_min}
-              max={mealLog.carbs_g_max}
-              unit="g"
-            />
-            <MacroRange
-              label="Tłuszcze"
-              min={mealLog.fat_g_min}
-              max={mealLog.fat_g_max}
-              unit="g"
-            />
-          </div>
-        </Card>
+        <PageSection
+          number="03 — Wartości"
+          title={mealLog.status === 'manual' ? 'Wartości wpisu' : 'Szacowane wartości'}
+          description={mealLog.status === 'manual' ? 'To są wartości zapisane w ręcznym wpisie.' : 'Zakres pokazuje przybliżone wartości z analizy.'}
+        >
+          <Card variant="default" padding="md">
+            <div className="grid grid-cols-2 gap-2">
+              <MacroRange
+                label="Kalorie"
+                min={mealLog.kcal_estimate_min}
+                max={mealLog.kcal_estimate_max}
+                unit="kcal"
+              />
+              <MacroRange
+                label="Białko"
+                min={mealLog.protein_g_min}
+                max={mealLog.protein_g_max}
+                unit="g"
+              />
+              <MacroRange
+                label="Węgle"
+                min={mealLog.carbs_g_min}
+                max={mealLog.carbs_g_max}
+                unit="g"
+              />
+              <MacroRange
+                label="Tłuszcze"
+                min={mealLog.fat_g_min}
+                max={mealLog.fat_g_max}
+                unit="g"
+              />
+            </div>
+          </Card>
+        </PageSection>
       )}
 
       {mealLog.user_warnings && mealLog.user_warnings.length > 0 && (
-        <Card variant="destructive" padding="md">
-          <CardEyebrow className="text-destructive">Uwagi</CardEyebrow>
-          <ul className="mt-3 flex flex-col gap-2">
-            {mealLog.user_warnings.map((w, i) => (
-              <li key={i} className="flex items-start gap-2.5 text-body-m text-foreground">
-                <AlertTriangle className="mt-1 h-3.5 w-3.5 shrink-0 text-destructive" />
-                <span>{w}</span>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <PageSection
+          number="04 — Uwagi"
+          title="Na co zwrócić uwagę"
+          description="To sygnały, że warto jeszcze raz spojrzeć na rozpoznanie albo ręcznie doprecyzować wpis."
+        >
+          <Card variant="destructive" padding="md">
+            <CardEyebrow className="text-destructive">Uwagi</CardEyebrow>
+            <ul className="mt-3 flex flex-col gap-2">
+              {mealLog.user_warnings.map((w, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-body-m text-foreground">
+                  <AlertTriangle className="mt-1 h-3.5 w-3.5 shrink-0 text-destructive" />
+                  <span>{w}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </PageSection>
       )}
 
       {items.length > 0 && (
-        <Card variant="default" padding="md">
-          <CardEyebrow>Rozpoznane składniki</CardEyebrow>
-          <div className="mt-3 flex flex-col divide-y divide-border/60">
-            {items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-body-m font-medium tracking-tight">{item.label}</span>
-                    {item.is_user_corrected && (
-                      <Badge variant="label" className="px-0 text-[10px]">
-                        edytowano
-                      </Badge>
+        <PageSection
+          number="05 — Składniki"
+          title="Rozpoznane składniki"
+          description="Tutaj zobaczysz listę produktów rozpoznanych lub wpisanych przy tym posiłku."
+        >
+          <Card variant="default" padding="md">
+            <div className="flex flex-col divide-y divide-border/60">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-body-m font-medium tracking-tight">{item.label}</span>
+                      {item.is_user_corrected && (
+                        <Badge variant="label" className="px-0 text-[10px]">
+                          edytowano
+                        </Badge>
+                      )}
+                    </div>
+                    {item.portion_estimate && (
+                      <span className="mt-0.5 font-mono text-body-s tabular-nums text-muted-foreground">
+                        {item.portion_estimate}
+                      </span>
                     )}
                   </div>
-                  {item.portion_estimate && (
-                    <span className="mt-0.5 font-mono text-body-s tabular-nums text-muted-foreground">
-                      {item.portion_estimate}
+                  {item.kcal_estimate != null && (
+                    <span className="shrink-0 font-mono text-body-m tabular-nums text-foreground">
+                      ~{item.kcal_estimate}
+                      <span className="ml-1 text-body-s text-muted-foreground">kcal</span>
                     </span>
                   )}
                 </div>
-                {item.kcal_estimate != null && (
-                  <span className="shrink-0 font-mono text-body-m tabular-nums text-foreground">
-                    ~{item.kcal_estimate}
-                    <span className="ml-1 text-body-s text-muted-foreground">kcal</span>
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        </PageSection>
       )}
 
       {mealLog.note && (
-        <Card variant="recessed" padding="md">
-          <CardEyebrow>Notatka</CardEyebrow>
-          <p className="mt-2 text-body-m leading-relaxed text-foreground">{mealLog.note}</p>
-        </Card>
+        <PageSection
+          number="06 — Notatka"
+          title="Dodatkowy kontekst"
+          description="To notatka dodana przy zapisywaniu posiłku."
+        >
+          <Card variant="recessed" padding="md">
+            <CardEyebrow>Notatka</CardEyebrow>
+            <p className="mt-2 text-body-m leading-relaxed text-foreground">{mealLog.note}</p>
+          </Card>
+        </PageSection>
       )}
 
-      <Link href="/app/nutrition" className="group">
-        <Card
-          variant="default"
-          padding="sm"
-          className="flex items-center justify-between gap-4 transition-[border-color,background-color] hover:border-foreground/30 hover:bg-surface-2/60"
-        >
-          <span className="text-body-m font-semibold tracking-tight">
-            Zobacz podsumowanie jedzenia
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-200 ease-premium group-hover:translate-x-0.5" />
-        </Card>
-      </Link>
+      <Button asChild variant="outline" className="w-full sm:w-auto">
+        <Link href="/app/nutrition">Zobacz podsumowanie jedzenia</Link>
+      </Button>
     </div>
   )
 }

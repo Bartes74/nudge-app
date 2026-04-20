@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, ChevronRight, Dumbbell, RefreshCw, History } from 'lucide-react'
+import { ChevronRight, Dumbbell, RefreshCw, History } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
@@ -56,38 +57,29 @@ export default async function ExercisePage({
     : { data: [] }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/plan"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Plan
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/plan" label="Plan" />
 
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          {exercise.category && (
-            <Badge variant="outline-warm">
-              {CATEGORY_LABELS[exercise.category as string] ?? exercise.category}
-            </Badge>
-          )}
-          {exercise.difficulty && (
-            <Badge variant="outline">
-              {DIFFICULTY_LABELS[exercise.difficulty as string] ?? exercise.difficulty}
-            </Badge>
-          )}
-          {exercise.is_compound && <Badge variant="brand">Wielostawowe</Badge>}
-        </div>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-sans font-semibold">{exercise.name_pl}</span>
-        </h1>
-        {exercise.name_en && (
-          <p className="font-display text-body-l italic text-muted-foreground">
-            {exercise.name_en}
-          </p>
-        )}
-      </header>
+      <PageHero
+        eyebrow="Ćwiczenie"
+        titleMain={exercise.name_pl}
+        lede={exercise.name_en ? <span className="font-[var(--font-editorial)] italic">{exercise.name_en}</span> : undefined}
+        meta={[
+          ...(exercise.category
+            ? [{
+                label: 'Kategoria',
+                value: CATEGORY_LABELS[exercise.category as string] ?? exercise.category,
+              }]
+            : []),
+          ...(exercise.difficulty
+            ? [{
+                label: 'Poziom',
+                value: DIFFICULTY_LABELS[exercise.difficulty as string] ?? exercise.difficulty,
+              }]
+            : []),
+          ...(exercise.is_compound ? [{ label: 'Typ', value: 'Wielostawowe' }] : []),
+        ]}
+      />
 
       <Link
         href={`/app/plan/exercise/${slug}/history`}
@@ -112,44 +104,61 @@ export default async function ExercisePage({
       </Link>
 
       {((exercise.primary_muscles as string[])?.length > 0 || (exercise.secondary_muscles as string[])?.length > 0) && (
-        <Card variant="recessed" padding="md">
-          <CardEyebrow>Mięśnie</CardEyebrow>
-          <div className="mt-3 flex flex-col gap-2">
-            {(exercise.primary_muscles as string[])?.length > 0 && (
-              <div className="flex items-start gap-3">
-                <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
-                  Główne
-                </span>
-                <p className="flex-1 text-body-m text-foreground">
-                  {(exercise.primary_muscles as string[]).join(', ')}
-                </p>
-              </div>
-            )}
-            {(exercise.secondary_muscles as string[])?.length > 0 && (
-              <div className="flex items-start gap-3 border-t border-border/60 pt-2">
-                <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
-                  Pomocnicze
-                </span>
-                <p className="flex-1 text-body-m text-muted-foreground">
-                  {(exercise.secondary_muscles as string[]).join(', ')}
-                </p>
-              </div>
-            )}
-          </div>
-        </Card>
+        <PageSection
+          number="01 — Mięśnie"
+          title="Za co odpowiada to ćwiczenie"
+          description="Najważniejsze partie, które pracują w tym ruchu."
+        >
+          <Card variant="recessed" padding="md">
+            <CardEyebrow>Mięśnie</CardEyebrow>
+            <div className="mt-3 flex flex-col gap-2">
+              {(exercise.primary_muscles as string[])?.length > 0 && (
+                <div className="flex items-start gap-3">
+                  <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
+                    Główne
+                  </span>
+                  <p className="flex-1 text-body-m text-foreground">
+                    {(exercise.primary_muscles as string[]).join(', ')}
+                  </p>
+                </div>
+              )}
+              {(exercise.secondary_muscles as string[])?.length > 0 && (
+                <div className="flex items-start gap-3 border-t border-border/60 pt-2">
+                  <span className="min-w-[80px] pt-0.5 text-label uppercase text-muted-foreground">
+                    Pomocnicze
+                  </span>
+                  <p className="flex-1 text-body-m text-muted-foreground">
+                    {(exercise.secondary_muscles as string[]).join(', ')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </Card>
+        </PageSection>
       )}
 
       {exercise.technique_notes && (
-        <Card variant="default" padding="md">
-          <CardEyebrow>Technika</CardEyebrow>
-          <p className="mt-3 text-body-m leading-relaxed text-foreground">
-            {exercise.technique_notes}
-          </p>
-        </Card>
+        <PageSection
+          number="02 — Technika"
+          title="Najważniejsza wskazówka"
+          description="Krótki opis, na czym najbardziej warto się skupić."
+        >
+          <Card variant="default" padding="md">
+            <CardEyebrow>Technika</CardEyebrow>
+            <p className="mt-3 text-body-m leading-relaxed text-foreground">
+              {exercise.technique_notes}
+            </p>
+          </Card>
+        </PageSection>
       )}
 
       {exercise.common_mistakes && (
-        <Accordion type="single" collapsible>
+        <PageSection
+          number="03 — Uważaj"
+          title="Najczęstsze błędy"
+          description="Te pomyłki najczęściej psują technikę albo odbierają kontrolę nad ruchem."
+        >
+          <Accordion type="single" collapsible>
           <AccordionItem value="mistakes" className="rounded-xl border border-border bg-surface-1 px-5">
             <AccordionTrigger className="text-body-m font-semibold tracking-tight">
               Częste błędy
@@ -158,7 +167,8 @@ export default async function ExercisePage({
               {exercise.common_mistakes}
             </AccordionContent>
           </AccordionItem>
-        </Accordion>
+          </Accordion>
+        </PageSection>
       )}
 
       {(exercise.equipment_required as string[])?.length > 0 && (
@@ -171,7 +181,12 @@ export default async function ExercisePage({
       )}
 
       {alternatives && alternatives.length > 0 && (
-        <section className="flex flex-col gap-3">
+        <PageSection
+          number="04 — Zamienniki"
+          title="Podobne ćwiczenia"
+          description="Jeśli chcesz zmienić ruch, zacznij od tych wariantów."
+          className="gap-4"
+        >
           <div className="flex items-center gap-2">
             <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             <p className="text-label uppercase text-muted-foreground">Zamienniki</p>
@@ -203,7 +218,7 @@ export default async function ExercisePage({
               </Link>
             ))}
           </div>
-        </section>
+        </PageSection>
       )}
 
       <SubstituteButton exerciseSlug={slug} exerciseName={exercise.name_pl} />

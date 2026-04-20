@@ -189,7 +189,7 @@ function RestDayCard({
   onOpenPlan: () => void
 }) {
   return (
-    <Card variant="default" padding="lg" className="animate-stagger">
+    <Card variant="default" padding="lg">
       <div className="flex flex-col gap-2">
         <CardEyebrow>Dziś bez treningu</CardEyebrow>
         <CardTitle>{title}</CardTitle>
@@ -344,7 +344,7 @@ export function TodayCard({
     }
 
     return (
-      <Card variant="hero" padding="lg" className="animate-stagger">
+      <Card variant="hero" padding="lg">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -422,7 +422,7 @@ export function TodayCard({
   }
 
   return (
-    <Card variant="hero" padding="lg" className="animate-stagger">
+    <Card variant="hero" padding="lg">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-2">
           <CardEyebrow>Dziś trenujesz</CardEyebrow>

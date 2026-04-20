@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowRight, ChevronRight, PenLine, Scale, UtensilsCrossed } from 'lucide-react'
 import { createClient, getUser } from '@/lib/supabase/server'
+import { PageHero, SectionHeader } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { buildWeightPointInputs } from '@/app/app/progress/weightUtils'
@@ -130,18 +131,13 @@ export default async function NutritionPage() {
     mealCount === 1 ? 'posiłek' : mealCount > 1 && mealCount < 5 ? 'posiłki' : 'posiłków'
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <header className="flex flex-col gap-3">
-        <p className="text-label uppercase text-muted-foreground">Jedzenie</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twoje</span>
-          <br />
-          <span className="font-sans font-semibold">logi i waga.</span>
-        </h1>
-        <p className="max-w-xl text-body-m text-muted-foreground">
-          Tu zapisujesz posiłki, sprawdzasz dzienne podsumowanie i śledzisz masę ciała.
-        </p>
-      </header>
+    <div className="flex flex-col gap-12">
+      <PageHero
+        eyebrow="Jedzenie"
+        titleEmphasis="Twoje"
+        titleMain="logi i waga."
+        lede="Tu zapisujesz posiłki, sprawdzasz dzienne podsumowanie i śledzisz masę ciała."
+      />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Button asChild size="hero" className="gap-2">
@@ -183,17 +179,17 @@ export default async function NutritionPage() {
         )}
       </Card>
 
-      <section className="flex flex-col gap-3">
+      <section className="ds-section flex flex-col gap-3">
         <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-label uppercase text-muted-foreground">Dzisiejsze wpisy</p>
-            <h2 className="mt-1 text-display-s font-display tracking-tight text-foreground">
+          <div className="flex flex-col gap-1">
+            <p className="ds-label">Dzisiejsze wpisy</p>
+            <h2 className="font-display text-[28px] tracking-[-0.02em] text-[var(--fg-primary)]">
               Ostatnie posiłki
             </h2>
           </div>
           <Link
             href="/app/nutrition/log"
-            className="text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+            className="ds-label transition-colors hover:text-[var(--fg-primary)]"
           >
             Dodaj
           </Link>

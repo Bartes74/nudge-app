@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Dumbbell } from 'lucide-react'
+import { PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -54,24 +55,25 @@ export default function StartWorkoutPage({
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col justify-between gap-10 px-5 pt-8 pb-10 animate-stagger">
+    <div className="flex min-h-[100dvh] flex-col justify-between gap-12 pb-8">
       <div className="flex flex-col gap-10">
-        <header className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-brand-muted">
             <Dumbbell className="h-5 w-5 text-brand" aria-hidden="true" />
           </div>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-display italic text-muted-foreground">Zanim zaczniemy —</span>
-            <br />
-            <span className="font-sans font-semibold">Jak się dzisiaj czujesz?</span>
-          </h1>
-          <p className="text-body-m text-muted-foreground">
-            Na podstawie odpowiedzi, dostosuję intensywność treningu.
-          </p>
-        </header>
+          <PageHero
+            eyebrow="Przed startem"
+            titleEmphasis="Zanim zaczniemy —"
+            titleMain="Jak się dzisiaj czujesz?"
+            lede="Na podstawie odpowiedzi, dostosuję intensywność treningu."
+          />
+        </div>
 
-        <section className="flex flex-col gap-4">
-          <p className="text-label uppercase text-muted-foreground">Nastrój</p>
+        <PageSection
+          number="01 — Nastrój"
+          title="Jak się czujesz"
+          description="Wybierz odpowiedź, która najlepiej oddaje Twoje samopoczucie przed treningiem."
+        >
           <div className="grid grid-cols-4 gap-2">
             {MOOD_OPTIONS.map((o) => (
               <button
@@ -91,10 +93,13 @@ export default function StartWorkoutPage({
               </button>
             ))}
           </div>
-        </section>
+        </PageSection>
 
-        <section className="flex flex-col gap-4">
-          <p className="text-label uppercase text-muted-foreground">Energia</p>
+        <PageSection
+          number="02 — Energia"
+          title="Ile masz dziś energii"
+          description="Ta odpowiedź nie zmienia planu ćwiczeń, tylko pomaga dobrać dzisiejszą intensywność."
+        >
           <div className="grid grid-cols-3 gap-2">
             {ENERGY_OPTIONS.map((o) => (
               <button
@@ -113,7 +118,7 @@ export default function StartWorkoutPage({
               </button>
             ))}
           </div>
-        </section>
+        </PageSection>
       </div>
 
       <Button

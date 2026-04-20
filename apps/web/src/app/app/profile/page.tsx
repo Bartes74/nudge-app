@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getUser } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/card'
+import { PageHero } from '@/components/layout/PageHero'
 import { ProfileSettings } from './ProfileSettings'
 import { ProfileData } from './ProfileData'
 import { applyProfileFallbacks } from '@/lib/profile/profileFallbacks'
@@ -49,23 +50,21 @@ export default async function ProfilePage() {
   const locale = usersResult.data?.locale ?? 'pl-PL'
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Ty</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twój</span>
-          <br />
-          <span className="font-sans font-semibold">profil.</span>
-        </h1>
-      </header>
+    <div className="flex flex-col gap-12">
+      <PageHero
+        eyebrow="Ty"
+        titleEmphasis="Twój"
+        titleMain="profil."
+        lede="Tutaj zarządzasz swoimi danymi, preferencjami i ustawieniami konta."
+      />
 
       {profileWithFallbacks?.onboarding_layer_1_done ? (
         <ProfileData profile={profileWithFallbacks} locale={locale} />
       ) : (
         <Card variant="outline" padding="md">
-          <p className="text-body-m text-muted-foreground">
+          <p className="font-editorial text-body-m leading-[var(--leading-relaxed)] text-[var(--fg-secondary)]">
             Nie ukończyłeś/aś jeszcze onboardingu.{' '}
-            <Link href="/onboarding" className="font-semibold text-brand underline-offset-4 hover:underline">
+            <Link href="/onboarding" className="font-semibold text-[var(--fg-primary)] underline-offset-4 hover:underline">
               Skonfiguruj profil →
             </Link>
           </p>

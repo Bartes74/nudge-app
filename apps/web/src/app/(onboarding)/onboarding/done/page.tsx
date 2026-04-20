@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowRight, Target } from 'lucide-react'
+import { PageHero, PageSection } from '@/components/layout/PageHero'
 import { getUser } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
 
 export const metadata = {
   title: 'Profil gotowy — Nudge',
@@ -48,37 +50,45 @@ export default async function OnboardingDonePage() {
     : null
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-5 py-12">
-      <div className="flex w-full max-w-md flex-col items-center gap-8 text-center animate-stagger">
-        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-muted text-brand">
+    <div className="mx-auto flex min-h-svh w-full max-w-[var(--content-max)] flex-col justify-center gap-12 px-6 py-16">
+      <div className="flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--bg-inset)] text-[var(--copper-500)]">
           <Target className="h-7 w-7" aria-hidden="true" />
         </div>
 
-        <header className="flex flex-col gap-2">
-          <p className="text-label uppercase text-muted-foreground">Profil gotowy</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-display italic text-muted-foreground">Czas</span>
-            <br />
-            <span className="font-sans font-semibold">zadziałać.</span>
-          </h1>
-          <p className="text-body-m leading-relaxed text-muted-foreground">
-            {goalLabel && (
+      <PageHero
+        eyebrow="Profil gotowy"
+        titleEmphasis="Czas"
+        titleMain="zadziałać."
+        lede={(
+          <>
+            {goalLabel ? (
               <>
-                Cel:{' '}
-                <span className="font-medium text-foreground">{goalLabel}</span>.{' '}
+                Cel: <span className="font-medium text-[var(--fg-primary)]">{goalLabel}</span>.{' '}
               </>
-            )}
-            Mamy co trzeba, żeby zbudować Twój pierwszy plan.
-          </p>
-        </header>
+            ) : null}
+            Mamy już wszystko, żeby przygotować Twój pierwszy plan.
+          </>
+        )}
+      />
 
-        {(goalLabel || experienceLabel) && (
-          <div className="flex flex-wrap items-center justify-center gap-2">
+      {(goalLabel || experienceLabel) && (
+        <PageSection
+          number="01 — Profil"
+          title="Twoje ustawienia startowe"
+          description="Na tych informacjach oprzemy pierwszy plan i sposób prowadzenia w aplikacji."
+        >
+          <Card variant="default" padding="md" className="flex flex-wrap items-center gap-2">
             {goalLabel && <Badge variant="brand">{goalLabel}</Badge>}
             {experienceLabel && <Badge variant="outline-warm">{experienceLabel}</Badge>}
-          </div>
-        )}
+          </Card>
+        </PageSection>
+      )}
 
+      <PageSection
+        number="02 — Dalej"
+        title="Co dalej"
+        description="Możesz od razu wejść do aplikacji albo jeszcze raz sprawdzić swój profil."
+      >
         <div className="flex w-full flex-col gap-2">
           <Button asChild size="hero" className="w-full gap-2">
             <Link href="/app">
@@ -90,7 +100,7 @@ export default async function OnboardingDonePage() {
             <Link href="/app/profile">Sprawdź swój profil</Link>
           </Button>
         </div>
-      </div>
+      </PageSection>
     </div>
   )
 }

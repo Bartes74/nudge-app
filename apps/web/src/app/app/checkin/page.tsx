@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Loader2, Send } from 'lucide-react'
+import { Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -115,30 +115,29 @@ export default function CheckinPage() {
   const weightDelta = agg?.weightDeltaKg
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-32 animate-stagger">
-      <Link
-        href="/app"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12 pb-32">
+      <PageBackLink href="/app" label="Dziś" />
+
+      <PageHero
+        eyebrow="Check-in"
+        titleEmphasis="Twój"
+        titleMain="tydzień."
+        lede="Krótko podsumuj ostatnie dni. Na tej podstawie dopasujemy kolejne decyzje w planie."
+        meta={[
+          {
+            label: 'Tydzień od',
+            value: <span className="font-mono tabular-nums">{current?.weekOf ?? '…'}</span>,
+          },
+          { label: 'Czas', value: '~2 min' },
+        ]}
+      />
+
+      <PageSection
+        number="01 — Dane"
+        title="Automatyczne podsumowanie"
+        description="To, co aplikacja już widzi po Twoich treningach i pomiarach."
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
-      </Link>
-
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Check-in</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twój</span>
-          <br />
-          <span className="font-sans font-semibold">tydzień.</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          Tydzień od{' '}
-          <span className="font-mono tabular-nums text-foreground">{current?.weekOf ?? '…'}</span> —
-          ~2 minuty.
-        </p>
-      </header>
-
-      <Card variant="recessed" padding="md">
+        <Card variant="recessed" padding="md">
         <CardEyebrow>Dane automatyczne</CardEyebrow>
         <div className="mt-3 flex flex-col divide-y divide-border/60">
           <div className="flex items-center justify-between py-2.5 first:pt-0">
@@ -176,10 +175,14 @@ export default function CheckinPage() {
             </div>
           )}
         </div>
-      </Card>
+        </Card>
+      </PageSection>
 
-      <section className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Samopoczucie</p>
+      <PageSection
+        number="02 — Samopoczucie"
+        title="Jak wyglądał ten tydzień"
+        description="Oceń energię, regenerację, motywację, stres i sen."
+      >
         <Card variant="default" padding="md">
           <div className="flex flex-col gap-6">
             {(Object.keys(sliders) as SliderKey[]).map((key) => {
@@ -212,10 +215,13 @@ export default function CheckinPage() {
             })}
           </div>
         </Card>
-      </section>
+      </PageSection>
 
-      <section className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Kilka słów</p>
+      <PageSection
+        number="03 — Komentarz"
+        title="Kilka słów od Ciebie"
+        description="Krótki opis pomaga lepiej zrozumieć, co warto utrzymać, a co poprawić."
+      >
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <label
@@ -269,7 +275,7 @@ export default function CheckinPage() {
             />
           </div>
         </div>
-      </section>
+      </PageSection>
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border/60 bg-background/80 px-5 py-4 backdrop-blur-xl safe-bottom">
         <div className="mx-auto max-w-2xl">

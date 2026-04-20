@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { TrendingUp, Scale, ChevronRight, ArrowDown, ArrowUp, Minus } from 'lucide-react'
+import { PageHero } from '@/components/layout/PageHero'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { buildInterpolatedWeightSeries, buildWeightPointInputs, computeRollingAverage, computeTrend } from './weightUtils'
 
@@ -32,15 +33,13 @@ export default async function ProgressPage() {
   const latestWeight = points.length > 0 ? points[points.length - 1]!.weight_kg : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Przegląd</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twoje</span>
-          <br />
-          <span className="font-sans font-semibold">postępy.</span>
-        </h1>
-      </header>
+    <div className="flex flex-col gap-12">
+      <PageHero
+        eyebrow="Przegląd"
+        titleEmphasis="Twoje"
+        titleMain="postępy."
+        lede="Śledź wagę i wracaj do historii treningów, żeby widzieć zmiany w czasie."
+      />
 
       <div className="flex flex-col gap-2.5">
         <Link href="/app/progress/weight" className="group">

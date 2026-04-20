@@ -3,31 +3,26 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const cardVariants = cva(
-  'relative rounded-xl transition-[transform,box-shadow,border-color] duration-200 ease-premium',
+  'ds-card relative text-[var(--fg-primary)]',
   {
     variants: {
       variant: {
-        default:
-          'border border-border bg-surface-1 text-foreground',
-        elevated:
-          'border border-border bg-surface-1 text-foreground shadow-lift hover:-translate-y-0.5 hover:shadow-lift-lg',
-        recessed:
-          'bg-surface-2 text-foreground ring-1 ring-inset ring-border/70',
-        hero:
-          'overflow-hidden border border-border bg-surface-1 text-foreground shadow-lift bg-gradient-hero',
-        outline:
-          'border border-dashed border-border bg-transparent text-foreground',
-        data:
-          'border border-border bg-surface-1 text-foreground',
-        destructive:
-          'border border-destructive/40 bg-destructive/5 text-foreground',
+        default: '',
+        elevated: 'ds-card--elevated',
+        recessed: 'border-[var(--border-subtle)] bg-[var(--bg-inset)]',
+        hero: 'ds-card--elevated',
+        outline: 'border-dashed bg-transparent',
+        flush: 'ds-card--flush',
+        dark: 'ds-card--dark',
+        data: 'ds-card--elevated',
+        destructive: 'border-[var(--status-caution)] bg-[var(--copper-50)]',
       },
       padding: {
         none: 'p-0',
         sm: 'p-4',
-        md: 'p-5',
+        md: 'p-6',
         lg: 'p-6',
-        xl: 'p-7',
+        xl: 'p-8',
       },
     },
     defaultVariants: {
@@ -59,7 +54,7 @@ const CardEyebrow = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-label uppercase text-muted-foreground', className)}
+      className={cn('ds-label', className)}
       {...props}
     />
   ),
@@ -70,7 +65,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-display-m font-display text-balance text-foreground', className)}
+      className={cn('font-display text-[36px] leading-[1.05] tracking-[-0.02em] text-balance', className)}
       {...props}
     />
   ),
@@ -81,7 +76,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
   ({ className, ...props }, ref) => (
     <p
       ref={ref}
-      className={cn('text-body-m text-muted-foreground', className)}
+      className={cn('font-editorial text-body-m leading-[var(--leading-relaxed)] text-[var(--fg-secondary)]', className)}
       {...props}
     />
   ),

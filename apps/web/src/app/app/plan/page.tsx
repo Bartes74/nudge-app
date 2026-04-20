@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/card'
+import { PageHero } from '@/components/layout/PageHero'
 import { GeneratePlanButton } from './GeneratePlanButton'
 import { PlanWeekBoard } from './PlanWeekBoard'
 
@@ -51,23 +52,23 @@ export default async function PlanPage() {
 
   if (!version) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-        <header className="flex flex-col gap-2">
-          <p className="text-label uppercase text-muted-foreground">Plan</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-sans font-semibold">Twój plan treningowy</span>
-          </h1>
-        </header>
+      <div className="flex flex-col gap-12">
+        <PageHero
+          eyebrow="Plan"
+          titleEmphasis="Twój"
+          titleMain="plan treningowy."
+          lede="Gdy wygenerujesz plan, ułożymy tydzień treningów na podstawie Twojego celu i dostępności."
+        />
 
-        <Card variant="hero" padding="xl" className="animate-rise-in">
+        <Card variant="elevated" padding="xl">
           <div className="flex flex-col items-start gap-5">
-            <Dumbbell className="h-8 w-8 text-brand" aria-hidden="true" />
+            <Dumbbell className="h-8 w-8 text-[var(--fg-accent-copper)]" aria-hidden="true" />
             <div className="flex flex-col gap-2">
-              <p className="text-label uppercase text-muted-foreground">Brak aktywnego planu</p>
-              <p className="text-display-m font-display text-balance">
+              <p className="ds-label">Brak aktywnego planu</p>
+              <p className="text-display-m font-display text-balance leading-[1.05]">
                 <span className="font-sans font-semibold">Jeszcze nie masz planu.</span>
               </p>
-              <p className="text-body-m text-muted-foreground">
+              <p className="font-editorial text-body-m leading-[var(--leading-relaxed)] text-[var(--fg-secondary)]">
                 Wygeneruj go tutaj od zera, a dopasujemy ćwiczenia do Twojego celu i tego,
                 jak chcesz trenować.
               </p>
@@ -80,7 +81,7 @@ export default async function PlanPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+    <div className="flex flex-col gap-12">
       <PlanWeekBoard version={version} />
     </div>
   )

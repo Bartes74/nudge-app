@@ -1,56 +1,52 @@
-import Link from 'next/link'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Card, CardEyebrow } from '@/components/ui/card'
 
 export default function HowToUseGymPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app" label="Dziś" />
+
+      <PageHero
+        eyebrow="Przewodnik"
+        titleEmphasis="Jak korzystać"
+        titleMain="z siłowni."
+        lede="Podstawy organizacyjne — nie musisz znać całej siłowni, żeby dobrze wejść w trening."
+      />
+
+      <PageSection
+        number="01 — Podstawy"
+        title="Najważniejsze zasady"
+        description="Tu są tylko rzeczy, które pomagają spokojnie wejść w trening i nie pogubić się na starcie."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
-      </Link>
+        <InfoCard
+          title="Jak ogarnąć przestrzeń"
+          items={[
+            'Na początku znajdź tylko to urządzenie, które jest potrzebne teraz.',
+            'Nie musisz znać całego układu siłowni.',
+            'Jeśli czegoś nie wiesz, zapytanie obsługi jest normalne.',
+          ]}
+        />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Przewodnik</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Jak korzystać</span>
-          <br />
-          <span className="font-sans font-semibold">z siłowni.</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          Podstawy organizacyjne — nie musisz być ekspertem od sprzętu, żeby wejść dobrze w trening.
-        </p>
-      </header>
+        <InfoCard
+          title="Jak korzystać ze sprzętu"
+          items={[
+            'Zanim zaczniesz, sprawdź siedzenie, uchwyty i obciążenie startowe.',
+            'Po serii odłóż rzeczy na miejsce.',
+            'Jeśli urządzenie jest zajęte, wybierz zamiennik albo wróć do niego później.',
+          ]}
+        />
 
-      <InfoCard
-        title="Jak ogarnąć przestrzeń"
-        items={[
-          'Na początku znajdź tylko to urządzenie, które jest potrzebne teraz.',
-          'Nie musisz znać całego układu siłowni.',
-          'Jeśli czegoś nie wiesz, zapytanie obsługi jest normalne.',
-        ]}
-      />
-
-      <InfoCard
-        title="Jak korzystać ze sprzętu"
-        items={[
-          'Zanim zaczniesz, sprawdź siedzenie, uchwyty i obciążenie startowe.',
-          'Po serii odłóż rzeczy na miejsce.',
-          'Jeśli urządzenie jest zajęte, wybierz zamiennik albo wróć do niego później.',
-        ]}
-      />
-
-      <InfoCard
-        title="Kiedy odpocząć albo przerwać"
-        items={[
-          'Gdy ruch staje się niejasny i tracisz kontrolę.',
-          'Gdy pojawia się ból zamiast zwykłego wysiłku.',
-          'Gdy czujesz zawrót głowy, nietypową duszność albo ból w klatce piersiowej.',
-        ]}
-      />
+        <InfoCard
+          title="Kiedy odpocząć albo przerwać"
+          items={[
+            'Gdy ruch staje się niejasny i tracisz kontrolę.',
+            'Gdy pojawia się ból zamiast zwykłego wysiłku.',
+            'Gdy czujesz zawrót głowy, nietypową duszność albo ból w klatce piersiowej.',
+          ]}
+        />
+      </PageSection>
 
       <Card variant="default" padding="md" className="ring-1 ring-inset ring-warning/20">
         <div className="flex items-start gap-2.5">

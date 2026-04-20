@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
+import { PageHero, SectionHeader } from '@/components/layout/PageHero'
 import { GeneratePlanButton } from './GeneratePlanButton'
 import { DeleteTrainingPlanButton } from './DeleteTrainingPlanButton'
 import {
@@ -242,23 +243,23 @@ export function PlanWeekBoard({
 
   return (
     <>
-      <header className="flex items-end justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-label uppercase text-muted-foreground">Plan</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-display italic text-muted-foreground">Tydzień</span>
-            <br />
-            <span className="font-sans font-semibold">treningowy.</span>
-          </h1>
-        </div>
-        <Link
-          href="/app/plan/history"
-          className="inline-flex shrink-0 items-center gap-1 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Historia
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
-      </header>
+      <PageHero
+        eyebrow="Plan"
+        titleEmphasis="Tydzień"
+        titleMain="treningowy."
+        lede="Przejrzyj tygodniowy rozkład treningów i dopasuj dni do swojego rytmu."
+        meta={[
+          {
+            label: 'Historia',
+            value: (
+              <Link href="/app/plan/history" className="inline-flex items-center gap-1 hover:underline">
+                Otwórz
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            ),
+          },
+        ]}
+      />
 
       {guidedExplanation && (
         <Card variant="recessed" padding="md">
@@ -277,13 +278,12 @@ export function PlanWeekBoard({
         </Card>
       )}
 
-      <section className="flex flex-col gap-2.5">
-        <div className="flex items-center justify-between gap-3">
-          <CardEyebrow>Harmonogram treningów</CardEyebrow>
-          <p className="text-body-s text-muted-foreground">
-            Przeciągnij trening na inny dzień, jeśli tak Ci wygodniej.
-          </p>
-        </div>
+      <section className="ds-section flex flex-col gap-6">
+        <SectionHeader
+          number="01 — Tydzień"
+          title="Harmonogram treningów"
+          description="Przeciągnij trening na inny dzień, jeśli tak Ci wygodniej."
+        />
         <Reorder.Group
           as="div"
           axis="y"

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Check, Zap, Shield, TrendingUp, ArrowRight, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { PageHero } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardEyebrow } from '@/components/ui/card'
@@ -79,19 +80,14 @@ export function PaywallClient({
   }
 
   return (
-    <div className="min-h-svh bg-background px-5 py-12">
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 animate-stagger">
-        <header className="flex flex-col gap-2 text-center">
-          <p className="text-label uppercase text-muted-foreground">Subskrypcja</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-display italic text-muted-foreground">Kontynuuj</span>
-            <br />
-            <span className="font-sans font-semibold">z Nudge.</span>
-          </h1>
-          <p className="text-body-m leading-relaxed text-muted-foreground">
-            Twoje dane i postępy są zachowane. Wybierz plan i wróć do treningów.
-          </p>
-        </header>
+    <div className="min-h-svh bg-[var(--bg-canvas)] px-8 py-12">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-12">
+        <PageHero
+          eyebrow="Subskrypcja"
+          titleEmphasis="Kontynuuj"
+          titleMain="z Nudge."
+          lede="Twoje dane i postępy są zachowane. Wybierz plan i wróć do treningów."
+        />
 
         <Card variant="recessed" padding="md">
           <CardEyebrow>Co dostajesz</CardEyebrow>

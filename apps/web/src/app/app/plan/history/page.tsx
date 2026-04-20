@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, History } from 'lucide-react'
+import { History } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 
@@ -49,23 +49,15 @@ export default async function PlanHistoryPage() {
   const versionList = (versions.data ?? []) as Version[]
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/plan"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Plan
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/plan" label="Plan" />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Plan</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Historia —</span>
-          <br />
-          <span className="font-sans font-semibold">ewolucja planu.</span>
-        </h1>
-      </header>
+      <PageHero
+        eyebrow="Plan"
+        titleEmphasis="Historia —"
+        titleMain="ewolucja planu."
+        lede="Każda wersja pokazuje, kiedy plan był odświeżany i jaki był powód zmiany."
+      />
 
       {versionList.length === 0 ? (
         <Card variant="outline" padding="xl" className="flex flex-col items-center gap-4 text-center">
@@ -75,7 +67,12 @@ export default async function PlanHistoryPage() {
           </p>
         </Card>
       ) : (
-        <section className="flex flex-col gap-3">
+        <PageSection
+          number="01 — Wersje"
+          title="Kolejne odsłony planu"
+          description="Najnowsza wersja jest u góry. Starsze wersje możesz traktować jako historię zmian."
+          className="gap-4"
+        >
           {versionList.map((v, idx) => {
             const isCurrent = idx === 0
             const daysPresent = v.week_structure
@@ -124,7 +121,7 @@ export default async function PlanHistoryPage() {
               </Card>
             )
           })}
-        </section>
+        </PageSection>
       )}
     </div>
   )

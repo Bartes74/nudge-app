@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star } from 'lucide-react'
 import { toast } from 'sonner'
+import { PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -186,19 +187,19 @@ export default function FinishWorkoutPage({
 
   if (isGuidedMode) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-        <header className="flex flex-col gap-2">
-          <p className="text-label uppercase text-muted-foreground">Po treningu</p>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-display italic text-muted-foreground">Krótki</span>
-            <br />
-            <span className="font-sans font-semibold">check-in.</span>
-          </h1>
-          <p className="text-body-m text-muted-foreground">
-            Chcemy wiedzieć, czy wszystko było jasne, spokojne i bezpieczne.
-          </p>
-        </header>
+      <div className="flex flex-col gap-12">
+        <PageHero
+          eyebrow="Po treningu"
+          titleEmphasis="Krótki"
+          titleMain="check-in."
+          lede="Powiedz, jak poszedł trening. Ta odpowiedź wpływa na kolejne wersje planu i poziom prowadzenia."
+        />
 
+        <PageSection
+          number="01 — Ocena"
+          title="Jak poszedł ten trening"
+          description="Kilka krótkich odpowiedzi pomoże dopasować kolejną wersję planu."
+        >
         <div className="flex flex-col gap-5">
           <ScaleQuestion
             title={copy.clarityTitle}
@@ -293,6 +294,7 @@ export default function FinishWorkoutPage({
             placeholder="np. prostsze wskazówki przy ustawieniu sprzętu, wolniejsze tempo…"
           />
         </div>
+        </PageSection>
 
         <Button
           type="button"
@@ -311,19 +313,19 @@ export default function FinishWorkoutPage({
   const displayRating = hovered || rating
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Po treningu</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Jak był</span>
-          <br />
-          <span className="font-sans font-semibold">trening?</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          Podsumuj sesję — pomoże nam dopasować Twój plan.
-        </p>
-      </header>
+    <div className="flex flex-col gap-12">
+      <PageHero
+        eyebrow="Po treningu"
+        titleEmphasis="Jak był"
+        titleMain="trening?"
+        lede="Podsumuj sesję. Dzięki temu kolejne treningi będą lepiej dopasowane do Twojego tempa."
+      />
 
+      <PageSection
+        number="01 — Ocena"
+        title="Ocena treningu"
+        description="Najpierw daj ogólną ocenę sesji, a potem dopisz krótki komentarz."
+      >
       <Card variant="recessed" padding="md">
         <div className="flex justify-center gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
@@ -380,6 +382,7 @@ export default function FinishWorkoutPage({
           placeholder="np. więcej snu, więcej wody…"
         />
       </div>
+      </PageSection>
 
       <Button
         type="button"

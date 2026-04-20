@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, ArrowRight, ChevronRight, Clock, Dumbbell } from 'lucide-react'
+import { PageHero, SectionHeader } from '@/components/layout/PageHero'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
@@ -119,32 +120,21 @@ export default async function WorkoutPage({
 
   if (viewMode === 'guided_beginner_view') {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+      <div className="flex flex-col gap-12">
         <Link
           href="/app/plan"
-          className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           Plan
         </Link>
 
-        <header className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <Badge variant="label">Dzisiejszy trening</Badge>
-            <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
-              <Clock className="h-3 w-3" />
-              {guidedDuration} min
-            </Badge>
-          </div>
-          <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-            <span className="font-sans font-semibold">
-              {guidedWorkoutDisplayName(workout.name ?? 'Trening wprowadzający - przegląd')}
-            </span>
-          </h1>
-          <p className="text-body-m text-muted-foreground">
-            Poprowadzę Cię krok po kroku.
-          </p>
-        </header>
+        <PageHero
+          eyebrow="Dzisiejszy trening"
+          titleMain={guidedWorkoutDisplayName(workout.name ?? 'Trening wprowadzający - przegląd')}
+          lede="Poprowadzę Cię krok po kroku."
+          meta={[{ label: 'Czas', value: `${guidedDuration} min` }]}
+        />
 
         {(workout.confidence_goal || viewMode === 'guided_beginner_view') && (
           <Card variant="recessed" padding="lg">
@@ -155,7 +145,8 @@ export default async function WorkoutPage({
           </Card>
         )}
 
-        <section className="flex flex-col gap-3">
+        <section className="ds-section flex flex-col gap-3">
+          <SectionHeader number="01 — Kroki" title="Przegląd treningu" />
           {guidedSteps.map((step, index) => (
             <Card key={step.id} variant="default" padding="md">
               <div className="flex items-start gap-4">
@@ -192,29 +183,23 @@ export default async function WorkoutPage({
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
+    <div className="flex flex-col gap-12">
       <Link
         href="/app/plan"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex w-fit items-center gap-1.5 ds-label transition-colors hover:text-[var(--fg-primary)]"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Plan
       </Link>
 
-      <header className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
-            <Clock className="h-3 w-3" />
-            {workout.duration_min_estimated} min
-          </Badge>
-          <Badge variant="label">
-            <span className="font-mono tabular-nums">{exercises.length}</span>&nbsp;ćwiczeń
-          </Badge>
-        </div>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-sans font-semibold">{workout.name}</span>
-        </h1>
-      </header>
+      <PageHero
+        eyebrow="Trening"
+        titleMain={workout.name}
+        meta={[
+          { label: 'Czas', value: `${workout.duration_min_estimated} min` },
+          { label: 'Ćwiczenia', value: exercises.length },
+        ]}
+      />
 
       {workout.warmup_notes && (
         <Card variant="recessed" padding="md">
@@ -225,7 +210,8 @@ export default async function WorkoutPage({
         </Card>
       )}
 
-      <section className="flex flex-col gap-2.5">
+      <section className="ds-section flex flex-col gap-2.5">
+        <SectionHeader number="01 — Ćwiczenia" title="Plan ćwiczeń" />
         {exercises.map((ex, idx) => (
           <Link
             key={ex.id}

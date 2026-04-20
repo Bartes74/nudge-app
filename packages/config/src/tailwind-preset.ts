@@ -6,107 +6,118 @@ import type { Config } from 'tailwindcss'
  * Add `presets: [nudgeTailwindPreset]` to any app's tailwind.config.ts.
  */
 export const nudgeTailwindPreset = {
-  darkMode: ['class'],
+  darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Semantic tokens — mapped to CSS variables
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        background: 'var(--bg-canvas)',
+        foreground: 'var(--fg-primary)',
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'var(--bg-surface)',
+          foreground: 'var(--fg-primary)',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: 'var(--bg-elevated)',
+          foreground: 'var(--fg-primary)',
         },
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'var(--action-primary-bg)',
+          foreground: 'var(--action-primary-fg)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'var(--bg-inset)',
+          foreground: 'var(--fg-primary)',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: 'var(--bg-inset)',
+          foreground: 'var(--fg-secondary)',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'var(--bg-inset)',
+          foreground: 'var(--fg-primary)',
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: 'var(--status-caution)',
+          foreground: 'var(--oatmeal-50)',
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        // Layered surfaces — used by cards and chips for quiet depth
+        border: 'var(--border-subtle)',
+        input: 'var(--border-subtle)',
+        ring: 'var(--border-strong)',
         surface: {
-          1: 'hsl(var(--surface-1))',
-          2: 'hsl(var(--surface-2))',
+          1: 'var(--bg-surface)',
+          2: 'var(--bg-inset)',
+          3: 'var(--bg-elevated)',
         },
-        // Nudge-specific brand tokens
         brand: {
-          DEFAULT: 'hsl(var(--brand))',
-          foreground: 'hsl(var(--brand-foreground))',
-          muted: 'hsl(var(--brand-muted))',
+          DEFAULT: 'var(--status-premium)',
+          foreground: 'var(--oatmeal-50)',
+          muted: 'var(--copper-50)',
         },
-        // Electric lime — used exclusively for data-positive / high-signal moments
         success: {
-          DEFAULT: 'hsl(var(--success))',
-          foreground: 'hsl(var(--success-foreground))',
+          DEFAULT: 'var(--status-success)',
+          foreground: 'var(--oatmeal-50)',
         },
         warning: {
-          DEFAULT: 'hsl(var(--warning))',
-          foreground: 'hsl(var(--warning-foreground))',
+          DEFAULT: 'var(--status-caution)',
+          foreground: 'var(--oatmeal-50)',
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        xl: 'calc(var(--radius) + 4px)',
-        '2xl': 'calc(var(--radius) + 8px)',
+        xs: 'var(--radius-xs)',
+        sm: 'var(--radius-sm)',
+        md: 'var(--radius-md)',
+        lg: 'var(--radius-lg)',
+        xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
+        pill: 'var(--radius-pill)',
+        full: 'var(--radius-pill)',
+      },
+      spacing: {
+        0: 'var(--space-0)',
+        1: 'var(--space-1)',
+        2: 'var(--space-2)',
+        3: 'var(--space-3)',
+        4: 'var(--space-4)',
+        5: 'var(--space-5)',
+        6: 'var(--space-6)',
+        8: 'var(--space-8)',
+        10: 'var(--space-10)',
+        12: 'var(--space-12)',
+        16: 'var(--space-16)',
+        20: 'var(--space-20)',
+        24: 'var(--space-24)',
+        32: 'var(--space-32)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'Georgia', 'serif'],
+        editorial: ['var(--font-editorial)', 'Georgia', 'serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        // Editorial display scale — use with font-display for serif effect
-        'display-xl': ['3.5rem', { lineHeight: '1.05', letterSpacing: '-0.035em' }],
-        'display-l': ['2.5rem', { lineHeight: '1.1', letterSpacing: '-0.03em' }],
-        'display-m': ['1.75rem', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
-        // Body scale — Inter Tight
-        'body-l': ['1.0625rem', { lineHeight: '1.55' }],
-        'body-m': ['0.9375rem', { lineHeight: '1.5' }],
-        'body-s': ['0.8125rem', { lineHeight: '1.4' }],
-        // Meta / eyebrow labels
-        'label': ['0.6875rem', { lineHeight: '1.3', letterSpacing: '0.08em', fontWeight: '600' }],
-        // Tabular mono metrics
-        'data-xl': ['3rem', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '500' }],
-        'data-l': ['2rem', { lineHeight: '1.05', letterSpacing: '-0.015em', fontWeight: '500' }],
+        'display-xl': ['clamp(56px, 9vw, 120px)', { lineHeight: '0.98', letterSpacing: '-0.03em' }],
+        'display-l': ['48px', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
+        'display-m': ['36px', { lineHeight: '1.05', letterSpacing: '-0.02em' }],
+        'display-s': ['28px', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
+        'body-l': ['var(--text-lg)', { lineHeight: 'var(--leading-relaxed)' }],
+        'body-m': ['var(--text-base)', { lineHeight: 'var(--leading-normal)' }],
+        'body-s': ['var(--text-sm)', { lineHeight: 'var(--leading-normal)' }],
+        label: ['10px', { lineHeight: '1.3', letterSpacing: 'var(--tracking-wider)', fontWeight: '400' }],
+        'data-xl': ['48px', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '500' }],
+        'data-l': ['36px', { lineHeight: '1.05', letterSpacing: '-0.02em', fontWeight: '500' }],
       },
       transitionTimingFunction: {
-        premium: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      },
-      backgroundImage: {
-        // Hero radial glow — brand warmth, used on hero cards
-        'gradient-hero':
-          'radial-gradient(120% 80% at 0% 0%, hsl(var(--brand) / 0.18) 0%, transparent 55%), radial-gradient(80% 60% at 100% 100%, hsl(var(--brand) / 0.08) 0%, transparent 55%)',
-        // Subtle noise texture (feTurbulence) — overlays surfaces for tactile feel
-        'grain':
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>\")",
+        premium: 'var(--ease-soft)',
       },
       boxShadow: {
-        'lift-sm': '0 1px 2px 0 hsl(var(--foreground) / 0.04), 0 1px 1px 0 hsl(var(--foreground) / 0.02)',
-        'lift': '0 4px 16px -4px hsl(var(--foreground) / 0.08), 0 2px 4px -2px hsl(var(--foreground) / 0.04)',
-        'lift-lg': '0 12px 40px -8px hsl(var(--foreground) / 0.14), 0 4px 12px -4px hsl(var(--foreground) / 0.06)',
+        xs: 'var(--shadow-xs)',
+        sm: 'var(--shadow-sm)',
+        md: 'var(--shadow-md)',
+        lg: 'var(--shadow-lg)',
+        ambient: 'var(--shadow-ambient)',
+        'lift-sm': 'var(--shadow-sm)',
+        lift: 'var(--shadow-md)',
+        'lift-lg': 'var(--shadow-lg)',
       },
       keyframes: {
         'accordion-down': {
@@ -117,25 +128,10 @@ export const nudgeTailwindPreset = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-        'fade-in': {
-          from: { opacity: '0', transform: 'translateY(4px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
-        'slide-up': {
-          from: { transform: 'translateY(100%)' },
-          to: { transform: 'translateY(0)' },
-        },
-        'rise-in': {
-          from: { opacity: '0', transform: 'translateY(12px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.2s ease-out',
-        'slide-up': 'slide-up 0.3s ease-out',
-        'rise-in': 'rise-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both',
       },
     },
   },

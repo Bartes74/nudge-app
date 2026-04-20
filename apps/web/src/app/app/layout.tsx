@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation'
-import { TopBar } from '@/components/layout/TopBar'
-import { BottomNav } from '@/components/layout/BottomNav'
+import { AppSidebar } from '@/components/layout/AppSidebar'
 import { TrialBanner } from '@/components/layout/TrialBanner'
 import { createClient } from '@/lib/supabase/server'
 import { getServerAccess } from '@/lib/access'
@@ -33,19 +32,18 @@ export default async function AppLayout({
   })
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
-      {access.status === 'trial' && access.trialDaysLeft !== undefined && (
-        <TrialBanner daysLeft={access.trialDaysLeft} />
-      )}
-
-      <TopBar user={user} role={role} />
-
-      {/* Main content — padded so it clears the bottom nav */}
-      <main className="flex-1 pb-[var(--bottom-nav-height)]">
-        {children}
-      </main>
-
-      <BottomNav />
+    <div className="ds-shell">
+      <AppSidebar user={user} role={role} />
+      <div className="flex min-w-0 justify-center">
+        <main className="ds-main">
+          {access.status === 'trial' && access.trialDaysLeft !== undefined && (
+            <div className="pb-8">
+              <TrialBanner daysLeft={access.trialDaysLeft} />
+            </div>
+          )}
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

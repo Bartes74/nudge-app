@@ -132,7 +132,7 @@ export function LogWeightForm() {
       <button
         type="button"
         onClick={() => setShowCircumferences((p) => !p)}
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+        className="ds-label inline-flex w-fit items-center gap-2 text-[var(--fg-secondary)] transition-colors hover:text-[var(--fg-primary)]"
       >
         <ChevronDown
           className={`h-3.5 w-3.5 transition-transform duration-200 ease-premium ${

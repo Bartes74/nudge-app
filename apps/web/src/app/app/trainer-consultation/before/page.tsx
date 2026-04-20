@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, AlertTriangle } from 'lucide-react'
+import { ArrowRight, AlertTriangle } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { posthog } from '@/lib/posthog'
@@ -29,67 +30,63 @@ export default function BeforeTrainerConsultationPage() {
   }, [])
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app" label="Dziś" />
+
+      <PageHero
+        eyebrow="Przewodnik"
+        titleEmphasis="Przed rozmową"
+        titleMain="z trenerem."
+        lede="To naturalny kolejny krok, kiedy chcesz wejść na wyższy poziom albo uporządkować technikę."
+      />
+
+      <PageSection
+        number="01 — Przygotowanie"
+        title="Co warto powiedzieć i o co zapytać"
+        description="Najkrótsza lista rzeczy, które pomogą dobrze wykorzystać rozmowę z trenerem."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
-      </Link>
+        <InfoCard
+          title="Po co iść do trenera"
+          description="Trener może szybko sprawdzić ustawienie sprzętu, technikę prostych ćwiczeń i podpowiedzieć, czego na razie unikać."
+        />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Przewodnik</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Przed rozmową</span>
-          <br />
-          <span className="font-sans font-semibold">z trenerem.</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          To naturalny kolejny krok, kiedy chcesz wejść na wyższy poziom albo uporządkować technikę.
-        </p>
-      </header>
+        <InfoCard
+          title="Co powiedzieć o sobie"
+          items={[
+            'Dopiero buduję regularność i chcę prostych wskazówek krok po kroku.',
+            'To są ćwiczenia albo urządzenia, które już robiłem/am.',
+            'To były dla mnie rzeczy niejasne albo trudne.',
+          ]}
+        />
 
-      <InfoCard
-        title="Po co iść do trenera"
-        description="Trener może szybko sprawdzić ustawienie sprzętu, technikę prostych ćwiczeń i podpowiedzieć, czego na razie unikać."
-      />
+        <InfoCard
+          title="Jakie postępy zgłosić"
+          items={[
+            'Ile treningów udało Ci się zrobić.',
+            'Co zaczęło być bardziej zrozumiałe.',
+            'Przy jakich ruchach czujesz się już pewniej.',
+          ]}
+        />
 
-      <InfoCard
-        title="Co powiedzieć o sobie"
-        items={[
-          'Dopiero buduję regularność i chcę prostych wskazówek krok po kroku.',
-          'To są ćwiczenia albo urządzenia, które już robiłem/am.',
-          'To były dla mnie rzeczy niejasne albo trudne.',
-        ]}
-      />
+        <InfoCard
+          title="Jakie trudności zgłosić"
+          items={[
+            'Co było niejasne.',
+            'Co było za trudne.',
+            'Gdzie pojawiał się dyskomfort albo ból.',
+          ]}
+        />
 
-      <InfoCard
-        title="Jakie postępy zgłosić"
-        items={[
-          'Ile treningów udało Ci się zrobić.',
-          'Co zaczęło być bardziej zrozumiałe.',
-          'Przy jakich ruchach czujesz się już pewniej.',
-        ]}
-      />
-
-      <InfoCard
-        title="Jakie trudności zgłosić"
-        items={[
-          'Co było niejasne.',
-          'Co było za trudne.',
-          'Gdzie pojawiał się dyskomfort albo ból.',
-        ]}
-      />
-
-      <InfoCard
-        title="O co zapytać"
-        items={[
-          'Jak ustawić to urządzenie pod mój wzrost?',
-          'Jak sprawdzić, czy ruch robię poprawnie?',
-          'Które ćwiczenie będzie dla mnie prostszą wersją na teraz?',
-        ]}
-      />
+        <InfoCard
+          title="O co zapytać"
+          items={[
+            'Jak ustawić to urządzenie pod mój wzrost?',
+            'Jak sprawdzić, czy ruch robię poprawnie?',
+            'Które ćwiczenie będzie dla mnie prostszą wersją na teraz?',
+          ]}
+        />
+      </PageSection>
 
       <Card variant="default" padding="md" className="ring-1 ring-inset ring-warning/20">
         <div className="flex items-start gap-2.5">
@@ -124,10 +121,10 @@ function InfoCard({
   return (
     <Card variant="default" padding="md">
       <CardEyebrow>{title}</CardEyebrow>
-      {description && (
+      {description ? (
         <p className="mt-2 text-body-m leading-relaxed text-foreground">{description}</p>
-      )}
-      {items && (
+      ) : null}
+      {items ? (
         <ul className="mt-3 flex flex-col gap-2">
           {items.map((item) => (
             <li
@@ -139,7 +136,7 @@ function InfoCard({
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </Card>
   )
 }

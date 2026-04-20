@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Loader2, Save, AlertTriangle, ArrowLeft } from 'lucide-react'
+import { Loader2, Save, AlertTriangle } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -96,44 +96,56 @@ export default function MealLogEditPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      <div className="flex flex-col gap-12">
+        <PageBackLink href={`/app/nutrition/log/${mealLogId}`} label="Wróć" />
+        <PageHero
+          eyebrow="Edycja"
+          titleEmphasis="Wczytuję"
+          titleMain="składniki."
+          lede="Pobieram aktualne dane wpisu."
+        />
+        <Card variant="default" padding="md" className="flex items-center gap-3">
+          <Loader2 className="h-5 w-5 animate-spin text-[var(--copper-500)]" />
+          <p className="text-body-m text-[var(--fg-secondary)]">Jeszcze chwila.</p>
+        </Card>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-5 pt-16 pb-24 text-center">
-        <AlertTriangle className="h-10 w-10 text-destructive" />
-        <p className="text-body-m text-destructive">{error}</p>
+      <div className="flex flex-col gap-12">
+        <PageBackLink href={`/app/nutrition/log/${mealLogId}`} label="Wróć" />
+        <PageHero
+          eyebrow="Edycja"
+          titleMain="Nie udało się wczytać wpisu."
+          lede="Spróbuj wrócić do posiłku i otworzyć edycję jeszcze raz."
+        />
+        <Card variant="destructive" padding="md" className="flex items-center gap-3">
+          <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+          <p className="text-body-m text-foreground">{error}</p>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href={`/app/nutrition/log/${mealLogId}`}
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href={`/app/nutrition/log/${mealLogId}`} label="Wróć" />
+
+      <PageHero
+        eyebrow="Edycja"
+        titleEmphasis="Popraw"
+        titleMain="składniki."
+        lede="Twoje korekty pomagają AI dokładniej rozpoznawać posiłki i lepiej szacować wartości."
+      />
+
+      <PageSection
+        number="01 — Składniki"
+        title="Edytuj wartości"
+        description="Możesz poprawić nazwę, porcję i makro dla każdego rozpoznanego składnika."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Wróć
-      </Link>
-
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Edycja</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Popraw</span>
-          <br />
-          <span className="font-sans font-semibold">składniki.</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          Twoje korekty pomagają AI dokładniej rozpoznawać posiłki.
-        </p>
-      </header>
-
-      <div className="flex flex-col gap-3">
         {items.map((item) => (
           <Card key={item.id} variant="default" padding="md">
             <div className="flex flex-col gap-3">
@@ -197,7 +209,7 @@ export default function MealLogEditPage() {
             </div>
           </Card>
         ))}
-      </div>
+      </PageSection>
 
       <Button
         variant="outline"

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { PageHero } from '@/components/layout/PageHero'
 import { TodayCard } from './TodayCard'
 
 export const metadata: Metadata = { title: 'Dziś' }
@@ -78,21 +79,12 @@ export default async function TodayPage() {
   })
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">
-          <span className="tabular-nums">{dateLabel}</span>
-        </p>
-        <h1 className="text-balance text-display-xl leading-[1.02] tracking-tight">
-          <span className="font-display italic text-muted-foreground">{greetingPrefix},</span>
-          {profile?.onboarding_layer_1_done && firstName && (
-            <>
-              <br />
-              <span className="font-sans font-semibold text-foreground">{firstName}.</span>
-            </>
-          )}
-        </h1>
-      </header>
+    <div className="flex flex-col gap-12">
+      <PageHero
+        eyebrow={<span className="tabular-nums">{dateLabel}</span>}
+        titleEmphasis={`${greetingPrefix},`}
+        titleMain={profile?.onboarding_layer_1_done && firstName ? `${firstName}.` : 'Dziś.'}
+      />
 
       <TodayCard
         plan={plan as Parameters<typeof TodayCard>[0]['plan']}

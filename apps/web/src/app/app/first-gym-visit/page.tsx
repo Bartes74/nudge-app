@@ -1,58 +1,54 @@
-import Link from 'next/link'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Card, CardEyebrow } from '@/components/ui/card'
 
 export default function FirstGymVisitPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app" label="Dziś" />
+
+      <PageHero
+        eyebrow="Przewodnik"
+        titleEmphasis="Pierwsza"
+        titleMain="wizyta na siłowni."
+        lede="Pierwszy trening nie jest testem sprawności — ma być spokojnym wejściem w nowe miejsce."
+      />
+
+      <PageSection
+        number="01 — Start"
+        title="Co warto wiedzieć przed wejściem"
+        description="Tylko najważniejsze rzeczy, które pomagają poczuć się pewniej przy pierwszej wizycie."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
-      </Link>
+        <InfoCard
+          title="Co zabrać"
+          items={[
+            'Wygodne buty i ubranie do ruchu.',
+            'Butelkę wody.',
+            'Mały ręcznik.',
+            'Telefon z otwartym dzisiejszym treningiem.',
+          ]}
+        />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Przewodnik</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Pierwsza</span>
-          <br />
-          <span className="font-sans font-semibold">wizyta na siłowni.</span>
-        </h1>
-        <p className="text-body-m text-muted-foreground">
-          Pierwszy trening nie jest testem sprawności — ma być spokojnym wejściem w nowe miejsce.
-        </p>
-      </header>
+        <InfoCard
+          title="Jak wygląda typowa wizyta"
+          items={[
+            'Wejście i odłożenie rzeczy.',
+            'Krótka rozgrzewka.',
+            'Prosty trening według kolejnych kroków.',
+            'Spokojne wyciszenie i wyjście.',
+          ]}
+        />
 
-      <InfoCard
-        title="Co zabrać"
-        items={[
-          'Wygodne buty i ubranie do ruchu.',
-          'Butelkę wody.',
-          'Mały ręcznik.',
-          'Telefon z otwartym dzisiejszym treningiem.',
-        ]}
-      />
-
-      <InfoCard
-        title="Jak wygląda typowa wizyta"
-        items={[
-          'Wejście i odłożenie rzeczy.',
-          'Krótka rozgrzewka.',
-          'Prosty trening według kolejnych kroków.',
-          'Spokojne wyciszenie i wyjście.',
-        ]}
-      />
-
-      <InfoCard
-        title="Ważne na start"
-        items={[
-          'Nie musisz znać wszystkich urządzeń.',
-          'Możesz poprosić obsługę o pomoc w ustawieniu sprzętu.',
-          'Nie musisz robić wszystkiego perfekcyjnie od razu.',
-        ]}
-      />
+        <InfoCard
+          title="Ważne na start"
+          items={[
+            'Nie musisz znać wszystkich urządzeń.',
+            'Możesz poprosić obsługę o pomoc w ustawieniu sprzętu.',
+            'Nie musisz robić wszystkiego perfekcyjnie od razu.',
+          ]}
+        />
+      </PageSection>
 
       <Card variant="default" padding="md" className="ring-1 ring-inset ring-warning/20">
         <div className="flex items-start gap-2.5">

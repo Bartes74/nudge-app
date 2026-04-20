@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, Camera, MessageSquare, PenLine, ChevronRight } from 'lucide-react'
+import { Camera, MessageSquare, PenLine, ChevronRight } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Card } from '@/components/ui/card'
 
 export const metadata: Metadata = { title: 'Dodaj posiłek' }
@@ -31,25 +32,22 @@ const OPTIONS = [
 
 export default function NutritionLogPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/nutrition"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/nutrition" label="Jedzenie" />
+
+      <PageHero
+        eyebrow="Nowy posiłek"
+        titleEmphasis="Jak chcesz"
+        titleMain="zarejestrować?"
+        lede="Wybierz sposób, który będzie dla Ciebie najwygodniejszy. Każda opcja prowadzi do osobnego flow zapisu."
+      />
+
+      <PageSection
+        number="01 — Wybór"
+        title="Sposób dodania posiłku"
+        description="Możesz dodać samo zdjęcie, zdjęcie z notatką albo wpisać posiłek ręcznie."
+        className="gap-4"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Jedzenie
-      </Link>
-
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Nowy posiłek</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Jak chcesz</span>
-          <br />
-          <span className="font-sans font-semibold">zarejestrować?</span>
-        </h1>
-      </header>
-
-      <div className="flex flex-col gap-2.5">
         {OPTIONS.map(({ href, icon: Icon, title, description, tone }) => {
           const iconClass =
             tone === 'brand'
@@ -76,7 +74,7 @@ export default function NutritionLogPage() {
             </Link>
           )
         })}
-      </div>
+      </PageSection>
     </div>
   )
 }

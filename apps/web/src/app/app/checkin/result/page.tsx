@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { CheckCircle, AlertCircle, TrendingUp, Loader2, ArrowLeft, ArrowRight } from 'lucide-react'
+import { CheckCircle, AlertCircle, TrendingUp, Loader2, ArrowRight } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Card, CardEyebrow } from '@/components/ui/card'
 
@@ -91,28 +91,28 @@ export default function CheckinResultPage() {
   const tones = toneClasses(config.tone)
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app" label="Dziś" />
+
+      <PageHero
+        eyebrow="Werdykt"
+        titleEmphasis="Twój"
+        titleMain="tydzień."
+        lede="Podsumowanie pokazuje, czy plan działa dobrze, czy warto go teraz skorygować."
+        meta={[
+          {
+            label: 'Tydzień od',
+            value: <span className="font-mono tabular-nums">{result.week_of}</span>,
+          },
+        ]}
+      />
+
+      <PageSection
+        number="01 — Ocena"
+        title="Werdykt tygodnia"
+        description="Najkrótsze podsumowanie tego, jak wyglądał ostatni tydzień."
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Dzisiaj
-      </Link>
-
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Werdykt</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Twój</span>
-          <br />
-          <span className="font-sans font-semibold">tydzień.</span>
-        </h1>
-        <p className="font-mono text-body-s tabular-nums text-muted-foreground">
-          Tydzień od {result.week_of}
-        </p>
-      </header>
-
-      <Card variant="default" padding="md" className={`ring-1 ring-inset ${tones.ring}`}>
+        <Card variant="default" padding="md" className={`ring-1 ring-inset ${tones.ring}`}>
         <div className="flex items-center gap-3">
           <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tones.iconBg}`}>
             <Icon className="h-5 w-5" aria-hidden="true" />
@@ -125,41 +125,54 @@ export default function CheckinResultPage() {
         {result.verdict_summary && (
           <p className="mt-4 text-body-m leading-relaxed text-foreground">{result.verdict_summary}</p>
         )}
-      </Card>
+        </Card>
+      </PageSection>
 
       {result.recommended_action && (
-        <Card variant="recessed" padding="md">
-          <CardEyebrow>Rekomendacja</CardEyebrow>
-          <p className="mt-2 text-body-m leading-relaxed text-foreground">
-            {result.recommended_action}
-          </p>
-        </Card>
+        <PageSection
+          number="02 — Rekomendacja"
+          title="Co warto zrobić dalej"
+          description="Najbliższy krok na kolejny tydzień."
+        >
+          <Card variant="recessed" padding="md">
+            <CardEyebrow>Rekomendacja</CardEyebrow>
+            <p className="mt-2 text-body-m leading-relaxed text-foreground">
+              {result.recommended_action}
+            </p>
+          </Card>
+        </PageSection>
       )}
 
       {result.plan_change_needed && result.plan_change_details && (
-        <Card variant="default" padding="md" className="ring-1 ring-inset ring-brand/20">
-          <CardEyebrow className="text-brand">Zmiana planu</CardEyebrow>
-          <p className="mt-1 text-label uppercase text-muted-foreground">
-            Obszar ·{' '}
-            <span className="text-foreground">
-              {result.plan_change_details.area === 'training'
-                ? 'Trening'
-                : result.plan_change_details.area === 'nutrition'
-                  ? 'Żywienie'
-                  : 'Regeneracja'}
-            </span>
-          </p>
-          <p className="mt-3 text-body-m leading-relaxed">{result.plan_change_details.suggestion}</p>
-          <Button
-            type="button"
-            size="hero"
-            onClick={() => router.push('/app/plan')}
-            className="mt-5 w-full gap-2"
-          >
-            Zobacz nowy plan
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </Card>
+        <PageSection
+          number="03 — Zmiana planu"
+          title="Plan wymaga aktualizacji"
+          description="Ta rekomendacja wpłynie na kolejny układ treningu lub regeneracji."
+        >
+          <Card variant="default" padding="md" className="ring-1 ring-inset ring-brand/20">
+            <CardEyebrow className="text-brand">Zmiana planu</CardEyebrow>
+            <p className="mt-1 text-label uppercase text-muted-foreground">
+              Obszar ·{' '}
+              <span className="text-foreground">
+                {result.plan_change_details.area === 'training'
+                  ? 'Trening'
+                  : result.plan_change_details.area === 'nutrition'
+                    ? 'Żywienie'
+                    : 'Regeneracja'}
+              </span>
+            </p>
+            <p className="mt-3 text-body-m leading-relaxed">{result.plan_change_details.suggestion}</p>
+            <Button
+              type="button"
+              size="hero"
+              onClick={() => router.push('/app/plan')}
+              className="mt-5 w-full gap-2"
+            >
+              Zobacz nowy plan
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Card>
+        </PageSection>
       )}
 
       <Button

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Lora, Playfair_Display } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
@@ -8,15 +8,23 @@ import { cn } from '@/lib/utils'
 import { env } from '@/lib/env'
 import './globals.css'
 
-const fontDisplay = Instrument_Serif({
+const fontDisplay = Playfair_Display({
   subsets: ['latin', 'latin-ext'],
-  weight: ['400'],
+  weight: ['400', '500'],
   style: ['normal', 'italic'],
   variable: '--font-display',
   display: 'swap',
 })
 
-const fontSans = Inter_Tight({
+const fontEditorial = Lora({
+  subsets: ['latin', 'latin-ext'],
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
+  variable: '--font-editorial',
+  display: 'swap',
+})
+
+const fontSans = Inter({
   subsets: ['latin', 'latin-ext'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
@@ -57,8 +65,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FAFAF7' },
-    { media: '(prefers-color-scheme: dark)', color: '#0A0A0D' },
+    { media: '(prefers-color-scheme: light)', color: '#F7F4F0' },
+    { media: '(prefers-color-scheme: dark)', color: '#0E0E0E' },
   ],
   width: 'device-width',
   initialScale: 1,
@@ -75,13 +83,18 @@ export default function RootLayout({
     <html
       lang="pl"
       suppressHydrationWarning
-      className={cn(fontSans.variable, fontDisplay.variable, fontMono.variable)}
+      className={cn(
+        fontSans.variable,
+        fontDisplay.variable,
+        fontEditorial.variable,
+        fontMono.variable,
+      )}
     >
       <body>
         <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
+          attribute="data-theme"
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <I18nProvider>

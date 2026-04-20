@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft } from 'lucide-react'
+import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Card, CardEyebrow } from '@/components/ui/card'
 import { LogWeightForm } from './LogWeightForm'
 
@@ -47,45 +46,49 @@ export default async function LogWeightPage() {
     : null
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-8 px-5 pt-6 pb-24 animate-stagger">
-      <Link
-        href="/app/nutrition"
-        className="inline-flex w-fit items-center gap-1.5 text-label uppercase text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Wróć
-      </Link>
+    <div className="flex flex-col gap-12">
+      <PageBackLink href="/app/nutrition" label="Wróć" />
 
-      <header className="flex flex-col gap-2">
-        <p className="text-label uppercase text-muted-foreground">Pomiar</p>
-        <h1 className="text-display-l font-display leading-[1.05] tracking-tight text-balance">
-          <span className="font-display italic text-muted-foreground">Zapisz</span>
-          <br />
-          <span className="font-sans font-semibold">wagę.</span>
-        </h1>
-      </header>
+      <PageHero
+        eyebrow="Pomiar"
+        titleEmphasis="Zapisz"
+        titleMain="wagę."
+        lede="Nowy pomiar od razu aktualizuje trend i pomaga lepiej ocenić postępy w czasie."
+      />
 
       {fallbackWeight && (
-        <Card variant="recessed" padding="sm">
-          <CardEyebrow>{fallbackWeight.label}</CardEyebrow>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
-              {Number(fallbackWeight.weight_kg).toFixed(1)}
-            </span>
-            <span className="text-body-s text-muted-foreground">kg</span>
-            {fallbackWeight.measured_at && (
-              <span className="ml-auto font-mono text-body-s tabular-nums text-muted-foreground">
-                {new Date(fallbackWeight.measured_at as string).toLocaleDateString('pl-PL', {
-                  day: 'numeric',
-                  month: 'long',
-                })}
+        <PageSection
+          number="01 — Ostatni wpis"
+          title="Poprzednia wartość"
+          description="To ostatni zapisany pomiar albo bieżąca wartość z profilu."
+        >
+          <Card variant="recessed" padding="sm">
+            <CardEyebrow>{fallbackWeight.label}</CardEyebrow>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="font-mono text-display-m tabular-nums tracking-tight text-foreground">
+                {Number(fallbackWeight.weight_kg).toFixed(1)}
               </span>
-            )}
-          </div>
-        </Card>
+              <span className="text-body-s text-muted-foreground">kg</span>
+              {fallbackWeight.measured_at && (
+                <span className="ml-auto font-mono text-body-s tabular-nums text-muted-foreground">
+                  {new Date(fallbackWeight.measured_at as string).toLocaleDateString('pl-PL', {
+                    day: 'numeric',
+                    month: 'long',
+                  })}
+                </span>
+              )}
+            </div>
+          </Card>
+        </PageSection>
       )}
 
-      <LogWeightForm />
+      <PageSection
+        number={fallbackWeight ? '02 — Nowy pomiar' : '01 — Nowy pomiar'}
+        title="Zapisz nową wagę"
+        description="Dodaj wartość i datę pomiaru, a aplikacja uwzględni ją w trendzie."
+      >
+        <LogWeightForm />
+      </PageSection>
     </div>
   )
 }
