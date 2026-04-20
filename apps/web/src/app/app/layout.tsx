@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { TopBar } from '@/components/layout/TopBar'
 import { BottomNav } from '@/components/layout/BottomNav'
-import { CoachBubble } from '@/components/layout/CoachBubble'
 import { TrialBanner } from '@/components/layout/TrialBanner'
 import { createClient } from '@/lib/supabase/server'
 import { getServerAccess } from '@/lib/access'
@@ -47,7 +46,6 @@ export default async function AppLayout({
       </main>
 
       <BottomNav />
-      <CoachBubble />
     </div>
   )
 }

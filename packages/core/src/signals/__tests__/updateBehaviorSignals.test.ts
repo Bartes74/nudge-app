@@ -14,7 +14,6 @@ function buildSupabaseMock(overrides: {
   mealLogs?: object[]
   bodyMeasurements?: object[]
   questionAsks?: object[]
-  coachMessages?: object[]
   planWorkouts?: object | null
   skippedAsks?: object[]
 }) {
@@ -23,7 +22,6 @@ function buildSupabaseMock(overrides: {
     mealLogs = [],
     bodyMeasurements = [],
     questionAsks = [],
-    coachMessages = [],
     planWorkouts = null,
     skippedAsks = [],
   } = overrides
@@ -89,15 +87,6 @@ function buildSupabaseMock(overrides: {
             }),
           }),
         }
-      }),
-    },
-    coach_messages: {
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          gte: vi.fn().mockReturnValue({
-            limit: vi.fn().mockResolvedValue({ data: coachMessages }),
-          }),
-        }),
       }),
     },
     training_plans: {
@@ -197,6 +186,16 @@ describe('updateBehaviorSignals', () => {
       const upserted = supabase.upsertSpy.mock.calls[0][0]
       expect(upserted.onboarding_fields_skipped).toBe(2)
       expect(upserted.user_id).toBe(USER_ID)
+    })
+  })
+
+  describe('scenario: chat removed from product', () => {
+    it('stores legacy coach_messages_sent_7d as zero', async () => {
+      const supabase = buildSupabaseMock({})
+      await updateBehaviorSignals(supabase as never, { userId: USER_ID })
+
+      const upserted = supabase.upsertSpy.mock.calls[0][0]
+      expect(upserted.coach_messages_sent_7d).toBe(0)
     })
   })
 })

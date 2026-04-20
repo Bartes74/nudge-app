@@ -9,7 +9,6 @@ import { SubstituteModal, type Exercise as SubstituteExercise } from './Substitu
 import { ExerciseDetailModal } from './ExerciseDetailModal'
 import { useWorkoutStore, type LocalExercise } from '@/hooks/useWorkoutStore'
 import { useAutoSync } from '@/hooks/useAutoSync'
-import { AskCoachButton } from '@/components/coach/AskCoachButton'
 
 interface ExerciseCatalog {
   id: string
@@ -243,17 +242,6 @@ export function WorkoutLogger({
           >
             <RefreshCw className="h-5 w-5" />
           </button>
-
-          {catalogEntry && (
-            <AskCoachButton
-              entryPoint="exercise_shortcut"
-              contextEntityType="exercise"
-              contextEntityId={catalogEntry.id}
-              prefillMessage={`Jak prawidłowo wykonać ${catalogEntry.name_pl}?`}
-              label=""
-              variant="ghost"
-            />
-          )}
         </div>
 
         <button

@@ -13,7 +13,7 @@ const FEATURES = [
   'Spersonalizowany plan treningowy i żywieniowy',
   'Analiza zdjęć posiłków (AI Vision)',
   'Tygodniowe check-iny z adaptacją planu',
-  'Coach AI — pytaj o wszystko, 24/7',
+  'Szczegółowe prowadzenie treningu krok po kroku',
   'Historia treningów i postępów',
 ]
 
@@ -89,7 +89,7 @@ export function PaywallClient({
             <span className="font-sans font-semibold">z Nudge.</span>
           </h1>
           <p className="text-body-m leading-relaxed text-muted-foreground">
-            Twoje dane i postępy są zachowane. Wybierz plan i wróć do coachingu.
+            Twoje dane i postępy są zachowane. Wybierz plan i wróć do treningów.
           </p>
         </header>
 

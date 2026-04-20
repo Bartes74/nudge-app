@@ -59,10 +59,6 @@ export const pl = {
     progress: 'Postępy',
     profile: 'Profil',
   },
-  coach: {
-    bubbleLabel: 'Coach',
-    comingSoonTooltip: 'Coach AI pojawi się wkrótce. Trzymaj się!',
-  },
   profile: {
     title: 'Profil',
     settingsTitle: 'Ustawienia',

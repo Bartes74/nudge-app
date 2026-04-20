@@ -22,7 +22,6 @@ export async function updateBehaviorSignals(
     mealLogsResult,
     bodyMeasurementsResult,
     questionAsksResult,
-    coachMessagesResult,
     planWorkoutsResult,
     workoutLogExercisesResult,
   ] = await Promise.all([
@@ -53,13 +52,6 @@ export async function updateBehaviorSignals(
       .not('answered_at', 'is', null)
       .order('answered_at', { ascending: false })
       .limit(1),
-
-    supabase
-      .from('coach_messages')
-      .select('created_at')
-      .eq('role', 'user')
-      .gte('created_at', sevenDaysAgo)
-      .limit(200),
 
     supabase
       .from('training_plans')
@@ -103,7 +95,6 @@ export async function updateBehaviorSignals(
   const mealLogs: MealLogRow[] = mealLogsResult.data ?? []
   const bodyMeasurements: MeasurementRow[] = bodyMeasurementsResult.data ?? []
   const questionAsks: QuestionAskRow[] = questionAsksResult.data ?? []
-  const coachMessages: unknown[] = coachMessagesResult.data ?? []
   const workoutLogExercises: WorkoutLogExerciseRow[] = workoutLogExercisesResult.data ?? []
 
   // 1. days_since_last_workout_log
@@ -181,7 +172,8 @@ export async function updateBehaviorSignals(
   const lastQuestionAnsweredAt = questionAsks[0]?.answered_at ?? null
 
   // 10. coach_messages_sent_7d
-  const coachMessagesSent7d = coachMessages.length
+  // Chat has been removed from the product, so keep this legacy field neutral.
+  const coachMessagesSent7d = 0
 
   const logs7d = workoutLogs.filter((log) => log.started_at >= sevenDaysAgo)
   const logs14d = workoutLogs.filter((log) => log.started_at >= fourteenDaysAgo)
