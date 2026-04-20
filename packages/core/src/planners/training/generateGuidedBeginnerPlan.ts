@@ -7,6 +7,7 @@ import type {
   GuidedWorkoutEntry,
   GuidedWorkoutStep,
   PlannerProfile,
+  TrainingPlannerContext,
 } from './types'
 
 const DEFAULT_STARTING_LOAD_GUIDANCE = [
@@ -131,7 +132,7 @@ function buildArrivalStep(
     tempo_hint: null,
     breathing_hint: null,
     safety_notes:
-      'Jeśli jeszcze przed startem czujesz zawroty głowy, ostry ból albo wyraźnie gorsze samopoczucie, odpuść trening na dziś.',
+      'Zacznij dopiero wtedy, kiedy czujesz się stabilnie i możesz spokojnie wejść w bardzo lekką rozgrzewkę.',
     common_mistakes:
       'Próba ogarnięcia całej siłowni naraz albo zaczynanie z pośpiechem tylko dlatego, że inni już ćwiczą.',
     easy_substitution_slug: null,
@@ -140,7 +141,11 @@ function buildArrivalStep(
       hide_actions: true,
       support: buildArrivalSupport(equipmentLocation),
     },
-    stop_conditions: ['złe samopoczucie przed startem', 'zawroty głowy przed startem'],
+    stop_conditions: [
+      'ból, który pojawia się jeszcze przed startem',
+      'wyraźne osłabienie już na wejściu',
+      'brak poczucia stabilności przed wejściem na sprzęt',
+    ],
     starting_load_guidance: null,
     machine_settings: null,
     is_new_skill: false,
@@ -523,47 +528,107 @@ function buildExerciseStep(
 }
 
 function workoutName(index: number, phase: PlannerProfile['adaptation_phase']): string {
-  if (phase === 'phase_0_familiarization') return `Spokojny trening wprowadzający ${index + 1}`
-  if (phase === 'phase_1_adaptation') return `Lekki trening adaptacyjny ${index + 1}`
-  return `Proste podstawy siłowe ${index + 1}`
+  if (phase === 'phase_0_familiarization') return index === 0 ? 'Trening wprowadzający' : `Trening wprowadzający ${index + 1}`
+  if (phase === 'phase_1_adaptation') return index === 0 ? 'Trening adaptacyjny' : `Trening adaptacyjny ${index + 1}`
+  return index === 0 ? 'Podstawy siłowe' : `Podstawy siłowe ${index + 1}`
 }
 
-function confidenceGoalForPhase(phase: PlannerProfile['adaptation_phase']): string {
+function confidenceGoalForPhase(
+  phase: PlannerProfile['adaptation_phase'],
+  context?: TrainingPlannerContext,
+): string {
+  if (context?.adaptation.progression_bias === 'slow_down') {
+    return 'Celem tego treningu jest zrobić plan spokojnie, bez pośpiechu i z poczuciem kontroli nad każdym krokiem.'
+  }
+
+  if (context?.adaptation.can_introduce_new_skills) {
+    return 'Celem tego treningu jest utrzymać dobrą jakość ruchu i dołożyć mały, realny krok do przodu.'
+  }
+
   if (phase === 'phase_0_familiarization') {
-    return 'Poczuć się swobodniej z miejscem, tempem wizyty i prostą kolejnością kroków.'
+    return 'Celem tego treningu jest spokojnie wejść w plan i wiedzieć, co robić po kolei.'
   }
   if (phase === 'phase_1_adaptation') {
-    return 'Zbudować regularność i zrozumieć 1-2 proste ruchy bez pośpiechu.'
+    return 'Celem tego treningu jest utrzymać regularność i pewniej przejść przez 1-2 proste ruchy.'
   }
-  return 'Wejść spokojnie w podstawy siłowe bez presji i z jasnymi instrukcjami.'
+  return 'Celem tego treningu jest zrobić solidną pracę i dalej budować podstawy bez przeciążania.'
 }
 
 function buildMainBlockExercises(
   profile: PlannerProfile,
   catalog: ExerciseCatalogEntry[],
   index: number,
+  context?: TrainingPlannerContext,
 ): GuidedWorkoutStep[] {
   const phase = profile.adaptation_phase ?? 'phase_0_familiarization'
-  if (phase === 'phase_0_familiarization') {
+  if (phase === 'phase_0_familiarization' || context?.adaptation.should_reduce_novelty) {
     return [buildIntroCardioStep(3)]
   }
 
-  const gymPush = findExercise(catalog, [
-    (exercise) => ['machines', 'cables'].some((equipment) => exercise.equipment_required.includes(equipment)),
-    (exercise) => exercise.difficulty === 'beginner',
-    (exercise) => ['push', 'legs', 'pull'].includes(exercise.category),
+  const avoidSlugs = new Set([
+    ...profile.avoid_exercises,
+    ...(context?.adaptation.avoid_exercise_slugs ?? []),
+  ])
+  const preferredCategories = (context?.adaptation.preferred_focus ?? []).filter((focus) =>
+    ['push', 'pull', 'legs', 'core'].includes(focus),
+  )
+
+  const safeCatalog = catalog.filter((exercise) => !avoidSlugs.has(exercise.slug))
+
+  const findPreferredGymExercise = (
+    preferredCategory: string | null,
+    fallbackSlugs: string[],
+  ): ExerciseCatalogEntry | null =>
+    findExercise(safeCatalog, [
+      (exercise) => ['machines', 'cables', 'dumbbells'].some((equipment) => exercise.equipment_required.includes(equipment)),
+      (exercise) => exercise.difficulty === 'beginner',
+      (exercise) =>
+        preferredCategory != null
+          ? exercise.category === preferredCategory
+          : fallbackSlugs.includes(exercise.slug) || ['push', 'legs', 'pull', 'core'].includes(exercise.category),
+    ])
+
+  const findPreferredHomeExercise = (
+    preferredCategory: string | null,
+    fallbackSlugs: string[],
+  ): ExerciseCatalogEntry | null =>
+    findExercise(safeCatalog, [
+      (exercise) =>
+        exercise.equipment_required.length === 0 ||
+        exercise.equipment_required.every((equipment) =>
+          [
+            ...(profile.has_dumbbells ? ['dumbbells'] : []),
+            ...(profile.has_bench ? ['bench'] : []),
+            ...(profile.has_pullup_bar ? ['pullup_bar'] : []),
+          ].includes(equipment),
+        ),
+      (exercise) => exercise.difficulty === 'beginner',
+      (exercise) =>
+        preferredCategory != null
+          ? exercise.category === preferredCategory
+          : fallbackSlugs.includes(exercise.slug) || ['push', 'legs', 'pull', 'core'].includes(exercise.category),
+    ])
+
+  const gymPush = findPreferredGymExercise(preferredCategories[0] ?? null, [
+    'leg_press',
+    'seated_row_machine',
+    'machine_chest_press',
+  ])
+  const gymPull = findPreferredGymExercise(preferredCategories[1] ?? null, [
+    'lat_pulldown',
+    'cable_row',
+    'seated_row_machine',
   ])
 
-  const gymPull = findExercise(catalog, [
-    (exercise) => exercise.slug === 'lat_pulldown' || exercise.slug === 'cable_row',
+  const homeLower = findPreferredHomeExercise(preferredCategories[0] ?? null, [
+    'goblet_squat',
+    'bodyweight_squat',
+    'glute_bridge',
   ])
-
-  const homeLower = findExercise(catalog, [
-    (exercise) => exercise.slug === 'goblet_squat' || exercise.slug === 'pushups',
-  ])
-
-  const homeUpper = findExercise(catalog, [
-    (exercise) => exercise.slug === 'pushups' || exercise.slug === 'dumbbell_row',
+  const homeUpper = findPreferredHomeExercise(preferredCategories[1] ?? null, [
+    'pushups',
+    'dumbbell_row',
+    'incline_pushups',
   ])
 
   const mainExercises: ExerciseCatalogEntry[] =
@@ -572,10 +637,17 @@ function buildMainBlockExercises(
       : [homeLower, homeUpper].filter((exercise): exercise is ExerciseCatalogEntry => exercise != null)
 
   const limitedExercises =
-    phase === 'phase_1_adaptation' ? mainExercises.slice(0, 2) : mainExercises.slice(0, 3)
+    phase === 'phase_1_adaptation' || context?.adaptation.progression_bias === 'slow_down'
+      ? mainExercises.slice(0, 2)
+      : mainExercises.slice(0, 3)
 
   return limitedExercises.map((exercise, exerciseIndex) =>
-    buildExerciseStep(3 + exerciseIndex, exercise, 'main_block', exerciseIndex < 2 && index === 0),
+    buildExerciseStep(
+      3 + exerciseIndex,
+      exercise,
+      'main_block',
+      context?.adaptation.can_introduce_new_skills ? exerciseIndex === 0 && index === 0 : false,
+    ),
   )
 }
 
@@ -584,13 +656,14 @@ function buildWorkout(
   catalog: ExerciseCatalogEntry[],
   dayLabel: string,
   orderInWeek: number,
+  context?: TrainingPlannerContext,
 ): GuidedWorkoutEntry {
   const phase = profile.adaptation_phase ?? 'phase_0_familiarization'
   const includeArrivalPrep = orderInWeek === 1
   const steps: GuidedWorkoutStep[] = [
     ...(includeArrivalPrep ? [buildArrivalStep(1, profile.equipment_location)] : []),
     buildWarmupCardioStep(2),
-    ...buildMainBlockExercises(profile, catalog, orderInWeek - 1),
+    ...buildMainBlockExercises(profile, catalog, orderInWeek - 1, context),
     buildCooldownStep(50),
     buildSummaryStep(60),
   ]
@@ -606,7 +679,7 @@ function buildWorkout(
       profile.session_duration_min ?? durationForPhase(phase),
       calculatedDuration,
     ),
-    confidence_goal: confidenceGoalForPhase(phase),
+    confidence_goal: confidenceGoalForPhase(phase, context),
     steps,
   }
 }
@@ -614,6 +687,7 @@ function buildWorkout(
 export function generateGuidedBeginnerPlan(opts: {
   profile: PlannerProfile
   catalog: ExerciseCatalogEntry[]
+  context?: TrainingPlannerContext
 }): GuidedTrainingPlanOutput {
   const phase = opts.profile.adaptation_phase ?? 'phase_0_familiarization'
   const daysPerWeek = guidedDaysPerWeek(opts.profile.days_per_week)
@@ -624,7 +698,7 @@ export function generateGuidedBeginnerPlan(opts: {
     view_mode: 'guided_beginner_view',
     adaptation_phase: phase,
     workouts: dayLabels.map((dayLabel, index) =>
-      buildWorkout(opts.profile, opts.catalog, dayLabel, index + 1),
+      buildWorkout(opts.profile, opts.catalog, dayLabel, index + 1, opts.context),
     ),
     week_structure: weekStructureForDays(daysPerWeek),
     progression_rules: {
@@ -633,6 +707,8 @@ export function generateGuidedBeginnerPlan(opts: {
       when: 'Advance only after enough clarity, confidence and no pain flags.',
     },
     additional_notes:
-      'Ten plan ma prowadzić krok po kroku. Najpierw bezpieczeństwo i zrozumienie, potem regularność, a dopiero później trudniejsze ruchy.',
+      opts.context?.adaptation.progression_bias === 'slow_down'
+        ? 'Ten plan wraca do prostszej progresji, żeby utrzymać bezpieczeństwo i odbudować pewność.'
+        : 'Ten plan zwiększa trudność tylko wtedy, gdy użytkownik jest na to realnie gotowy.',
   }
 }

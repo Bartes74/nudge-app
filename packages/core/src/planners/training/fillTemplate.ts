@@ -1,5 +1,11 @@
 import { callStructured } from '../../llm/client'
-import type { PlanTemplate, ExerciseCatalogEntry, TrainingPlanOutput, PlannerProfile } from './types'
+import type {
+  PlanTemplate,
+  ExerciseCatalogEntry,
+  TrainingPlanOutput,
+  PlannerProfile,
+  TrainingPlannerContext,
+} from './types'
 import type { LlmCallMeta } from '../../llm/client'
 
 export interface FillTemplateResult {
@@ -37,6 +43,42 @@ function buildCatalogList(catalog: ExerciseCatalogEntry[]): string {
     .map((e) =>
       `- ${e.slug} (${e.name_pl}, ${e.category}, sprzęt: ${e.equipment_required.join('+') || 'brak'}, poziom: ${e.difficulty})`,
     )
+    .join('\n')
+}
+
+function buildContextSummary(context: TrainingPlannerContext | undefined): string {
+  if (!context) return 'Brak dodatkowego kontekstu adaptacji.'
+
+  return [
+    `Maturity treningowa: ${context.adaptation.training_maturity}`,
+    `Maturity komunikacyjna: ${context.adaptation.communication_maturity}`,
+    `Bias progresji: ${context.adaptation.progression_bias}`,
+    `Potrzeba większego prowadzenia: ${context.adaptation.requires_more_guidance ? 'tak' : 'nie'}`,
+    `Można dodać nowe umiejętności: ${context.adaptation.can_introduce_new_skills ? 'tak' : 'nie'}`,
+    context.adaptation.latest_feedback_themes.length > 0
+      ? `Ostatnie sygnały feedbacku: ${context.adaptation.latest_feedback_themes.join(', ')}`
+      : '',
+    context.adaptation.avoid_exercise_slugs.length > 0
+      ? `Ćwiczenia do unikania po feedbacku: ${context.adaptation.avoid_exercise_slugs.join(', ')}`
+      : '',
+    context.adaptation.preferred_focus.length > 0
+      ? `Preferowane obszary na kolejny plan: ${context.adaptation.preferred_focus.join(', ')}`
+      : '',
+    context.muscle_balance.undertrained_categories.length > 0
+      ? `Niedotrenowane kategorie: ${context.muscle_balance.undertrained_categories.join(', ')}`
+      : '',
+    context.muscle_balance.undertrained_muscles.length > 0
+      ? `Niedotrenowane partie: ${context.muscle_balance.undertrained_muscles.join(', ')}`
+      : '',
+    `Ostatnie ukończone treningi: ${context.recent_workouts.length}`,
+    context.communication.guidance_level
+      ? `Styl prowadzenia: ${context.communication.guidance_level}, techniczność: ${context.communication.technicality}`
+      : '',
+    context.adaptation.rationale.length > 0
+      ? `Uzasadnienie adaptacji: ${context.adaptation.rationale.join(' | ')}`
+      : '',
+  ]
+    .filter(Boolean)
     .join('\n')
 }
 
@@ -101,9 +143,11 @@ export async function fillTemplate(opts: {
   template: PlanTemplate
   profile: PlannerProfile
   catalog: ExerciseCatalogEntry[]
+  context?: TrainingPlannerContext
   promptId: string | null
 }): Promise<FillTemplateResult> {
   const profileSummary = buildProfileSummary(opts.profile)
+  const contextSummary = buildContextSummary(opts.context)
   const templateStructure = JSON.stringify(opts.template, null, 2)
   const availableExercises = buildCatalogList(opts.catalog)
 
@@ -111,6 +155,7 @@ export async function fillTemplate(opts: {
     .replace('{{profile_summary}}', profileSummary)
     .replace('{{template_structure}}', templateStructure)
     .replace('{{available_exercises}}', availableExercises)
+    .concat(`\n\n# ADAPTATION CONTEXT\n${contextSummary}`)
 
   const { output, meta } = await callStructured<TrainingPlanOutput>({
     apiKey: opts.apiKey,

@@ -5,8 +5,18 @@ import { selectTemplate } from '@nudge/core/planners/training/selectTemplate'
 import { fillTemplate } from '@nudge/core/planners/training/fillTemplate'
 import { generateGuidedBeginnerPlan } from '@nudge/core/planners/training/generateGuidedBeginnerPlan'
 import { logLlmCall } from '@nudge/core/llm/client'
-import type { PlannerProfile, ExerciseCatalogEntry, GuidedTrainingPlanOutput, TrainingPlanOutput } from '@nudge/core/planners/training/types'
+import { prepareGuidedPlanContent, prepareStandardPlanContent } from '@nudge/core/planners/training/preparePlanContent'
+import type {
+  ExerciseCatalogEntry,
+  GuidedTrainingPlanOutput,
+  TrainingPlanOutput,
+  PreparedWorkoutBrief,
+  GuidedWorkoutContent,
+} from '@nudge/core/planners/training/types'
 import type { GuardrailProfile, GuardrailContext } from '@nudge/core/rules/guardrails'
+import { buildTrainingPlannerContext } from '@/lib/training/buildTrainingPlannerContext'
+import { loadPlannerProfile } from '@/lib/training/loadPlannerProfile'
+import type { Json, TablesInsert } from '@nudge/core/types/db'
 
 function serviceClient() {
   return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
@@ -62,25 +72,10 @@ export async function runGenerateTrainingPlanTask({
     return { success: false }
   }
 
-  const { profile, equipment, health, goal } = await runStep('load-profile', async () => {
-    const [profileRes, equipmentRes, healthRes, goalRes] = await Promise.all([
-      supabase.from('user_profile').select('*').eq('user_id', userId).single(),
-      supabase.from('user_equipment').select('*').eq('user_id', userId).maybeSingle(),
-      supabase.from('user_health').select('*').eq('user_id', userId).maybeSingle(),
-      supabase.from('user_goals').select('*').eq('user_id', userId).eq('is_current', true).maybeSingle(),
-    ])
-
-    if (profileRes.error || !profileRes.data) {
-      throw new Error(`Failed to load profile for user ${userId}: ${profileRes.error?.message}`)
-    }
-
-    return {
-      profile: profileRes.data,
-      equipment: equipmentRes.data,
-      health: healthRes.data,
-      goal: goalRes.data,
-    }
-  })
+  const { plannerProfile, profile, goal } = await runStep(
+    'load-profile',
+    async () => loadPlannerProfile(supabase, userId),
+  )
 
   const guardrailResult = await runStep('evaluate-guardrails', async () => {
     const birthYear = profile.birth_date
@@ -124,45 +119,16 @@ export async function runGenerateTrainingPlanTask({
     return { success: false, blocked: true, reasons: guardrailResult.reasons }
   }
 
-  const plannerProfile: PlannerProfile = {
-    user_id: userId,
-    experience_level: profile.experience_level as PlannerProfile['experience_level'],
-    primary_goal: (goal?.goal_type ?? profile.primary_goal) as PlannerProfile['primary_goal'],
-    days_per_week: null,
-    equipment_location: equipment?.location_type as PlannerProfile['equipment_location'] ?? 'gym',
-    entry_path: profile.entry_path as PlannerProfile['entry_path'] ?? 'standard_training',
-    adaptation_phase: profile.adaptation_phase as PlannerProfile['adaptation_phase'] ?? null,
-    needs_guided_mode: profile.needs_guided_mode ?? false,
-    clarity_score: null,
-    confidence_score: null,
-    trainer_consultation_completed_at:
-      (profile.trainer_consultation_completed_at as string | null) ?? null,
-    has_barbell: equipment?.has_barbell ?? false,
-    has_dumbbells: equipment?.has_dumbbells ?? false,
-    has_machines: equipment?.has_machines ?? false,
-    has_cables: equipment?.has_cables ?? false,
-    has_pullup_bar: equipment?.has_pullup_bar ?? false,
-    has_bench: equipment?.has_bench ?? false,
-    session_duration_min: null,
-    avoid_exercises: [],
-    injuries: (health?.injuries as string[] | null) ?? [],
-  }
-
-  const preferences = await runStep('load-preferences', async () => {
-    const { data } = await supabase
-      .from('user_training_preferences')
-      .select('days_per_week, session_duration_min, avoid_exercises')
-      .eq('user_id', userId)
-      .maybeSingle()
-    return data
-  })
-
-  plannerProfile.days_per_week = preferences?.days_per_week ?? 3
-  plannerProfile.session_duration_min = preferences?.session_duration_min ?? null
-  plannerProfile.avoid_exercises = (preferences?.avoid_exercises as string[] | null) ?? []
-
   const warnings: string[] = guardrailResult.blocked ? [] : (guardrailResult.warnings ?? [])
   const lowVolume = warnings.includes('bmi_extreme')
+
+  const plannerContext = await runStep('build-planner-context', async () =>
+    buildTrainingPlannerContext({
+      supabase,
+      userId,
+      profile: plannerProfile,
+    }),
+  )
 
   const template = await runStep('select-template', async () => {
     const selectedTemplate = selectTemplate(plannerProfile)
@@ -216,6 +182,7 @@ export async function runGenerateTrainingPlanTask({
 
   let planOutput: TrainingPlanOutput | GuidedTrainingPlanOutput
   let llmCallId: string | null = null
+  let contentLlmCallId: string | null = null
 
   if (isGuidedBeginner) {
     planOutput = await runStep('generate-guided-beginner-plan', async () =>
@@ -225,6 +192,7 @@ export async function runGenerateTrainingPlanTask({
           adaptation_phase: plannerProfile.adaptation_phase ?? 'phase_0_familiarization',
         },
         catalog,
+        context: plannerContext,
       }),
     )
   } else {
@@ -252,6 +220,7 @@ export async function runGenerateTrainingPlanTask({
         template,
         profile: plannerProfile,
         catalog,
+        context: plannerContext,
         promptId: promptData.id,
       })
 
@@ -269,6 +238,62 @@ export async function runGenerateTrainingPlanTask({
 
     planOutput = llmResult.planOutput
     llmCallId = llmResult.llmCallId
+  }
+
+  let preparedWorkoutBriefsByKey = new Map<string, PreparedWorkoutBrief>()
+  let preparedGuidedContentByKey = new Map<string, GuidedWorkoutContent>()
+
+  if (isGuidedBeginner && 'guided_mode' in planOutput) {
+    const preparedGuidedContent = await runStep('prepare-guided-content', async () =>
+      prepareGuidedPlanContent({
+        apiKey: env.OPENAI_API_KEY,
+        model: 'gpt-4o-mini',
+        context: plannerContext,
+        plan: planOutput,
+      }),
+    )
+
+    contentLlmCallId = await logLlmCall({
+      supabase,
+      userId,
+      meta: preparedGuidedContent.meta,
+      aiTaskId: taskId,
+      promptId: null,
+      promptVersion: null,
+    })
+
+    preparedGuidedContentByKey = new Map(
+      preparedGuidedContent.workouts.map((workout) => [
+        `${workout.day_label}:${workout.order_in_week}`,
+        workout,
+      ]),
+    )
+  } else {
+    const preparedStandardContent = await runStep('prepare-standard-content', async () =>
+      prepareStandardPlanContent({
+        apiKey: env.OPENAI_API_KEY,
+        model: 'gpt-4o-mini',
+        context: plannerContext,
+        plan: planOutput as TrainingPlanOutput,
+        catalog,
+      }),
+    )
+
+    contentLlmCallId = await logLlmCall({
+      supabase,
+      userId,
+      meta: preparedStandardContent.meta,
+      aiTaskId: taskId,
+      promptId: null,
+      promptVersion: null,
+    })
+
+    preparedWorkoutBriefsByKey = new Map(
+      preparedStandardContent.workouts.map((workout) => [
+        `${workout.day_label}:${workout.order_in_week}`,
+        workout,
+      ]),
+    )
   }
 
   if (await wasTaskCancelled(supabase, taskId)) {
@@ -305,10 +330,16 @@ export async function runGenerateTrainingPlanTask({
         created_by_ai_task_id: taskId,
         change_reason: 'Wygenerowano nowy plan na podstawie profilu.',
         goal_snapshot: goal ? { goal_type: goal.goal_type } : null,
+        assumptions_snapshot: {
+          communication: plannerContext.communication,
+          adaptation: plannerContext.adaptation,
+          recent_feedback: plannerContext.recent_feedback.slice(0, 4),
+          muscle_balance: plannerContext.muscle_balance,
+        } as unknown as Json,
         progression_rules: planOutput.progression_rules,
         week_structure: planOutput.week_structure,
         additional_notes: planOutput.additional_notes,
-        llm_call_id: llmCallId,
+        llm_call_id: contentLlmCallId ?? llmCallId,
         guided_mode: 'guided_mode' in planOutput ? planOutput.guided_mode : false,
         adaptation_phase:
           'adaptation_phase' in planOutput ? planOutput.adaptation_phase : null,
@@ -328,6 +359,9 @@ export async function runGenerateTrainingPlanTask({
       .eq('id', plan.id)
 
     for (const workout of planOutput.workouts) {
+      const workoutKey = `${workout.day_label}:${workout.order_in_week}`
+      const preparedWorkoutBrief = preparedWorkoutBriefsByKey.get(workoutKey) ?? null
+      const preparedGuidedWorkout = preparedGuidedContentByKey.get(workoutKey) ?? null
       const { data: planWorkout, error: planWorkoutError } = await supabase
         .from('plan_workouts')
         .insert({
@@ -336,7 +370,12 @@ export async function runGenerateTrainingPlanTask({
           order_in_week: workout.order_in_week,
           name: workout.name,
           duration_min_estimated: workout.duration_min_estimated,
-          confidence_goal: 'confidence_goal' in workout ? workout.confidence_goal : null,
+          confidence_goal:
+            preparedGuidedWorkout?.confidence_goal ??
+            preparedWorkoutBrief?.confidence_goal ??
+            ('confidence_goal' in workout ? workout.confidence_goal : null),
+          warmup_notes: preparedWorkoutBrief?.warmup_notes ?? null,
+          cooldown_notes: preparedWorkoutBrief?.cooldown_notes ?? null,
         })
         .select('id')
         .single()
@@ -347,6 +386,10 @@ export async function runGenerateTrainingPlanTask({
 
       if ('steps' in workout) {
         for (const stepItem of workout.steps) {
+          const preparedStep =
+            preparedGuidedWorkout?.steps.find(
+              (candidate) => candidate.order_num === stepItem.order_num,
+            ) ?? null
           const catalogEntry = stepItem.exercise_slug
             ? catalog.find((catalogExercise) => catalogExercise.slug === stepItem.exercise_slug)
             : null
@@ -355,24 +398,25 @@ export async function runGenerateTrainingPlanTask({
             plan_workout_id: planWorkout.id,
             step_type: stepItem.step_type,
             order_num: stepItem.order_num,
-            title: stepItem.title,
+            title: preparedStep?.title ?? stepItem.title,
             duration_min: stepItem.duration_min,
             exercise_id: catalogEntry?.id ?? null,
-            instruction_text: stepItem.instruction_text,
-            setup_instructions: stepItem.setup_instructions,
-            execution_steps: stepItem.execution_steps,
-            tempo_hint: stepItem.tempo_hint,
-            breathing_hint: stepItem.breathing_hint,
-            safety_notes: stepItem.safety_notes,
-            common_mistakes: stepItem.common_mistakes,
-            stop_conditions: stepItem.stop_conditions,
-            machine_settings: stepItem.machine_settings,
+            instruction_text: preparedStep?.instruction_text ?? stepItem.instruction_text,
+            setup_instructions: preparedStep?.setup_instructions ?? stepItem.setup_instructions,
+            execution_steps: preparedStep?.execution_steps ?? stepItem.execution_steps,
+            tempo_hint: preparedStep?.tempo_hint ?? stepItem.tempo_hint,
+            breathing_hint: preparedStep?.breathing_hint ?? stepItem.breathing_hint,
+            safety_notes: preparedStep?.safety_notes ?? stepItem.safety_notes,
+            common_mistakes: preparedStep?.common_mistakes ?? stepItem.common_mistakes,
+            stop_conditions: preparedStep?.stop_conditions ?? stepItem.stop_conditions,
+            machine_settings: preparedStep?.machine_settings ?? stepItem.machine_settings,
             substitution_policy:
               stepItem.substitution_policy ?? {
                 easy: stepItem.easy_substitution_slug,
                 machine_busy: stepItem.machine_busy_substitution_slug,
               },
-            starting_load_guidance: stepItem.starting_load_guidance,
+            starting_load_guidance:
+              preparedStep?.starting_load_guidance ?? stepItem.starting_load_guidance,
             is_new_skill: stepItem.is_new_skill,
           })
         }
@@ -404,6 +448,44 @@ export async function runGenerateTrainingPlanTask({
     }
 
     return version.id
+  })
+
+  await runStep('record-planning-decision', async () => {
+    const recommendationType: TablesInsert<'ai_decisions'>['recommendation_type'] =
+      plannerContext.adaptation.progression_bias === 'slow_down'
+        ? 'slow_down'
+        : plannerContext.adaptation.requires_more_guidance
+          ? 'show_more_guidance'
+          : plannerContext.adaptation.can_introduce_new_skills
+            ? isGuidedBeginner
+              ? 'introduce_strength_basics'
+              : 'introduce_new_machine'
+            : 'repeat_similar_session'
+
+    await supabase.from('ai_decisions').insert({
+      user_id: userId,
+      ai_task_id: taskId,
+      llm_call_id: contentLlmCallId ?? llmCallId,
+      recommendation_type: recommendationType,
+      entry_path: plannerProfile.entry_path ?? null,
+      adaptation_phase:
+        'adaptation_phase' in planOutput ? planOutput.adaptation_phase : plannerProfile.adaptation_phase ?? null,
+      input_snapshot: {
+        profile: plannerProfile,
+        communication: plannerContext.communication,
+        behavior_signals: plannerContext.behavior_signals,
+        recent_feedback: plannerContext.recent_feedback.slice(0, 4),
+      } as unknown as Json,
+      decision_payload: {
+        adaptation: plannerContext.adaptation,
+        muscle_balance: plannerContext.muscle_balance,
+        second_pass_applied: true,
+        plan_version_id: planVersionId,
+        plan_view_mode: 'view_mode' in planOutput ? planOutput.view_mode : 'standard_training_view',
+        llm_call_ids: [llmCallId, contentLlmCallId].filter(Boolean),
+      } as unknown as Json,
+      rationale: plannerContext.adaptation.rationale.join(' '),
+    } satisfies TablesInsert<'ai_decisions'>)
   })
 
   await runStep('complete-task', async () => {

@@ -11,6 +11,18 @@ import type {
 export type SplitType = 'fbw' | 'upper_lower' | 'ppl' | 'split'
 
 export type PlanViewMode = 'guided_beginner_view' | 'standard_training_view'
+export type CommunicationMaturity = 'novice' | 'developing' | 'independent' | 'advanced'
+export type TrainingMaturity = 'novice' | 'building' | 'progressing' | 'advanced'
+export type ProgressionBias = 'slow_down' | 'hold' | 'progress'
+export type FeedbackTheme =
+  | 'clarity_issue'
+  | 'tempo_issue'
+  | 'equipment_issue'
+  | 'confidence_drop'
+  | 'too_hard'
+  | 'recovery_issue'
+  | 'exercise_disliked'
+  | 'pain_or_red_flag'
 
 export type GuidedStepType =
   | 'arrival_prep'
@@ -202,4 +214,153 @@ export interface PlannerProfile {
   session_duration_min: number | null
   avoid_exercises: string[]
   injuries: string[]
+}
+
+export interface RecentWorkoutSummary {
+  workout_log_id: string
+  started_at: string
+  ended_at: string | null
+  duration_min: number | null
+  overall_rating: number | null
+  clarity_score: number | null
+  confidence_score: number | null
+  felt_safe: boolean | null
+  exercise_confusion_flag: boolean
+  machine_confusion_flag: boolean
+  too_hard_flag: boolean
+  pain_flag: boolean
+  ready_for_next_workout: boolean | null
+  went_well: string | null
+  went_poorly: string | null
+  what_to_improve: string | null
+}
+
+export interface ExerciseHistorySession {
+  exercise_slug: string
+  exercise_name: string | null
+  category: string | null
+  primary_muscles: string[]
+  started_at: string
+  was_substituted: boolean
+  max_weight_kg: number | null
+  total_reps: number
+  target_total_reps: number | null
+  hit_top_of_range: boolean
+}
+
+export interface ExerciseHistorySummary {
+  exercise_slug: string
+  exercise_name: string | null
+  category: string | null
+  primary_muscles: string[]
+  sessions_completed: number
+  last_started_at: string | null
+  substitutions: number
+  last_weight_kg: number | null
+  max_weight_kg: number | null
+  avg_total_reps: number | null
+  progression_action: 'weight' | 'reps' | 'deload' | 'hold' | 'none'
+  progression_reason: string | null
+  hit_top_recently: boolean
+}
+
+export interface MuscleBalanceSummary {
+  category_counts: Record<string, number>
+  primary_muscle_counts: Record<string, number>
+  undertrained_categories: string[]
+  overtrained_categories: string[]
+  undertrained_muscles: string[]
+  overtrained_muscles: string[]
+}
+
+export interface PlannerBehaviorSignals {
+  workout_completion_rate_7d: number | null
+  workout_completion_rate_30d: number | null
+  clarity_score_avg_7d: number | null
+  confidence_score_avg_7d: number | null
+  substitution_count_7d: number | null
+  substitution_count_30d: number | null
+  pain_flag_count_7d: number | null
+  too_hard_flag_count_7d: number | null
+  days_since_last_workout_log: number | null
+  avg_session_length_sec: number | null
+}
+
+export interface WorkoutFeedbackInsight {
+  workout_log_id: string | null
+  summary: string | null
+  themes: FeedbackTheme[]
+  recommended_focus: string | null
+  needs_more_guidance: boolean
+  needs_lower_intensity: boolean
+  confidence_drop: boolean
+  recovery_issue: boolean
+  exercise_slugs_to_avoid: string[]
+}
+
+export interface CommunicationProfile {
+  guidance_level: 'full' | 'supported' | 'concise'
+  technicality: 'plain' | 'balanced' | 'technical'
+  tone_preset:
+    | 'warm_encouraging'
+    | 'partnering'
+    | 'factual_technical'
+    | 'calm_guided'
+  explanation_depth: 'high' | 'medium' | 'low'
+}
+
+export interface AdaptationSnapshot {
+  training_maturity: TrainingMaturity
+  communication_maturity: CommunicationMaturity
+  progression_bias: ProgressionBias
+  requires_more_guidance: boolean
+  can_introduce_new_skills: boolean
+  should_reduce_novelty: boolean
+  latest_feedback_themes: FeedbackTheme[]
+  avoid_exercise_slugs: string[]
+  preferred_focus: string[]
+  rationale: string[]
+}
+
+export interface TrainingPlannerContext {
+  profile: PlannerProfile
+  recent_workouts: RecentWorkoutSummary[]
+  exercise_history: ExerciseHistorySummary[]
+  muscle_balance: MuscleBalanceSummary
+  recent_feedback: WorkoutFeedbackInsight[]
+  behavior_signals: PlannerBehaviorSignals
+  communication: CommunicationProfile
+  adaptation: AdaptationSnapshot
+}
+
+export interface StandardWorkoutPreparationCopy {
+  day_label: string
+  order_in_week: number
+  confidence_goal: string | null
+  warmup_notes: string | null
+  cooldown_notes: string | null
+}
+
+export interface PreparedWorkoutBrief extends StandardWorkoutPreparationCopy {}
+
+export interface PreparedGuidedStepContent {
+  order_num: number
+  title: string
+  instruction_text: string
+  setup_instructions: string | null
+  execution_steps: string[]
+  tempo_hint: string | null
+  breathing_hint: string | null
+  safety_notes: string | null
+  common_mistakes: string | null
+  stop_conditions: string[]
+  machine_settings: string | null
+  starting_load_guidance: string | null
+}
+
+export interface GuidedWorkoutContent {
+  day_label: string
+  order_in_week: number
+  confidence_goal: string
+  steps: PreparedGuidedStepContent[]
 }

@@ -32,6 +32,7 @@ export default function FinishWorkoutPage({
   const [readyForNextWorkout, setReadyForNextWorkout] = useState<boolean | null>(null)
   const [painFlag, setPainFlag] = useState(false)
   const [redFlagSymptoms, setRedFlagSymptoms] = useState<string[]>([])
+  const [guidedImprovementNote, setGuidedImprovementNote] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -97,6 +98,7 @@ export default function FinishWorkoutPage({
                 tempo_feedback: tempoFeedback,
                 ready_for_next_workout: readyForNextWorkout,
                 red_flag_symptoms: redFlagSymptoms,
+                what_to_improve: guidedImprovementNote.trim() || undefined,
               }
             : {
                 overall_rating: rating,
@@ -248,6 +250,14 @@ export default function FinishWorkoutPage({
             title="Gotowy/a na kolejny trening?"
             value={readyForNextWorkout}
             onChange={setReadyForNextWorkout}
+          />
+
+          <TextQuestion
+            id="guided-what-to-improve"
+            label="Co uprościć albo dopracować następnym razem?"
+            value={guidedImprovementNote}
+            onChange={setGuidedImprovementNote}
+            placeholder="np. prostsze wskazówki przy ustawieniu sprzętu, wolniejsze tempo…"
           />
         </div>
 
