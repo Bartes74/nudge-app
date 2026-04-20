@@ -277,24 +277,13 @@ export function PlanWeekBoard({
         </Card>
       )}
 
-      <Card variant="recessed" padding="md">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <CardEyebrow>Zacznij od nowa</CardEyebrow>
-            <p className="text-body-m leading-relaxed text-foreground">
-              Jeśli chcesz ułożyć plan jeszcze raz, możesz wygenerować nowy od zera.
-              Dotychczasowy plan zostanie zachowany w historii do wglądu, a nowy zastąpi go
-              dopiero wtedy, gdy będzie gotowy.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <GeneratePlanButton label="Wygeneruj od nowa" />
-            <DeleteTrainingPlanButton />
-          </div>
-        </div>
-      </Card>
-
       <section className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <CardEyebrow>Harmonogram treningów</CardEyebrow>
+          <p className="text-body-s text-muted-foreground">
+            Przeciągnij trening na inny dzień, jeśli tak Ci wygodniej.
+          </p>
+        </div>
         <Reorder.Group
           as="div"
           axis="y"
@@ -306,6 +295,11 @@ export function PlanWeekBoard({
             <DayRow key={items[index]?.key ?? dayLabel} dayLabel={dayLabel} item={items[index]!} />
           ))}
         </Reorder.Group>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          <GeneratePlanButton label="Wygeneruj nowy plan" />
+          <DeleteTrainingPlanButton />
+        </div>
       </section>
 
       {(isDirty || streakWarning) && (
