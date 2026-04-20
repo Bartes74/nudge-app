@@ -51,7 +51,7 @@ export default async function AppLayout({
 
       <div className="flex min-h-svh flex-col bg-[var(--bg-canvas)] min-[961px]:hidden">
         <TopBar user={user} role={role} />
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pt-6 pb-32">
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col px-5 pt-4 pb-28">
           {access.status === 'trial' && access.trialDaysLeft !== undefined && (
             <div className="pb-6">
               <TrialBanner daysLeft={access.trialDaysLeft} />
