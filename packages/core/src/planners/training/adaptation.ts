@@ -65,6 +65,12 @@ function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))]
 }
 
+function sortByRecentSession(left: ExerciseHistorySummary, right: ExerciseHistorySummary): number {
+  const leftTime = left.last_started_at ? new Date(left.last_started_at).getTime() : 0
+  const rightTime = right.last_started_at ? new Date(right.last_started_at).getTime() : 0
+  return rightTime - leftTime
+}
+
 export function summarizeExerciseHistory(
   sessions: ExerciseHistorySession[],
 ): ExerciseHistorySummary[] {
@@ -362,6 +368,23 @@ export function deriveAdaptationSnapshot(input: {
   const avoidExerciseSlugs = uniqueStrings(
     input.recentFeedback.flatMap((feedback) => feedback.exercise_slugs_to_avoid),
   )
+  const progressReadyExercises = input.exerciseHistory
+    .filter((summary) => summary.progression_action === 'weight' || summary.progression_action === 'reps')
+    .sort(sortByRecentSession)
+    .map((summary) => summary.exercise_slug)
+    .filter((slug) => !avoidExerciseSlugs.includes(slug))
+    .slice(0, 6)
+  const deloadExercises = input.exerciseHistory
+    .filter((summary) => summary.progression_action === 'deload')
+    .sort(sortByRecentSession)
+    .map((summary) => summary.exercise_slug)
+    .slice(0, 4)
+  const repeatableExercises = input.exerciseHistory
+    .filter((summary) => summary.sessions_completed >= 2 && summary.substitutions === 0)
+    .sort(sortByRecentSession)
+    .map((summary) => summary.exercise_slug)
+    .filter((slug) => !avoidExerciseSlugs.includes(slug))
+    .slice(0, 8)
   const preferredFocus = uniqueStrings([
     ...input.muscleBalance.undertrained_categories,
     ...input.muscleBalance.undertrained_muscles,
@@ -393,6 +416,9 @@ export function deriveAdaptationSnapshot(input: {
     latest_feedback_themes: latestFeedbackThemes,
     avoid_exercise_slugs: avoidExerciseSlugs,
     preferred_focus: preferredFocus,
+    progress_ready_exercises: progressReadyExercises,
+    deload_exercises: deloadExercises,
+    repeatable_exercises: repeatableExercises,
     rationale,
   }
 }

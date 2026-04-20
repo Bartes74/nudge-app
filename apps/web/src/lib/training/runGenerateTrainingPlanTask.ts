@@ -131,7 +131,7 @@ export async function runGenerateTrainingPlanTask({
   )
 
   const template = await runStep('select-template', async () => {
-    const selectedTemplate = selectTemplate(plannerProfile)
+    const selectedTemplate = selectTemplate(plannerProfile, plannerContext)
     if (lowVolume) {
       return {
         ...selectedTemplate,
@@ -142,6 +142,10 @@ export async function runGenerateTrainingPlanTask({
         notes_for_llm:
           selectedTemplate.notes_for_llm +
           ' LOW VOLUME modifier active: 2-3 sets per exercise max, compound movements only.',
+        planning_directives: [
+          ...(selectedTemplate.planning_directives ?? []),
+          'LOW VOLUME: ogranicz objętość do 2-3 serii na ćwiczenie i trzymaj się prostych ruchów bazowych.',
+        ],
       }
     }
     return selectedTemplate

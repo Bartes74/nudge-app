@@ -50,6 +50,10 @@ function buildContextSummary(context: TrainingPlannerContext | undefined): strin
   if (!context) return 'Brak dodatkowego kontekstu adaptacji.'
 
   return [
+    `Ukończone treningi (ostatnie 24): ${context.recent_workouts.length}`,
+    `Frekwencja 7d: ${context.behavior_signals.workout_completion_rate_7d ?? 'brak danych'}`,
+    `Frekwencja 30d: ${context.behavior_signals.workout_completion_rate_30d ?? 'brak danych'}`,
+    `Dni od ostatniego treningu: ${context.behavior_signals.days_since_last_workout_log ?? 'brak danych'}`,
     `Maturity treningowa: ${context.adaptation.training_maturity}`,
     `Maturity komunikacyjna: ${context.adaptation.communication_maturity}`,
     `Bias progresji: ${context.adaptation.progression_bias}`,
@@ -64,15 +68,35 @@ function buildContextSummary(context: TrainingPlannerContext | undefined): strin
     context.adaptation.preferred_focus.length > 0
       ? `Preferowane obszary na kolejny plan: ${context.adaptation.preferred_focus.join(', ')}`
       : '',
+    context.adaptation.progress_ready_exercises.length > 0
+      ? `Ćwiczenia gotowe do progresji: ${context.adaptation.progress_ready_exercises.join(', ')}`
+      : '',
+    context.adaptation.deload_exercises.length > 0
+      ? `Ćwiczenia wymagające cofnięcia lub łatwiejszego wariantu: ${context.adaptation.deload_exercises.join(', ')}`
+      : '',
+    context.adaptation.repeatable_exercises.length > 0
+      ? `Ćwiczenia warte powtórzenia w podobnej formie: ${context.adaptation.repeatable_exercises.join(', ')}`
+      : '',
     context.muscle_balance.undertrained_categories.length > 0
       ? `Niedotrenowane kategorie: ${context.muscle_balance.undertrained_categories.join(', ')}`
+      : '',
+    context.muscle_balance.overtrained_categories.length > 0
+      ? `Przeciążone kategorie: ${context.muscle_balance.overtrained_categories.join(', ')}`
       : '',
     context.muscle_balance.undertrained_muscles.length > 0
       ? `Niedotrenowane partie: ${context.muscle_balance.undertrained_muscles.join(', ')}`
       : '',
-    `Ostatnie ukończone treningi: ${context.recent_workouts.length}`,
     context.communication.guidance_level
       ? `Styl prowadzenia: ${context.communication.guidance_level}, techniczność: ${context.communication.technicality}`
+      : '',
+    context.exercise_history.length > 0
+      ? `Skrót historii ćwiczeń: ${context.exercise_history
+          .slice(0, 8)
+          .map(
+            (summary) =>
+              `${summary.exercise_slug} [${summary.category ?? 'brak kategorii'}]: ${summary.progression_action}, sesje=${summary.sessions_completed}, zamiany=${summary.substitutions}`,
+          )
+          .join(' | ')}`
       : '',
     context.adaptation.rationale.length > 0
       ? `Uzasadnienie adaptacji: ${context.adaptation.rationale.join(' | ')}`
@@ -150,12 +174,26 @@ export async function fillTemplate(opts: {
   const contextSummary = buildContextSummary(opts.context)
   const templateStructure = JSON.stringify(opts.template, null, 2)
   const availableExercises = buildCatalogList(opts.catalog)
+  const planningDirectives =
+    opts.template.planning_directives && opts.template.planning_directives.length > 0
+      ? opts.template.planning_directives.map((directive) => `- ${directive}`).join('\n')
+      : '- Brak dodatkowych dyrektyw.'
 
   const userPrompt = opts.userTemplate
     .replace('{{profile_summary}}', profileSummary)
     .replace('{{template_structure}}', templateStructure)
     .replace('{{available_exercises}}', availableExercises)
     .concat(`\n\n# ADAPTATION CONTEXT\n${contextSummary}`)
+    .concat(`\n\n# PLANNING DIRECTIVES\n${planningDirectives}`)
+    .concat(
+      '\n\n# HARD RULES\n' +
+        '- Zamroź liczbę sesji, day_label i week_structure z template.\n' +
+        '- Wykorzystaj historię ćwiczeń oraz balans partii do doboru ćwiczeń i objętości.\n' +
+        '- Jeśli ćwiczenie jest gotowe do progresji, zachowaj tę samą rodzinę ruchu i zaplanuj progres w realistyczny sposób.\n' +
+        '- Jeśli ćwiczenie jest oznaczone do deloadu lub uproszczenia, nie zwiększaj mu trudności.\n' +
+        '- Jeśli użytkownik potrzebuje więcej prowadzenia, preferuj znajome ćwiczenia i mniejszą liczbę nowości.\n' +
+        '- Każdy plan ma realizować cel użytkownika, ale stawiać ambitne i osiągalne cele bez zniechęcania.',
+    )
 
   const { output, meta } = await callStructured<TrainingPlanOutput>({
     apiKey: opts.apiKey,

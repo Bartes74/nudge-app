@@ -165,6 +165,8 @@ describe('training adaptation', () => {
     expect(snapshot.progression_bias).toBe('slow_down')
     expect(snapshot.requires_more_guidance).toBe(true)
     expect(snapshot.can_introduce_new_skills).toBe(false)
+    expect(snapshot.deload_exercises).toEqual([])
+    expect(snapshot.repeatable_exercises).toEqual([])
   })
 
   it('allows concise communication for mature users with stable history', () => {
@@ -186,6 +188,74 @@ describe('training adaptation', () => {
 
     expect(communication.guidance_level).toBe('concise')
     expect(communication.technicality).toBe('technical')
+  })
+
+  it('exposes per-exercise progression and repeat signals for the next plan', () => {
+    const exerciseHistory = summarizeExerciseHistory([
+      {
+        exercise_slug: 'barbell_row',
+        exercise_name: 'Wiosłowanie sztangą',
+        category: 'pull',
+        primary_muscles: ['back'],
+        started_at: '2026-04-10T10:00:00.000Z',
+        was_substituted: false,
+        max_weight_kg: 50,
+        total_reps: 32,
+        target_total_reps: 30,
+        hit_top_of_range: true,
+      },
+      {
+        exercise_slug: 'barbell_row',
+        exercise_name: 'Wiosłowanie sztangą',
+        category: 'pull',
+        primary_muscles: ['back'],
+        started_at: '2026-04-17T10:00:00.000Z',
+        was_substituted: false,
+        max_weight_kg: 50,
+        total_reps: 33,
+        target_total_reps: 30,
+        hit_top_of_range: true,
+      },
+      {
+        exercise_slug: 'romanian_deadlift',
+        exercise_name: 'RDL',
+        category: 'legs',
+        primary_muscles: ['hamstrings'],
+        started_at: '2026-04-09T10:00:00.000Z',
+        was_substituted: false,
+        max_weight_kg: 70,
+        total_reps: 24,
+        target_total_reps: 30,
+        hit_top_of_range: false,
+      },
+      {
+        exercise_slug: 'romanian_deadlift',
+        exercise_name: 'RDL',
+        category: 'legs',
+        primary_muscles: ['hamstrings'],
+        started_at: '2026-04-18T10:00:00.000Z',
+        was_substituted: false,
+        max_weight_kg: 55,
+        total_reps: 22,
+        target_total_reps: 30,
+        hit_top_of_range: false,
+      },
+    ])
+
+    const snapshot = deriveAdaptationSnapshot({
+      profile: baseProfile({ experience_level: 'intermediate', entry_path: 'standard_training' }),
+      recentWorkouts: [workout()],
+      exerciseHistory,
+      muscleBalance: summarizeMuscleBalance(exerciseHistory),
+      recentFeedback: [],
+      behaviorSignals: baseSignals({
+        workout_completion_rate_30d: 0.85,
+      }),
+    })
+
+    expect(snapshot.progress_ready_exercises).toContain('barbell_row')
+    expect(snapshot.deload_exercises).toContain('romanian_deadlift')
+    expect(snapshot.repeatable_exercises).toContain('barbell_row')
   })
 
   it('recommends regeneration when the latest feedback materially changes the plan', () => {

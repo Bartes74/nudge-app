@@ -84,6 +84,7 @@ export interface PlanTemplate {
   workouts: TemplateWorkout[]
   week_structure: Record<string, string>
   notes_for_llm: string
+  planning_directives?: string[]
 }
 
 // ─── LLM output schema (mirrors the JSON schema in migration) ───────────────
@@ -319,6 +320,9 @@ export interface AdaptationSnapshot {
   latest_feedback_themes: FeedbackTheme[]
   avoid_exercise_slugs: string[]
   preferred_focus: string[]
+  progress_ready_exercises: string[]
+  deload_exercises: string[]
+  repeatable_exercises: string[]
   rationale: string[]
 }
 
