@@ -248,17 +248,15 @@ export function PlanWeekBoard({
         titleEmphasis="Tydzień"
         titleMain="treningowy."
         lede="Przejrzyj tygodniowy rozkład treningów i dopasuj dni do swojego rytmu."
-        meta={[
-          {
-            label: 'Historia',
-            value: (
-              <Link href="/app/plan/history" className="inline-flex items-center gap-1 hover:underline">
-                Otwórz
-                <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            ),
-          },
-        ]}
+        action={(
+          <Link
+            href="/app/plan/history"
+            className="ds-label inline-flex items-center gap-1 text-[var(--fg-secondary)] transition-colors hover:text-[var(--fg-primary)]"
+          >
+            Historia
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        )}
       />
 
       {guidedExplanation && (

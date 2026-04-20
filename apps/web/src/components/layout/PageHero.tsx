@@ -8,6 +8,7 @@ export function PageHero({
   titleMain,
   lede,
   meta,
+  action,
   className,
 }: {
   eyebrow: React.ReactNode
@@ -15,10 +16,16 @@ export function PageHero({
   titleMain: React.ReactNode
   lede?: React.ReactNode
   meta?: Array<{ label: React.ReactNode; value: React.ReactNode }>
+  action?: React.ReactNode
   className?: string
 }) {
   return (
-    <header className={cn('ds-hero', className)}>
+    <header className={cn('ds-hero relative', className)}>
+      {action ? (
+        <div className="absolute right-0 top-0 flex items-center">
+          {action}
+        </div>
+      ) : null}
       <div className="ds-hero__eyebrow">{eyebrow}</div>
       <h1 className="ds-hero__title">
         {titleEmphasis ? <em>{titleEmphasis}</em> : null}

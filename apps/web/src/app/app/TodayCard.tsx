@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
@@ -164,7 +165,10 @@ function guidedWorkoutDuration(workout: Workout): number {
 
 function DurationChip({ minutes }: { minutes: number }) {
   return (
-    <Badge variant="outline-warm" className="gap-1.5 px-3 py-1 text-body-s tabular-nums">
+    <Badge
+      variant="outline-warm"
+      className="gap-1.5 whitespace-nowrap px-3 py-1 text-body-s leading-none tabular-nums"
+    >
       <Clock className="h-3.5 w-3.5" />
       {minutes} min
     </Badge>
@@ -395,13 +399,11 @@ export function TodayCard({
           </div>
         )}
 
-        <Button
-          size="hero"
-          className="mt-6 w-full"
-          onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
-        >
-          Otwórz dzisiejszy trening
-          <ChevronRight className="h-4 w-4" />
+        <Button asChild size="hero" className="mt-6 w-full">
+          <Link href={`/app/plan/workout/${todayWorkout.id}`}>
+            Otwórz dzisiejszy trening
+            <ChevronRight className="h-4 w-4" />
+          </Link>
         </Button>
       </Card>
     )
@@ -470,13 +472,11 @@ export function TodayCard({
         )}
       </ul>
 
-      <Button
-        size="hero"
-        className="mt-6 w-full"
-        onClick={() => router.push(`/app/plan/workout/${todayWorkout.id}`)}
-      >
-        Otwórz dzisiejszy trening
-        <ChevronRight className="h-4 w-4" />
+      <Button asChild size="hero" className="mt-6 w-full">
+        <Link href={`/app/plan/workout/${todayWorkout.id}`}>
+          Otwórz dzisiejszy trening
+          <ChevronRight className="h-4 w-4" />
+        </Link>
       </Button>
     </Card>
   )

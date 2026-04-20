@@ -66,11 +66,9 @@ export default async function TodayPage() {
   const now = new Date()
   const hour = now.getHours()
   const greetingPrefix =
-    hour < 5 ? 'Jeszcze noc'
-    : hour < 11 ? 'Dzień dobry'
-    : hour < 17 ? 'Cześć'
-    : hour < 22 ? 'Dobry wieczór'
-    : 'Późno'
+    hour < 11 ? 'Dzień dobry'
+    : hour < 18 ? 'Cześć'
+    : 'Dobry wieczór'
 
   const dateLabel = now.toLocaleDateString('pl-PL', {
     weekday: 'long',
