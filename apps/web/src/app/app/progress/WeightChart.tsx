@@ -43,6 +43,13 @@ function formatWeight(value: number): string {
 
 export function WeightChart({ data }: Props) {
   const [range, setRange] = React.useState<WeightRangeKey>('7d')
+  const gridColor = 'var(--border-subtle)'
+  const axisColor = 'var(--fg-secondary)'
+  const tooltipBackground = 'var(--bg-elevated)'
+  const tooltipBorder = 'var(--border-strong)'
+  const trendColor = 'var(--fg-accent-copper)'
+  const rollingAverageColor = 'var(--fg-accent-sage)'
+  const dotStrokeColor = 'var(--bg-surface)'
 
   if (data.length === 0) {
     return (
@@ -81,10 +88,10 @@ export function WeightChart({ data }: Props) {
       <circle
         cx={props.cx}
         cy={props.cy}
-        r={3.5}
-        fill="hsl(var(--brand))"
-        stroke="hsl(var(--background))"
-        strokeWidth={1.5}
+        r={4}
+        fill={trendColor}
+        stroke={dotStrokeColor}
+        strokeWidth={2}
       />
     )
   }
@@ -108,10 +115,10 @@ export function WeightChart({ data }: Props) {
 
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={chartData} margin={{ top: 8, right: 8, left: -12, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="2 4" stroke="hsl(var(--border))" />
+          <CartesianGrid strokeDasharray="2 4" stroke={gridColor} />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: axisColor }}
             tickLine={false}
             axisLine={false}
             interval="preserveStartEnd"
@@ -121,7 +128,7 @@ export function WeightChart({ data }: Props) {
           />
           <YAxis
             domain={[minW, maxW]}
-            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: axisColor }}
             tickLine={false}
             axisLine={false}
             tickFormatter={(v: number) => `${v}`}
@@ -152,31 +159,39 @@ export function WeightChart({ data }: Props) {
             contentStyle={{
               borderRadius: '12px',
               fontSize: '12px',
-              border: '1px solid hsl(var(--border))',
-              background: 'hsl(var(--surface-1))',
+              border: `1px solid ${tooltipBorder}`,
+              background: tooltipBackground,
+              color: 'var(--fg-primary)',
               boxShadow: '0 8px 24px -12px rgb(0 0 0 / 0.15)',
             }}
+            labelStyle={{ color: 'var(--fg-primary)' }}
+            itemStyle={{ color: 'var(--fg-secondary)' }}
           />
           <Legend
             formatter={(value: string) => (value === 'trend' ? 'Trend dzienny' : 'Śr. 7 dni')}
             iconType="circle"
             iconSize={8}
-            wrapperStyle={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+            wrapperStyle={{
+              fontSize: '11px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              color: axisColor,
+            }}
           />
           <Line
             type="monotone"
             dataKey="trend"
-            stroke="hsl(var(--brand))"
-            strokeWidth={2}
+            stroke={trendColor}
+            strokeWidth={2.5}
             dot={renderMeasurementDot}
-            activeDot={{ r: 5, strokeWidth: 2, stroke: 'hsl(var(--background))' }}
+            activeDot={{ r: 5, strokeWidth: 2, stroke: dotStrokeColor, fill: trendColor }}
             connectNulls
           />
           <Line
             type="monotone"
             dataKey="rollingAvg"
-            stroke="hsl(var(--muted-foreground))"
-            strokeWidth={1.5}
+            stroke={rollingAverageColor}
+            strokeWidth={2}
             strokeDasharray="4 3"
             dot={false}
             connectNulls
