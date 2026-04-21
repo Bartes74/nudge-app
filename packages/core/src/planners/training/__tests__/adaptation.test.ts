@@ -57,6 +57,29 @@ function baseSignals(overrides: Partial<PlannerBehaviorSignals> = {}): PlannerBe
   }
 }
 
+function basePlanAdherence(
+  overrides: Partial<{
+    current_day_label: string | null
+    past_due_workouts: number
+    completed_past_due_workouts: number
+    missed_past_due_workouts: number
+    pending_workouts: number
+    completion_rate_past_due: number | null
+    blocks_progression_until_plan_completed: boolean
+  }> = {},
+) {
+  return {
+    current_day_label: 'wed',
+    past_due_workouts: 2,
+    completed_past_due_workouts: 2,
+    missed_past_due_workouts: 0,
+    pending_workouts: 1,
+    completion_rate_past_due: 1,
+    blocks_progression_until_plan_completed: false,
+    ...overrides,
+  }
+}
+
 function workout(overrides: Partial<RecentWorkoutSummary> = {}): RecentWorkoutSummary {
   return {
     workout_log_id: 'log-1',
@@ -160,6 +183,7 @@ describe('training adaptation', () => {
         confidence_score_avg_7d: 2.5,
         too_hard_flag_count_7d: 1,
       }),
+      planAdherence: basePlanAdherence(),
     })
 
     expect(snapshot.progression_bias).toBe('slow_down')
@@ -251,6 +275,7 @@ describe('training adaptation', () => {
       behaviorSignals: baseSignals({
         workout_completion_rate_30d: 0.85,
       }),
+      planAdherence: basePlanAdherence(),
     })
 
     expect(snapshot.progress_ready_exercises).toContain('barbell_row')
@@ -277,6 +302,7 @@ describe('training adaptation', () => {
       behaviorSignals: baseSignals({
         too_hard_flag_count_7d: 1,
       }),
+      planAdherence: basePlanAdherence(),
     })
 
     const regenerationDecision = decidePlanRegeneration({
@@ -291,5 +317,29 @@ describe('training adaptation', () => {
 
     expect(regenerationDecision.shouldRegenerate).toBe(true)
     expect(regenerationDecision.recommendationType).toBe('show_more_guidance')
+  })
+
+  it('blocks progression when past workouts in the active plan were not completed with a summary', () => {
+    const snapshot = deriveAdaptationSnapshot({
+      profile: baseProfile({ experience_level: 'intermediate', entry_path: 'standard_training' }),
+      recentWorkouts: [workout()],
+      exerciseHistory: [],
+      muscleBalance: summarizeMuscleBalance([]),
+      recentFeedback: [],
+      behaviorSignals: baseSignals({
+        workout_completion_rate_30d: 0.9,
+      }),
+      planAdherence: basePlanAdherence({
+        completed_past_due_workouts: 1,
+        missed_past_due_workouts: 1,
+        completion_rate_past_due: 0.5,
+        blocks_progression_until_plan_completed: true,
+      }),
+    })
+
+    expect(snapshot.progression_bias).toBe('hold')
+    expect(snapshot.can_introduce_new_skills).toBe(false)
+    expect(snapshot.should_reduce_novelty).toBe(true)
+    expect(snapshot.blocks_progression_until_plan_completed).toBe(true)
   })
 })

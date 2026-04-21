@@ -330,6 +330,10 @@ export function deriveAdaptationSnapshot(input: {
   muscleBalance: MuscleBalanceSummary
   recentFeedback: WorkoutFeedbackInsight[]
   behaviorSignals: PlannerBehaviorSignals
+  planAdherence: {
+    blocks_progression_until_plan_completed: boolean
+    missed_past_due_workouts: number
+  }
 }): AdaptationSnapshot {
   const baseTrainingMaturity = buildBaseTrainingMaturity(input.profile.experience_level)
   const trainingMaturity = deriveMaturityFromHistory(input.recentWorkouts, baseTrainingMaturity)
@@ -347,6 +351,7 @@ export function deriveAdaptationSnapshot(input: {
     latestFeedbackThemes.includes('too_hard') ||
     latestFeedbackThemes.includes('pain_or_red_flag') ||
     latestFeedbackThemes.includes('recovery_issue')
+  const incompletePlanBlocksProgression = input.planAdherence.blocks_progression_until_plan_completed
   const requiresMoreGuidance =
     latestFeedbackThemes.includes('clarity_issue') ||
     latestFeedbackThemes.includes('confidence_drop') ||
@@ -357,6 +362,8 @@ export function deriveAdaptationSnapshot(input: {
   let progressionBias: ProgressionBias = 'hold'
   if (negativeFeedback || (input.behaviorSignals.too_hard_flag_count_7d ?? 0) >= 1) {
     progressionBias = 'slow_down'
+  } else if (incompletePlanBlocksProgression) {
+    progressionBias = 'hold'
   } else if (
     !requiresMoreGuidance &&
     trainingMaturity !== 'novice' &&
@@ -395,6 +402,9 @@ export function deriveAdaptationSnapshot(input: {
       : progressionBias === 'progress'
         ? 'Recent completion and confidence allow realistic progression.'
         : 'Hold progression until more signal is available.',
+    incompletePlanBlocksProgression
+      ? `Do not progress yet because ${input.planAdherence.missed_past_due_workouts} past scheduled workout(s) from the active week were not completed with a summary.`
+      : 'Past scheduled workouts are completed enough to evaluate progression fairly.',
     requiresMoreGuidance
       ? 'Communication should stay more guided because clarity/confidence is still building.'
       : 'Communication can be shorter and more autonomous.',
@@ -405,12 +415,16 @@ export function deriveAdaptationSnapshot(input: {
     communication_maturity: communicationMaturity,
     progression_bias: progressionBias,
     requires_more_guidance: requiresMoreGuidance,
+    blocks_progression_until_plan_completed: incompletePlanBlocksProgression,
+    missed_past_due_workouts: input.planAdherence.missed_past_due_workouts,
     can_introduce_new_skills:
       progressionBias === 'progress' &&
+      !incompletePlanBlocksProgression &&
       !requiresMoreGuidance &&
       !latestFeedbackThemes.includes('pain_or_red_flag'),
     should_reduce_novelty:
       progressionBias === 'slow_down' ||
+      incompletePlanBlocksProgression ||
       requiresMoreGuidance ||
       trainingMaturity === 'novice',
     latest_feedback_themes: latestFeedbackThemes,

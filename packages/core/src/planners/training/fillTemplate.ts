@@ -54,6 +54,12 @@ function buildContextSummary(context: TrainingPlannerContext | undefined): strin
     `Frekwencja 7d: ${context.behavior_signals.workout_completion_rate_7d ?? 'brak danych'}`,
     `Frekwencja 30d: ${context.behavior_signals.workout_completion_rate_30d ?? 'brak danych'}`,
     `Dni od ostatniego treningu: ${context.behavior_signals.days_since_last_workout_log ?? 'brak danych'}`,
+    context.plan_adherence.past_due_workouts > 0
+      ? `Domknięte treningi z minionych dni: ${context.plan_adherence.completed_past_due_workouts}/${context.plan_adherence.past_due_workouts}`
+      : 'Brak minionych treningów do rozliczenia w aktywnym tygodniu.',
+    context.plan_adherence.blocks_progression_until_plan_completed
+      ? 'Nie wolno progresować planu, dopóki wszystkie treningi z minionych dni nie zostaną ukończone z podsumowaniem.'
+      : '',
     `Maturity treningowa: ${context.adaptation.training_maturity}`,
     `Maturity komunikacyjna: ${context.adaptation.communication_maturity}`,
     `Bias progresji: ${context.adaptation.progression_bias}`,

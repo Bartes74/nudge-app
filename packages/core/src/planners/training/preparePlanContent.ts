@@ -114,6 +114,7 @@ function serializeContext(context: TrainingPlannerContext): string {
       recent_feedback: context.recent_feedback.slice(0, 4),
       muscle_balance: context.muscle_balance,
       behavior_signals: context.behavior_signals,
+      plan_adherence: context.plan_adherence,
     },
     null,
     2,

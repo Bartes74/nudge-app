@@ -26,6 +26,7 @@ import {
   DAY_SHORT,
   type DayLabel,
   guidedWeekExplanation,
+  type PlanWorkoutVisualStatus,
   progressionCopy,
   trainingStreakWarning,
   workoutDisplayCount,
@@ -77,9 +78,11 @@ function weekSignature(items: WeekItem[]): string {
 function DayRow({
   dayLabel,
   item,
+  status,
 }: {
   dayLabel: DayLabel
   item: WeekItem
+  status: PlanWorkoutVisualStatus | null
 }) {
   const dragControls = useDragControls()
   const workout = item.workout
@@ -111,6 +114,8 @@ function DayRow({
 
   const count = workoutDisplayCount(workout)
   const duration = workoutDisplayDuration(workout)
+  const isCompleted = status === 'completed'
+  const isMissed = status === 'missed'
 
   return (
     <Reorder.Item
@@ -124,19 +129,37 @@ function DayRow({
       <Card
         variant="default"
         padding="sm"
-        className="flex items-center justify-between gap-3 border-border/80 shadow-lift-sm"
+        className={cn(
+          'flex items-center justify-between gap-3 border-border/80 shadow-lift-sm',
+          isCompleted &&
+            'border-[var(--border-accent)] bg-[var(--bg-accent-sage-soft)]',
+          isMissed &&
+            'border-[var(--copper-300)] bg-[var(--bg-accent-copper-soft)]',
+        )}
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
             type="button"
             onPointerDown={(event) => dragControls.start(event)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground active:scale-[0.98]"
+            className={cn(
+              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2 text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground active:scale-[0.98]',
+              isCompleted &&
+                'border-[var(--border-accent)] bg-[var(--bg-accent-sage-soft)] text-[var(--fg-accent-sage)]',
+              isMissed &&
+                'border-[var(--copper-300)] bg-[var(--bg-accent-copper-soft)] text-[var(--fg-accent-copper)]',
+            )}
             aria-label={`Przeciągnij trening na inny dzień: ${workout.name}`}
           >
             <GripVertical className="h-4 w-4" />
           </button>
 
-          <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-center">
+          <div
+            className={cn(
+              'flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-lg bg-surface-2 text-center',
+              isCompleted && 'bg-[var(--bg-accent-sage-soft)]',
+              isMissed && 'bg-[var(--bg-accent-copper-soft)]',
+            )}
+          >
             <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
               {DAY_SHORT[dayLabel]}
             </span>
@@ -153,7 +176,10 @@ function DayRow({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Badge variant="outline-warm" className="gap-1 font-mono tabular-nums">
+          <Badge
+            variant={isCompleted ? 'success' : isMissed ? 'destructive' : 'outline-warm'}
+            className="gap-1 font-mono tabular-nums"
+          >
             <Clock className="h-3 w-3" />
             {duration} min
           </Badge>
@@ -170,8 +196,10 @@ function DayRow({
 
 export function PlanWeekBoard({
   version,
+  workoutStatusById,
 }: {
   version: PlanVersion
+  workoutStatusById: Record<string, PlanWorkoutVisualStatus>
 }) {
   const router = useRouter()
   const [items, setItems] = useState<WeekItem[]>(() => buildWeekItems(version.workouts))
@@ -290,7 +318,12 @@ export function PlanWeekBoard({
           className="flex flex-col gap-2.5"
         >
           {DAY_ORDER.map((dayLabel, index) => (
-            <DayRow key={items[index]?.key ?? dayLabel} dayLabel={dayLabel} item={items[index]!} />
+            <DayRow
+              key={items[index]?.key ?? dayLabel}
+              dayLabel={dayLabel}
+              item={items[index]!}
+              status={items[index]?.workout ? workoutStatusById[items[index]!.workout!.id] ?? null : null}
+            />
           ))}
         </Reorder.Group>
 

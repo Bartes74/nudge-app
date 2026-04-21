@@ -289,6 +289,7 @@ export async function POST(
     muscleBalance: plannerContext.muscle_balance,
     recentFeedback: recomputedFeedback,
     behaviorSignals: plannerContext.behavior_signals,
+    planAdherence: plannerContext.plan_adherence,
   })
 
   plannerContext.recent_feedback = recomputedFeedback

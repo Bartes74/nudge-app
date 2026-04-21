@@ -287,6 +287,16 @@ export interface PlannerBehaviorSignals {
   avg_session_length_sec: number | null
 }
 
+export interface PlanAdherenceSummary {
+  current_day_label: string | null
+  past_due_workouts: number
+  completed_past_due_workouts: number
+  missed_past_due_workouts: number
+  pending_workouts: number
+  completion_rate_past_due: number | null
+  blocks_progression_until_plan_completed: boolean
+}
+
 export interface WorkoutFeedbackInsight {
   workout_log_id: string | null
   summary: string | null
@@ -317,6 +327,8 @@ export interface AdaptationSnapshot {
   requires_more_guidance: boolean
   can_introduce_new_skills: boolean
   should_reduce_novelty: boolean
+  blocks_progression_until_plan_completed: boolean
+  missed_past_due_workouts: number
   latest_feedback_themes: FeedbackTheme[]
   avoid_exercise_slugs: string[]
   preferred_focus: string[]
@@ -333,6 +345,7 @@ export interface TrainingPlannerContext {
   muscle_balance: MuscleBalanceSummary
   recent_feedback: WorkoutFeedbackInsight[]
   behavior_signals: PlannerBehaviorSignals
+  plan_adherence: PlanAdherenceSummary
   communication: CommunicationProfile
   adaptation: AdaptationSnapshot
 }

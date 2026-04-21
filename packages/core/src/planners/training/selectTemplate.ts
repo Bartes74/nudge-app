@@ -91,6 +91,12 @@ function buildPlanningDirectives(
     directives.push('Plan ma stawiać ambitne, ale realne cele progresji zgodne z ostatnimi udanymi treningami.')
   }
 
+  if (context.adaptation.blocks_progression_until_plan_completed) {
+    directives.push(
+      'Nie zwiększaj trudności względem poprzedniego tygodnia. Powtórz podobny poziom albo lekko uprość plan, bo wcześniejsze zaplanowane treningi z minionych dni nie zostały ukończone z podsumowaniem.',
+    )
+  }
+
   if (profile.injuries.length > 0) {
     directives.push(`Uwzględnij ograniczenia użytkownika: ${profile.injuries.join(', ')}.`)
   }

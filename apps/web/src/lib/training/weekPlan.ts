@@ -48,8 +48,110 @@ type WeekAssignmentLike = {
   workoutId: string | null
 }
 
+type PlanWorkoutStatusLike = {
+  id: string
+  day_label: string
+}
+
+type WorkoutLogStatusLike = {
+  plan_workout_id: string | null
+  ended_at: string | null
+  overall_rating: number | null
+}
+
+export type PlanWorkoutVisualStatus = 'completed' | 'missed' | 'upcoming'
+
+export type WeekWorkoutStatusSummary = {
+  currentDayLabel: DayLabel
+  pastDueWorkouts: number
+  completedPastDueWorkouts: number
+  missedPastDueWorkouts: number
+  pendingWorkouts: number
+  completionRatePastDue: number | null
+  statusByWorkoutId: Record<string, PlanWorkoutVisualStatus>
+}
+
 export function isDayLabel(value: string): value is DayLabel {
   return DAY_ORDER.includes(value as DayLabel)
+}
+
+export function currentDayLabelInTimezone(
+  now: Date = new Date(),
+  timeZone = 'Europe/Warsaw',
+): DayLabel {
+  const weekday = new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    timeZone,
+  }).format(now).toLowerCase()
+
+  const dayLabelMap: Record<string, DayLabel> = {
+    mon: 'mon',
+    tue: 'tue',
+    wed: 'wed',
+    thu: 'thu',
+    fri: 'fri',
+    sat: 'sat',
+    sun: 'sun',
+  }
+
+  return dayLabelMap[weekday] ?? 'mon'
+}
+
+export function hasDayPassed(
+  dayLabel: DayLabel,
+  currentDayLabel: DayLabel,
+): boolean {
+  return DAY_ORDER.indexOf(dayLabel) < DAY_ORDER.indexOf(currentDayLabel)
+}
+
+export function summarizeWeekWorkoutStatuses(
+  workouts: PlanWorkoutStatusLike[],
+  logs: WorkoutLogStatusLike[],
+  currentDayLabel: DayLabel = currentDayLabelInTimezone(),
+): WeekWorkoutStatusSummary {
+  const completedWorkoutIds = new Set(
+    logs
+      .filter((log) => log.plan_workout_id && log.ended_at != null && log.overall_rating != null)
+      .map((log) => log.plan_workout_id as string),
+  )
+
+  let pastDueWorkouts = 0
+  let completedPastDueWorkouts = 0
+  let missedPastDueWorkouts = 0
+  let pendingWorkouts = 0
+  const statusByWorkoutId: Record<string, PlanWorkoutVisualStatus> = {}
+
+  for (const workout of workouts) {
+    if (!isDayLabel(workout.day_label)) continue
+
+    if (hasDayPassed(workout.day_label, currentDayLabel)) {
+      pastDueWorkouts += 1
+
+      if (completedWorkoutIds.has(workout.id)) {
+        completedPastDueWorkouts += 1
+        statusByWorkoutId[workout.id] = 'completed'
+      } else {
+        missedPastDueWorkouts += 1
+        statusByWorkoutId[workout.id] = 'missed'
+      }
+
+      continue
+    }
+
+    pendingWorkouts += 1
+    statusByWorkoutId[workout.id] = 'upcoming'
+  }
+
+  return {
+    currentDayLabel,
+    pastDueWorkouts,
+    completedPastDueWorkouts,
+    missedPastDueWorkouts,
+    pendingWorkouts,
+    completionRatePastDue:
+      pastDueWorkouts > 0 ? completedPastDueWorkouts / pastDueWorkouts : null,
+    statusByWorkoutId,
+  }
 }
 
 export function normalizeGuidedSteps<T extends { step_type: string }>(

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { PageHero } from '@/components/layout/PageHero'
 import { GeneratePlanButton } from './GeneratePlanButton'
 import { PlanWeekBoard } from './PlanWeekBoard'
+import { summarizeWeekWorkoutStatuses, type PlanWorkoutVisualStatus } from '@/lib/training/weekPlan'
 
 export const metadata: Metadata = { title: 'Plan' }
 
@@ -50,6 +51,22 @@ export default async function PlanPage() {
     }>
   } | null
 
+  let workoutStatusById: Record<string, PlanWorkoutVisualStatus> = {}
+
+  if (version?.workouts.length) {
+    const workoutIds = version.workouts.map((workout) => workout.id)
+    const { data: workoutLogs } = await supabase
+      .from('workout_logs')
+      .select('plan_workout_id, ended_at, overall_rating')
+      .eq('user_id', user!.id)
+      .in('plan_workout_id', workoutIds)
+
+    workoutStatusById = summarizeWeekWorkoutStatuses(
+      version.workouts,
+      workoutLogs ?? [],
+    ).statusByWorkoutId
+  }
+
   if (!version) {
     return (
       <div className="flex flex-col gap-12">
@@ -82,7 +99,7 @@ export default async function PlanPage() {
 
   return (
     <div className="flex flex-col gap-12">
-      <PlanWeekBoard version={version} />
+      <PlanWeekBoard version={version} workoutStatusById={workoutStatusById} />
     </div>
   )
 }

@@ -18,6 +18,7 @@ import type {
   TrainingPlannerContext,
   WorkoutFeedbackInsight,
 } from '@nudge/core/planners/training/types'
+import { summarizeWeekWorkoutStatuses } from '@/lib/training/weekPlan'
 
 type AppSupabaseClient = SupabaseClient<Database>
 
@@ -79,6 +80,18 @@ function defaultBehaviorSignals(): PlannerBehaviorSignals {
     too_hard_flag_count_7d: null,
     days_since_last_workout_log: null,
     avg_session_length_sec: null,
+  }
+}
+
+function defaultPlanAdherence() {
+  return {
+    current_day_label: null,
+    past_due_workouts: 0,
+    completed_past_due_workouts: 0,
+    missed_past_due_workouts: 0,
+    pending_workouts: 0,
+    completion_rate_past_due: null,
+    blocks_progression_until_plan_completed: false,
   }
 }
 
@@ -175,6 +188,48 @@ export async function buildTrainingPlannerContext({
         avg_session_length_sec: behaviorSignals.avg_session_length_sec,
       }
     : defaultBehaviorSignals()
+
+  const { data: activePlan } = await supabase
+    .from('training_plans')
+    .select(`
+      current_version:training_plan_versions!training_plans_current_version_fk (
+        workouts:plan_workouts ( id, day_label, order_in_week )
+      )
+    `)
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .limit(1)
+    .maybeSingle()
+
+  const activePlanWorkouts =
+    (activePlan?.current_version as {
+      workouts?: Array<{ id: string; day_label: string; order_in_week: number }> | null
+    } | null)?.workouts ?? []
+
+  const activePlanWorkoutIds = activePlanWorkouts.map((workout) => workout.id)
+
+  const { data: activePlanWorkoutLogs } = activePlanWorkoutIds.length > 0
+    ? await supabase
+        .from('workout_logs')
+        .select('plan_workout_id, ended_at, overall_rating')
+        .eq('user_id', userId)
+        .in('plan_workout_id', activePlanWorkoutIds)
+    : { data: [] as Array<Pick<Database['public']['Tables']['workout_logs']['Row'], 'plan_workout_id' | 'ended_at' | 'overall_rating'>> }
+
+  const planAdherenceSummary = activePlanWorkouts.length > 0
+    ? (() => {
+        const summary = summarizeWeekWorkoutStatuses(activePlanWorkouts, activePlanWorkoutLogs ?? [])
+        return {
+          current_day_label: summary.currentDayLabel,
+          past_due_workouts: summary.pastDueWorkouts,
+          completed_past_due_workouts: summary.completedPastDueWorkouts,
+          missed_past_due_workouts: summary.missedPastDueWorkouts,
+          pending_workouts: summary.pendingWorkouts,
+          completion_rate_past_due: summary.completionRatePastDue,
+          blocks_progression_until_plan_completed: summary.missedPastDueWorkouts > 0,
+        }
+      })()
+    : defaultPlanAdherence()
 
   let exerciseHistorySessions: ExerciseHistorySession[] = []
 
@@ -307,6 +362,7 @@ export async function buildTrainingPlannerContext({
     muscleBalance,
     recentFeedback,
     behaviorSignals: behaviorSignalsSummary,
+    planAdherence: planAdherenceSummary,
   })
 
   return {
@@ -316,6 +372,7 @@ export async function buildTrainingPlannerContext({
     muscle_balance: muscleBalance,
     recent_feedback: recentFeedback,
     behavior_signals: behaviorSignalsSummary,
+    plan_adherence: planAdherenceSummary,
     communication,
     adaptation,
   }
