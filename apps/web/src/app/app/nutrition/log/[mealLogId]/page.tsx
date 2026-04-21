@@ -234,92 +234,9 @@ export default function MealLogResultPage() {
         lede={mealLog.status === 'manual' ? 'To jest wpis ręczny.' : 'To jest zapis z analizy zdjęcia lub ręcznej korekty.'}
       />
 
-      <PageSection
-        number="01 — Akcje"
-        title="Zarządzaj wpisem"
-        description="Możesz poprawić składniki i wartości, jeśli chcesz doprecyzować zapis posiłku."
-      >
-        <Button asChild variant="outline" size="sm" className="gap-1.5 w-full sm:w-auto">
-          <Link href={`/app/nutrition/log/${mealLogId}/edit`}>
-            <Pencil className="h-3.5 w-3.5" />
-            Edytuj posiłek
-          </Link>
-        </Button>
-      </PageSection>
-
-      {mealLog.confidence_score != null && (
-        <PageSection
-          number="02 — Pewność"
-          title="Pewność analizy"
-          description="To tylko wskazówka, jak bardzo pewnie aplikacja rozpoznała składniki."
-        >
-          <Card variant="default" padding="md" className="flex items-center justify-between gap-4">
-            <ConfidenceStars score={mealLog.confidence_score} />
-            <span className="text-body-s text-[var(--fg-secondary)]">pewność analizy</span>
-          </Card>
-        </PageSection>
-      )}
-
-      {hasMacroSummary && (
-        <PageSection
-          number="03 — Wartości"
-          title={mealLog.status === 'manual' ? 'Wartości wpisu' : 'Szacowane wartości'}
-          description={mealLog.status === 'manual' ? 'To są wartości zapisane w ręcznym wpisie.' : 'Zakres pokazuje przybliżone wartości z analizy.'}
-        >
-          <Card variant="default" padding="md">
-            <div className="grid grid-cols-2 gap-2">
-              <MacroRange
-                label="Kalorie"
-                min={mealLog.kcal_estimate_min}
-                max={mealLog.kcal_estimate_max}
-                unit="kcal"
-              />
-              <MacroRange
-                label="Białko"
-                min={mealLog.protein_g_min}
-                max={mealLog.protein_g_max}
-                unit="g"
-              />
-              <MacroRange
-                label="Węgle"
-                min={mealLog.carbs_g_min}
-                max={mealLog.carbs_g_max}
-                unit="g"
-              />
-              <MacroRange
-                label="Tłuszcze"
-                min={mealLog.fat_g_min}
-                max={mealLog.fat_g_max}
-                unit="g"
-              />
-            </div>
-          </Card>
-        </PageSection>
-      )}
-
-      {mealLog.user_warnings && mealLog.user_warnings.length > 0 && (
-        <PageSection
-          number="04 — Uwagi"
-          title="Na co zwrócić uwagę"
-          description="To sygnały, że warto jeszcze raz spojrzeć na rozpoznanie albo ręcznie doprecyzować wpis."
-        >
-          <Card variant="destructive" padding="md">
-            <CardEyebrow className="text-destructive">Uwagi</CardEyebrow>
-            <ul className="mt-3 flex flex-col gap-2">
-              {mealLog.user_warnings.map((w, i) => (
-                <li key={i} className="flex items-start gap-2.5 text-body-m text-foreground">
-                  <AlertTriangle className="mt-1 h-3.5 w-3.5 shrink-0 text-destructive" />
-                  <span>{w}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        </PageSection>
-      )}
-
       {items.length > 0 && (
         <PageSection
-          number="05 — Składniki"
+          number="01 — Składniki"
           title="Rozpoznane składniki"
           description="Tutaj zobaczysz listę produktów rozpoznanych lub wpisanych przy tym posiłku."
         >
@@ -355,9 +272,57 @@ export default function MealLogResultPage() {
         </PageSection>
       )}
 
+      {hasMacroSummary && (
+        <PageSection
+          number="02 — Wartości"
+          title="Szacowane wartości"
+          description={mealLog.status === 'manual' ? 'To są wartości zapisane w ręcznym wpisie.' : 'Zakres pokazuje przybliżone wartości z analizy.'}
+        >
+          <Card variant="default" padding="md">
+            <div className="grid grid-cols-2 gap-2">
+              <MacroRange
+                label="Kalorie"
+                min={mealLog.kcal_estimate_min}
+                max={mealLog.kcal_estimate_max}
+                unit="kcal"
+              />
+              <MacroRange
+                label="Białko"
+                min={mealLog.protein_g_min}
+                max={mealLog.protein_g_max}
+                unit="g"
+              />
+              <MacroRange
+                label="Węgle"
+                min={mealLog.carbs_g_min}
+                max={mealLog.carbs_g_max}
+                unit="g"
+              />
+              <MacroRange
+                label="Tłuszcze"
+                min={mealLog.fat_g_min}
+                max={mealLog.fat_g_max}
+                unit="g"
+              />
+            </div>
+          </Card>
+        </PageSection>
+      )}
+
+      {mealLog.confidence_score != null && (
+        <PageSection
+          number="03 — Pewność"
+          title="Ocena pewności analizy"
+        >
+          <Card variant="default" padding="md" className="flex items-center justify-center">
+            <ConfidenceStars score={mealLog.confidence_score} />
+          </Card>
+        </PageSection>
+      )}
+
       {mealLog.note && (
         <PageSection
-          number="06 — Notatka"
+          number="04 — Notatka"
           title="Dodatkowy kontekst"
           description="To notatka dodana przy zapisywaniu posiłku."
         >
@@ -368,8 +333,11 @@ export default function MealLogResultPage() {
         </PageSection>
       )}
 
-      <Button asChild variant="outline" className="w-full sm:w-auto">
-        <Link href="/app/nutrition">Zobacz podsumowanie jedzenia</Link>
+      <Button asChild variant="outline" className="w-full gap-1.5 sm:w-auto">
+        <Link href={`/app/nutrition/log/${mealLogId}/edit`}>
+          <Pencil className="h-3.5 w-3.5" />
+          Edytuj posiłek
+        </Link>
       </Button>
     </div>
   )
