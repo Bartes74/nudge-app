@@ -44,11 +44,10 @@ export default function MealPhotoPage() {
     setError(null)
 
     try {
-      const compressed = await compressImage(file)
-      const compressedFile = new File([compressed], file.name, { type: 'image/jpeg' })
+      const preparedFile = await compressImage(file)
 
       const formData = new FormData()
-      formData.append('photo', compressedFile)
+      formData.append('photo', preparedFile)
       if (note.trim()) formData.append('note', note.trim())
 
       const res = await fetch('/api/meal/photo', {
@@ -75,8 +74,11 @@ export default function MealPhotoPage() {
 
       const { meal_log_id } = await res.json() as { meal_log_id: string }
       router.push(`/app/nutrition/log/${meal_log_id}`)
-    } catch {
-      const message = 'Wystąpił błąd podczas przesyłania'
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : 'Wystąpił błąd podczas przesyłania'
       setError(message)
       toast.error(message)
     } finally {

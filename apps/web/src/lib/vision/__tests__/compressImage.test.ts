@@ -1,19 +1,29 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-// compressImage uses browser APIs — we mock them in jsdom
 describe('compressImage', () => {
-  const MAX_DIMENSION = 512
+  const MAX_DIMENSION = 1600
 
-  function makeImageMock(width: number, height: number) {
+  function makeImageMock(
+    width: number,
+    height: number,
+    options?: { fail?: boolean },
+  ) {
     return {
       onload: null as (() => void) | null,
       onerror: null as (() => void) | null,
       width,
       height,
+      naturalWidth: width,
+      naturalHeight: height,
       set src(_: string) {
-        // Trigger onload synchronously
-        setTimeout(() => this.onload?.(), 0)
+        setTimeout(() => {
+          if (options?.fail) {
+            this.onerror?.()
+            return
+          }
+          this.onload?.()
+        }, 0)
       },
     }
   }
@@ -25,23 +35,21 @@ describe('compressImage', () => {
       getContext: vi.fn().mockReturnValue({
         drawImage: vi.fn(),
       }),
-      toBlob: vi.fn(
-        (cb: (blob: Blob | null) => void) => {
-          cb(resultBlob)
-        },
-      ),
+      toBlob: vi.fn((cb: (blob: Blob | null) => void) => {
+        cb(resultBlob)
+      }),
     }
   }
 
   beforeEach(() => {
     vi.restoreAllMocks()
-    // jsdom does not implement createObjectURL / revokeObjectURL
     URL.createObjectURL = vi.fn().mockReturnValue('blob:mock')
     URL.revokeObjectURL = vi.fn()
+    vi.stubGlobal('createImageBitmap', undefined)
   })
 
-  it('scales down an image wider than 512px', async () => {
-    const imgMock = makeImageMock(1024, 768)
+  it('scales down an image wider than 1600px', async () => {
+    const imgMock = makeImageMock(3200, 2400)
     const canvasMock = makeCanvasMock(new Blob(['img'], { type: 'image/jpeg' }))
 
     vi.spyOn(global, 'Image' as never).mockImplementation(() => imgMock as never)
@@ -53,36 +61,35 @@ describe('compressImage', () => {
     const { compressImage } = await import('../compressImage')
     const result = await compressImage(new File(['data'], 'meal.jpg', { type: 'image/jpeg' }))
 
-    expect(result).toBeInstanceOf(Blob)
+    expect(result).toBeInstanceOf(File)
 
-    const ratio = Math.min(MAX_DIMENSION / 1024, MAX_DIMENSION / 768)
-    expect(canvasMock.width).toBe(Math.round(1024 * ratio))
-    expect(canvasMock.height).toBe(Math.round(768 * ratio))
+    const ratio = Math.min(MAX_DIMENSION / 3200, MAX_DIMENSION / 2400)
+    expect(canvasMock.width).toBe(Math.round(3200 * ratio))
+    expect(canvasMock.height).toBe(Math.round(2400 * ratio))
     expect(canvasMock.width).toBeLessThanOrEqual(MAX_DIMENSION)
     expect(canvasMock.height).toBeLessThanOrEqual(MAX_DIMENSION)
   })
 
-  it('does not upscale an image smaller than 512px', async () => {
+  it('keeps a small supported image without recompressing', async () => {
     const imgMock = makeImageMock(300, 200)
-    const canvasMock = makeCanvasMock(new Blob(['img'], { type: 'image/jpeg' }))
+    const sourceFile = new File(['data'], 'small.jpg', { type: 'image/jpeg' })
 
     vi.spyOn(global, 'Image' as never).mockImplementation(() => imgMock as never)
-    vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
-      if (tag === 'canvas') return canvasMock as unknown as HTMLCanvasElement
-      return document.createElement(tag)
-    })
 
     const { compressImage } = await import('../compressImage')
-    const result = await compressImage(new File(['data'], 'small.jpg', { type: 'image/jpeg' }))
+    const result = await compressImage(sourceFile)
 
-    expect(result).toBeInstanceOf(Blob)
-    expect(canvasMock.width).toBe(300)
-    expect(canvasMock.height).toBe(200)
+    expect(result).toBe(sourceFile)
   })
 
-  it('rejects when toBlob returns null', async () => {
-    const imgMock = makeImageMock(100, 100)
+  it('rejects when toBlob returns null for a large image', async () => {
+    const imgMock = makeImageMock(3000, 2000)
     const canvasMock = makeCanvasMock(null)
+    const oversizedFile = new File(
+      [new Uint8Array(16 * 1024 * 1024)],
+      'broken.jpg',
+      { type: 'image/jpeg' },
+    )
 
     vi.spyOn(global, 'Image' as never).mockImplementation(() => imgMock as never)
     vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
@@ -92,7 +99,38 @@ describe('compressImage', () => {
 
     const { compressImage } = await import('../compressImage')
     await expect(
-      compressImage(new File(['data'], 'broken.jpg', { type: 'image/jpeg' })),
-    ).rejects.toThrow('Canvas toBlob returned null')
+      compressImage(oversizedFile),
+    ).rejects.toThrow(
+      'Nie udało się przygotować tego zdjęcia na telefonie. Wybierz inne albo zapisz je wcześniej jako JPG lub PNG.',
+    )
+  })
+
+  it('falls back to the original file when decoding fails but upload size is acceptable', async () => {
+    let imageCalls = 0
+    const sourceFile = new File(['data'], 'meal.heic', { type: 'image/heic' })
+
+    vi.spyOn(global, 'Image' as never).mockImplementation(() => {
+      imageCalls += 1
+      return makeImageMock(0, 0, { fail: true }) as never
+    })
+
+    class FileReaderMock {
+      result: string | ArrayBuffer | null = null
+      onload: null | (() => void) = null
+      onerror: null | (() => void) = null
+
+      readAsDataURL() {
+        this.result = 'data:image/heic;base64,AAAA'
+        setTimeout(() => this.onload?.(), 0)
+      }
+    }
+
+    vi.stubGlobal('FileReader', FileReaderMock)
+
+    const { compressImage } = await import('../compressImage')
+    const result = await compressImage(sourceFile)
+
+    expect(imageCalls).toBe(2)
+    expect(result).toBe(sourceFile)
   })
 })
