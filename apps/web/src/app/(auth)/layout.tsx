@@ -23,7 +23,8 @@ export default function AuthLayout({
               <NudgeLogo className="h-[28px] w-auto" priority />
             </span>
             <span className="ds-sidebar__brand-sub text-center">
-              Adaptacyjny AI coach treningowo-żywieniowy
+              <span className="block">Adaptacyjny AI coach</span>
+              <span className="block">treningowo - żywieniowy</span>
             </span>
           </span>
         </Link>

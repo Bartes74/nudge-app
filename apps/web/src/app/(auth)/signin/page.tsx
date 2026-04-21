@@ -16,13 +16,12 @@ export default function SignInPage({
         eyebrow="Logowanie"
         titleEmphasis="Witaj"
         titleMain="z powrotem."
-        lede="Zaloguj się, żeby wrócić do swojego planu."
         className="!border-b-0 !py-0 text-center"
       />
 
       <PageSection
         number="01 — Konto"
-        title="Zaloguj się"
+        title={<span className="font-sans text-[28px] font-medium tracking-tight md:text-[32px]">Zaloguj się</span>}
         description="Użyj adresu e-mail i hasła przypisanego do konta."
         className="!border-b-0 !py-0 [&_.ds-section__desc]:mt-2 [&_.ds-section__header]:mb-4 [&_.ds-section__title]:mt-0"
       >
