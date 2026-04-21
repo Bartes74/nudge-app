@@ -11,7 +11,7 @@ const buttonVariants = cva(
         default:
           "border-transparent bg-[var(--action-primary-bg)] text-[var(--action-primary-fg)]",
         success:
-          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)]',
+          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)] shadow-[0_10px_28px_-18px_var(--sage-700)]',
         destructive:
           'border-transparent bg-[var(--clay-500)] text-[var(--oatmeal-50)]',
         outline:
@@ -23,11 +23,11 @@ const buttonVariants = cva(
         link:
           'border-transparent bg-transparent px-0 text-[var(--fg-primary)] underline-offset-4 hover:underline',
         sage:
-          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)]',
+          'border-transparent bg-[var(--sage-700)] text-[var(--oatmeal-50)] shadow-[0_10px_28px_-18px_var(--sage-700)]',
         copper:
-          'border-transparent bg-[var(--copper-500)] text-white',
+          'border-transparent bg-[var(--copper-500)] text-white shadow-[0_10px_28px_-18px_var(--copper-500)]',
         subtle:
-          'border-transparent bg-[var(--bg-inset)] text-[var(--fg-primary)]',
+          'border-[var(--border-accent)] bg-[var(--bg-accent-sage-soft)] text-[var(--fg-accent-sage)]',
       },
       size: {
         default: 'h-[42px] rounded-[var(--radius-md)] px-[18px] py-[10px] text-[14px]',

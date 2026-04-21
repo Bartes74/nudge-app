@@ -17,19 +17,19 @@
     --oatmeal-100: #f7f4f0;
     --oatmeal-200: #efebe4;
 
-    --sage-900: #3c4a3a;
-    --sage-700: #5d6e58;
-    --sage-500: #8a9a86;
-    --sage-300: #b9c5b4;
-    --sage-100: #e4eadf;
-    --sage-50: #f1f4ed;
+    --sage-900: #2f5637;
+    --sage-700: #4f7d59;
+    --sage-500: #74a17d;
+    --sage-300: #a9c6ae;
+    --sage-100: #e0ecdf;
+    --sage-50: #eef6ed;
 
-    --copper-900: #5e3a1a;
-    --copper-700: #8a5527;
-    --copper-500: #b87333;
-    --copper-300: #d8a472;
-    --copper-100: #f0dec5;
-    --copper-50: #f9f0e1;
+    --copper-900: #6b3c16;
+    --copper-700: #9b5922;
+    --copper-500: #c77936;
+    --copper-300: #dea474;
+    --copper-100: #f3dfcb;
+    --copper-50: #fbf2e8;
 
     --clay-500: #b8553a;
     --slate-500: #4a5568;
@@ -39,6 +39,8 @@
     --bg-elevated: #ffffff;
     --bg-inset: var(--oatmeal-200);
     --bg-inverted: var(--obsidian-900);
+    --bg-accent-sage-soft: #e8f1e6;
+    --bg-accent-copper-soft: #f7ecdf;
 
     --fg-primary: var(--obsidian-900);
     --fg-secondary: var(--obsidian-500);
@@ -49,15 +51,15 @@
 
     --border-subtle: var(--obsidian-100);
     --border-strong: var(--obsidian-500);
-    --border-accent: var(--sage-300);
+    --border-accent: var(--sage-500);
 
     --action-primary-bg: var(--obsidian-900);
     --action-primary-fg: var(--oatmeal-100);
     --action-secondary-bg: transparent;
     --action-secondary-fg: var(--obsidian-900);
 
-    --status-success: var(--sage-500);
-    --status-premium: var(--copper-500);
+    --status-success: var(--sage-700);
+    --status-premium: var(--copper-700);
     --status-caution: var(--clay-500);
     --status-info: var(--slate-500);
 
@@ -138,17 +140,19 @@
     --bg-elevated: var(--obsidian-700);
     --bg-inset: #141414;
     --bg-inverted: var(--oatmeal-100);
+    --bg-accent-sage-soft: #162019;
+    --bg-accent-copper-soft: #271c13;
 
     --fg-primary: var(--oatmeal-100);
     --fg-secondary: #a7a39c;
     --fg-tertiary: #6e6a64;
     --fg-inverted: var(--obsidian-900);
-    --fg-accent-sage: var(--sage-300);
-    --fg-accent-copper: var(--copper-300);
+    --fg-accent-sage: var(--sage-500);
+    --fg-accent-copper: var(--copper-500);
 
     --border-subtle: #2a2a2a;
     --border-strong: #5a5a5a;
-    --border-accent: var(--sage-700);
+    --border-accent: var(--sage-500);
 
     --action-primary-bg: var(--oatmeal-100);
     --action-primary-fg: var(--obsidian-900);

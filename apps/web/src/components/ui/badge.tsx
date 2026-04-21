@@ -9,10 +9,13 @@ const badgeVariants = cva(
       variant: {
         default: 'border-[var(--border-subtle)] bg-[var(--bg-inset)] text-[var(--fg-secondary)]',
         secondary: 'border-[var(--border-subtle)] bg-[var(--bg-inset)] text-[var(--fg-secondary)]',
-        destructive: 'border-[var(--copper-100)] bg-[var(--copper-50)] text-[var(--copper-900)]',
+        destructive:
+          'border-[var(--copper-300)] bg-[var(--bg-accent-copper-soft)] text-[var(--copper-900)]',
         outline: 'border-[var(--border-strong)] bg-transparent text-[var(--fg-primary)]',
-        brand: 'border-[var(--copper-100)] bg-[var(--copper-50)] text-[var(--copper-900)]',
-        success: 'border-[var(--sage-100)] bg-[var(--sage-50)] text-[var(--sage-900)]',
+        brand:
+          'border-[var(--copper-300)] bg-[var(--bg-accent-copper-soft)] text-[var(--fg-accent-copper)]',
+        success:
+          'border-[var(--border-accent)] bg-[var(--bg-accent-sage-soft)] text-[var(--fg-accent-sage)]',
         'outline-warm': 'border-[var(--border-subtle)] bg-[var(--bg-inset)] text-[var(--fg-secondary)]',
         label: 'border-transparent bg-transparent px-0 py-0 ds-label',
         dark: 'border-[var(--obsidian-700)] bg-[var(--obsidian-900)] text-[var(--oatmeal-100)]',
