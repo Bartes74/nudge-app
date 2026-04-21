@@ -11,19 +11,20 @@ export default function SignInPage({
   searchParams: Promise<{ redirectTo?: string; deleted?: string }>
 }) {
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-4 md:gap-12">
       <PageHero
         eyebrow="Logowanie"
         titleEmphasis="Witaj"
         titleMain="z powrotem."
         lede="Zaloguj się, żeby wrócić do swojego planu."
-        className="text-center"
+        className="!border-b-0 !py-0 text-center"
       />
 
       <PageSection
         number="01 — Konto"
         title="Zaloguj się"
         description="Użyj adresu e-mail i hasła przypisanego do konta."
+        className="!border-b-0 !py-0 [&_.ds-section__desc]:mt-2 [&_.ds-section__header]:mb-4 [&_.ds-section__title]:mt-0"
       >
         <SignInForm searchParams={searchParams} />
       </PageSection>
