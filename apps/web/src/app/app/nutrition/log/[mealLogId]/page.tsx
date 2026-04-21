@@ -113,38 +113,42 @@ export default function MealLogResultPage() {
 
     async function fetchLog() {
       try {
-        const res = await fetch(`/api/meal/${mealLogId}`)
+        const res = await fetch(`/api/meal/${mealLogId}`, {
+          cache: 'no-store',
+        })
         if (!res.ok) {
           setError('Nie znaleziono wpisu')
-          return
+          return false
         }
         const { mealLog: data } = await res.json() as { mealLog: MealLog }
         if (!cancelled) {
           setMealLog(data)
           if (data.status !== 'pending_analysis' && intervalId) {
             clearInterval(intervalId)
+            intervalId = null
           }
         }
+        return data.status === 'pending_analysis'
       } catch {
         if (!cancelled) setError('Błąd wczytywania')
+        return false
       }
     }
 
     void fetchLog()
 
     intervalId = setInterval(() => {
-      if (mealLog?.status !== 'pending_analysis') {
-        if (intervalId) clearInterval(intervalId)
-        return
-      }
-      void fetchLog()
+      void fetchLog().then((shouldContinuePolling) => {
+        if (shouldContinuePolling || !intervalId) return
+        clearInterval(intervalId)
+        intervalId = null
+      })
     }, 3000)
 
     return () => {
       cancelled = true
       if (intervalId) clearInterval(intervalId)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mealLogId])
 
   if (error) {
