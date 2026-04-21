@@ -4,8 +4,10 @@ import withPWAInit from '@ducanh2912/next-pwa'
 
 const withPWA = withPWAInit({
   dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  // Keep PWA shell/caches, but avoid overly aggressive client navigation caching.
+  // Installed iOS PWAs were prone to holding onto stale route bundles across deploys.
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
   reloadOnOnline: true,
   swcMinify: true,
   // Disable SW in dev to avoid stale cache confusion
