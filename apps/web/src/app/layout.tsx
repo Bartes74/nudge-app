@@ -1,42 +1,18 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono, Lora, Playfair_Display } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { PostHogProvider } from '@/components/providers/PostHogProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { I18nProvider } from '@/components/providers/I18nProvider'
 import { cn } from '@/lib/utils'
 import { env } from '@/lib/env'
+import {
+  fontDisplay,
+  fontEditorial,
+  fontMono,
+  fontSans,
+  fontWordmarkSans,
+} from '@/lib/fonts'
 import './globals.css'
-
-const fontDisplay = Playfair_Display({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500'],
-  style: ['normal', 'italic'],
-  variable: '--font-display',
-  display: 'swap',
-})
-
-const fontEditorial = Lora({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500'],
-  style: ['normal', 'italic'],
-  variable: '--font-editorial',
-  display: 'swap',
-})
-
-const fontSans = Inter({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
-  display: 'swap',
-})
-
-const fontMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['500'],
-  variable: '--font-mono',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: {
@@ -88,6 +64,7 @@ export default function RootLayout({
         fontDisplay.variable,
         fontEditorial.variable,
         fontMono.variable,
+        fontWordmarkSans.variable,
       )}
     >
       <body>

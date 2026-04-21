@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { NudgeWordmark } from '@/components/layout/NudgeWordmark'
 
 export const metadata: Metadata = {
   title: {
@@ -18,7 +19,9 @@ export default function AuthLayout({
       <div className="w-full max-w-md">
         <Link href="/" className="mb-10 flex justify-center">
           <span className="inline-flex flex-col items-center gap-1">
-            <span className="ds-sidebar__brand-mark">Nudge</span>
+            <span className="ds-sidebar__brand-mark">
+              <NudgeWordmark />
+            </span>
             <span className="ds-sidebar__brand-sub">Adaptacyjny AI coach treningowo-żywieniowy</span>
           </span>
         </Link>

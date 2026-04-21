@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
+import { NudgeWordmark } from '@/components/layout/NudgeWordmark'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { AppUserRole } from '@/lib/auth/roles'
 import { cn } from '@/lib/utils'
@@ -65,10 +66,9 @@ export function TopBar({ userEmail, avatarUrl, title, role = 'user' }: Props) {
       <Link
         href="/app"
         aria-label="Nudge — strona główna"
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-baseline gap-0 text-foreground transition-opacity hover:opacity-80"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground transition-opacity hover:opacity-80"
       >
-        <span className="font-display text-2xl italic leading-none tracking-tight">N</span>
-        <span className="font-sans text-xl font-semibold leading-none tracking-tight">udge</span>
+        <NudgeWordmark className="text-[20px]" />
       </Link>
 
       {title && (

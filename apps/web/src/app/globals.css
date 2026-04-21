@@ -236,10 +236,14 @@
   }
 
   .ds-sidebar__brand-mark {
-    font-family: var(--font-display);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0;
     font-size: 22px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
+    line-height: 1;
+    letter-spacing: 0;
+    color: var(--fg-primary);
+    text-decoration: none;
   }
 
   .ds-sidebar__brand-sub {
