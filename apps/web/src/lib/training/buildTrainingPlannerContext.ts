@@ -192,6 +192,7 @@ export async function buildTrainingPlannerContext({
   const { data: activePlan } = await supabase
     .from('training_plans')
     .select(`
+      id,
       current_version:training_plan_versions!training_plans_current_version_fk (
         workouts:plan_workouts ( id, day_label, order_in_week )
       )
@@ -206,19 +207,36 @@ export async function buildTrainingPlannerContext({
       workouts?: Array<{ id: string; day_label: string; order_in_week: number }> | null
     } | null)?.workouts ?? []
 
-  const activePlanWorkoutIds = activePlanWorkouts.map((workout) => workout.id)
+  const { data: activePlanVersionRows } = activePlan?.id
+    ? await supabase
+        .from('training_plan_versions')
+        .select('id')
+        .eq('plan_id', activePlan.id)
+    : { data: [] as Array<{ id: string }> }
 
-  const { data: activePlanWorkoutLogs } = activePlanWorkoutIds.length > 0
+  const activePlanVersionIds = (activePlanVersionRows ?? []).map((version) => version.id)
+  const { data: activePlanWorkoutHistory } = activePlanVersionIds.length > 0
+    ? await supabase
+        .from('plan_workouts')
+        .select('id, order_in_week')
+        .in('plan_version_id', activePlanVersionIds)
+    : { data: [] as Array<{ id: string; order_in_week: number }> }
+
+  const activePlanHistoryWorkoutIds = (activePlanWorkoutHistory ?? []).map((workout) => workout.id)
+
+  const { data: activePlanWorkoutLogs } = activePlanHistoryWorkoutIds.length > 0
     ? await supabase
         .from('workout_logs')
         .select('plan_workout_id, ended_at, overall_rating')
         .eq('user_id', userId)
-        .in('plan_workout_id', activePlanWorkoutIds)
+        .in('plan_workout_id', activePlanHistoryWorkoutIds)
     : { data: [] as Array<Pick<Database['public']['Tables']['workout_logs']['Row'], 'plan_workout_id' | 'ended_at' | 'overall_rating'>> }
 
   const planAdherenceSummary = activePlanWorkouts.length > 0
     ? (() => {
-        const summary = summarizeWeekWorkoutStatuses(activePlanWorkouts, activePlanWorkoutLogs ?? [])
+        const summary = summarizeWeekWorkoutStatuses(activePlanWorkouts, activePlanWorkoutLogs ?? [], {
+          historicalWorkouts: activePlanWorkoutHistory ?? activePlanWorkouts,
+        })
         return {
           current_day_label: summary.currentDayLabel,
           past_due_workouts: summary.pastDueWorkouts,

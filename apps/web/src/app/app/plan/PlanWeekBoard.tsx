@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Reorder, useDragControls } from 'framer-motion'
 import {
@@ -10,8 +10,6 @@ import {
   Clock,
   GripVertical,
   Info,
-  RotateCcw,
-  Save,
   TriangleAlert,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -73,6 +71,13 @@ function buildWeekItems(workouts: PlanWorkout[]): WeekItem[] {
 
 function weekSignature(items: WeekItem[]): string {
   return items.map((item) => item.workout?.id ?? 'rest').join('|')
+}
+
+function toAssignments(items: WeekItem[]) {
+  return DAY_ORDER.map((dayLabel, index) => ({
+    dayLabel,
+    workoutId: items[index]?.workout?.id ?? null,
+  }))
 }
 
 function DayRow({
@@ -205,6 +210,11 @@ export function PlanWeekBoard({
   const [items, setItems] = useState<WeekItem[]>(() => buildWeekItems(version.workouts))
   const [initialItems, setInitialItems] = useState<WeekItem[]>(() => buildWeekItems(version.workouts))
   const [isSaving, setIsSaving] = useState(false)
+  const latestItemsRef = useRef(items)
+
+  useEffect(() => {
+    latestItemsRef.current = items
+  }, [items])
 
   useEffect(() => {
     const nextItems = buildWeekItems(version.workouts)
@@ -233,19 +243,14 @@ export function PlanWeekBoard({
       ? guidedWeekExplanation(version.adaptation_phase ?? null)
       : null
 
-  async function handleSave(): Promise<void> {
-    if (!isDirty) return
-
+  const persistItems = useCallback(async (nextItems: WeekItem[]): Promise<void> => {
     setIsSaving(true)
     try {
       const res = await fetch('/api/plan/training/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          assignments: DAY_ORDER.map((dayLabel, index) => ({
-            dayLabel,
-            workoutId: items[index]?.workout?.id ?? null,
-          })),
+          assignments: toAssignments(nextItems),
         }),
       })
 
@@ -256,18 +261,26 @@ export function PlanWeekBoard({
 
       toast.success('Zapisaliśmy nowy układ tygodnia.')
       if (result.warning) toast.message(result.warning)
-      setInitialItems(items)
+      setInitialItems(nextItems)
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Nie udało się zapisać zmian.')
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [router])
 
-  function handleReset(): void {
-    setItems(initialItems)
-  }
+  useEffect(() => {
+    if (!isDirty || isSaving) return
+
+    const timeoutId = window.setTimeout(() => {
+      const latestItems = latestItemsRef.current
+      if (weekSignature(latestItems) === weekSignature(initialItems)) return
+      void persistItems(latestItems)
+    }, 700)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [initialItems, isDirty, isSaving, items, persistItems])
 
   return (
     <>
@@ -333,7 +346,7 @@ export function PlanWeekBoard({
         </div>
       </section>
 
-      {(isDirty || streakWarning) && (
+      {(isSaving || streakWarning) && (
         <Card
           variant={streakWarning ? 'destructive' : 'recessed'}
           padding="md"
@@ -347,34 +360,11 @@ export function PlanWeekBoard({
             )}
             <div className="flex flex-1 flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <CardEyebrow>{streakWarning ? 'Regeneracja' : 'Zmiany w tygodniu'}</CardEyebrow>
+                <CardEyebrow>{streakWarning ? 'Regeneracja' : 'Zapisywanie'}</CardEyebrow>
                 <p className="text-body-m leading-relaxed text-foreground">
-                  {streakWarning ?? 'Możesz zapisać nowy układ tygodnia, jeśli ten rozkład będzie dla Ciebie wygodniejszy.'}
+                  {streakWarning ?? 'Zapisujemy nowy układ tygodnia automatycznie po każdej zmianie.'}
                 </p>
               </div>
-              {isDirty && (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => void handleSave()}
-                    isLoading={isSaving}
-                  >
-                    {!isSaving && <Save className="h-4 w-4" />}
-                    Zapisz układ tygodnia
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={isSaving}
-                    onClick={handleReset}
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Cofnij
-                  </Button>
-                </div>
-              )}
             </div>
           </div>
         </Card>

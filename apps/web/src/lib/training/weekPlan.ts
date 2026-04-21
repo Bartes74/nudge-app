@@ -51,6 +51,12 @@ type WeekAssignmentLike = {
 type PlanWorkoutStatusLike = {
   id: string
   day_label: string
+  order_in_week: number
+}
+
+type HistoricalPlanWorkoutLike = {
+  id: string
+  order_in_week: number
 }
 
 type WorkoutLogStatusLike = {
@@ -105,14 +111,25 @@ export function hasDayPassed(
 }
 
 export function summarizeWeekWorkoutStatuses(
-  workouts: PlanWorkoutStatusLike[],
-  logs: WorkoutLogStatusLike[],
-  currentDayLabel: DayLabel = currentDayLabelInTimezone(),
+  workouts: readonly PlanWorkoutStatusLike[],
+  logs: readonly WorkoutLogStatusLike[],
+  options: {
+    currentDayLabel?: DayLabel
+    historicalWorkouts?: readonly HistoricalPlanWorkoutLike[]
+  } = {},
 ): WeekWorkoutStatusSummary {
-  const completedWorkoutIds = new Set(
+  const currentDayLabel = options.currentDayLabel ?? currentDayLabelInTimezone()
+  const historicalWorkouts = options.historicalWorkouts ?? workouts
+
+  const workoutOrderById = new Map(
+    historicalWorkouts.map((workout) => [workout.id, workout.order_in_week]),
+  )
+
+  const completedWorkoutOrders = new Set(
     logs
       .filter((log) => log.plan_workout_id && log.ended_at != null && log.overall_rating != null)
-      .map((log) => log.plan_workout_id as string),
+      .map((log) => workoutOrderById.get(log.plan_workout_id as string))
+      .filter((orderInWeek): orderInWeek is number => typeof orderInWeek === 'number'),
   )
 
   let pastDueWorkouts = 0
@@ -127,7 +144,7 @@ export function summarizeWeekWorkoutStatuses(
     if (hasDayPassed(workout.day_label, currentDayLabel)) {
       pastDueWorkouts += 1
 
-      if (completedWorkoutIds.has(workout.id)) {
+      if (completedWorkoutOrders.has(workout.order_in_week)) {
         completedPastDueWorkouts += 1
         statusByWorkoutId[workout.id] = 'completed'
       } else {

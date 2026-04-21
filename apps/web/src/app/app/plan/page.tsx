@@ -53,18 +53,38 @@ export default async function PlanPage() {
 
   let workoutStatusById: Record<string, PlanWorkoutVisualStatus> = {}
 
-  if (version?.workouts.length) {
-    const workoutIds = version.workouts.map((workout) => workout.id)
-    const { data: workoutLogs } = await supabase
-      .from('workout_logs')
-      .select('plan_workout_id, ended_at, overall_rating')
-      .eq('user_id', user!.id)
-      .in('plan_workout_id', workoutIds)
+  if (plan && version?.workouts.length) {
+    const { data: planVersions } = await supabase
+      .from('training_plan_versions')
+      .select('id')
+      .eq('plan_id', plan.id)
 
-    workoutStatusById = summarizeWeekWorkoutStatuses(
-      version.workouts,
-      workoutLogs ?? [],
-    ).statusByWorkoutId
+    const planVersionIds = (planVersions ?? []).map((entry) => entry.id)
+    const { data: planWorkoutHistory } = planVersionIds.length > 0
+      ? await supabase
+          .from('plan_workouts')
+          .select('id, order_in_week')
+          .in('plan_version_id', planVersionIds)
+      : { data: [] as Array<{ id: string; order_in_week: number }> }
+
+    const historyWorkoutIds = (planWorkoutHistory ?? []).map((workout) => workout.id)
+    const { data: workoutLogs } = historyWorkoutIds.length > 0
+      ? await supabase
+          .from('workout_logs')
+          .select('plan_workout_id, ended_at, overall_rating')
+          .eq('user_id', user!.id)
+          .in('plan_workout_id', historyWorkoutIds)
+      : {
+          data: [] as Array<{
+            plan_workout_id: string | null
+            ended_at: string | null
+            overall_rating: number | null
+          }>,
+        }
+
+    workoutStatusById = summarizeWeekWorkoutStatuses(version.workouts, workoutLogs ?? [], {
+      historicalWorkouts: planWorkoutHistory ?? version.workouts,
+    }).statusByWorkoutId
   }
 
   if (!version) {
