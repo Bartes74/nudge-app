@@ -3,10 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { dispatchInngestEvent } from '@/lib/inngest/dispatchEvent'
 import { env } from '@/lib/env'
+import {
+  markMealPhotoAnalysisFailed,
+  mealPhotoServiceClient,
+  runMealPhotoAnalysis,
+} from '@/lib/nutrition/analyzeMealPhotoTask'
 
 const RATE_LIMIT_PER_DAY = 6
 const MEAL_ANALYSIS_START_ERROR =
   'Nie udało się uruchomić analizy zdjęcia. Spróbuj ponownie za chwilę.'
+
+function shouldRunMealPhotoInline() {
+  return env.NODE_ENV === 'development' && env.INNGEST_EVENT_KEY === 'local'
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
   const supabase = await createClient()
@@ -98,6 +107,33 @@ export async function POST(request: Request): Promise<NextResponse> {
     user_id: user.id,
     storage_path: storagePath,
   })
+
+  if (shouldRunMealPhotoInline()) {
+    const serviceSupabase = mealPhotoServiceClient()
+
+    try {
+      await runMealPhotoAnalysis({
+        mealLogId: mealLog.id,
+        userId: user.id,
+        storagePath,
+        note: noteText,
+        supabase: serviceSupabase,
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : 'Analiza posiłku nie powiodła się.'
+
+      await markMealPhotoAnalysisFailed({
+        supabase: serviceSupabase,
+        mealLogId: mealLog.id,
+        message,
+      })
+    }
+
+    return NextResponse.json({ meal_log_id: mealLog.id }, { status: 202 })
+  }
 
   try {
     await dispatchInngestEvent({

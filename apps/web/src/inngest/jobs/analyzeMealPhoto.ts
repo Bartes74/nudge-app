@@ -1,14 +1,13 @@
-import { createClient } from '@supabase/supabase-js'
 import { inngest } from '../client'
-import { env } from '@/lib/env'
-import { analyzeMealPhoto } from '@nudge/core/vision/analyzeMealPhoto'
-import { logLlmCall } from '@nudge/core/llm/client'
-
-const MONTHLY_COST_ALERT_USD = 5
-
-function serviceClient() {
-  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
-}
+import {
+  analyzeMealPhotoWithLlm,
+  checkMealPhotoBudget,
+  createMealPhotoSignedUrl,
+  loadMealPhotoPromptId,
+  markMealPhotoAnalysisFailed,
+  mealPhotoServiceClient,
+  saveMealPhotoAnalysis,
+} from '@/lib/nutrition/analyzeMealPhotoTask'
 
 export const analyzeMealPhotoJob = inngest.createFunction(
   {
@@ -19,14 +18,12 @@ export const analyzeMealPhotoJob = inngest.createFunction(
     onFailure: async ({ event, error }: { event: { data: { event: { data: Record<string, unknown> } } }; error: Error }) => {
       const { meal_log_id } = event.data.event.data as { meal_log_id: string }
       if (!meal_log_id) return
-      const supabase = serviceClient()
-      await supabase
-        .from('meal_logs')
-        .update({
-          status: 'failed',
-          user_warnings: [error.message ?? 'Analiza posiłku nie powiodła się.'],
-        })
-        .eq('id', meal_log_id)
+      const supabase = mealPhotoServiceClient()
+      await markMealPhotoAnalysisFailed({
+        supabase,
+        mealLogId: meal_log_id,
+        message: error.message ?? 'Analiza posiłku nie powiodła się.',
+      })
     },
   },
   async ({
@@ -43,106 +40,39 @@ export const analyzeMealPhotoJob = inngest.createFunction(
       note: string | null
     }
 
-    const supabase = serviceClient()
+    const supabase = mealPhotoServiceClient()
 
     const imageUrl = await step.run('get-signed-url', async () => {
-      const { data, error } = await supabase.storage
-        .from('meal_photos')
-        .createSignedUrl(storage_path, 300)
-
-      if (error || !data?.signedUrl) {
-        throw new Error(`Failed to create signed URL: ${error?.message}`)
-      }
-
-      return data.signedUrl
+      return createMealPhotoSignedUrl({
+        supabase,
+        storagePath: storage_path,
+      })
     })
 
-    const promptData = await step.run('load-prompt', async () => {
-      const { data } = await supabase
-        .from('prompts')
-        .select('id')
-        .eq('slug', 'meal_vision_analysis')
-        .eq('version', 1)
-        .eq('deprecated', false)
-        .maybeSingle()
-      return data
-    })
+    const promptId = await step.run('load-prompt', async () => loadMealPhotoPromptId({ supabase }))
 
     const { analysis, llmCallId } = await step.run('call-llm', async () => {
-      const result = await analyzeMealPhoto({
-        apiKey: env.OPENAI_API_KEY,
-        imageUrl,
-        note: note ?? undefined,
-      })
-
-      const llmCallId = await logLlmCall({
+      return analyzeMealPhotoWithLlm({
         supabase,
         userId: user_id,
-        meta: result.meta,
-        promptId: promptData?.id ?? null,
-        promptVersion: 1,
+        imageUrl,
+        note: note ?? null,
+        promptId,
       })
-
-      return { analysis: result.output, llmCallId }
     })
 
     await step.run('save-results', async () => {
-      await supabase
-        .from('meal_logs')
-        .update({
-          status: 'analyzed',
-          meal_type: analysis.meal_type_guess,
-          kcal_estimate_min: Math.round(analysis.kcal_estimate_min),
-          kcal_estimate_max: Math.round(analysis.kcal_estimate_max),
-          protein_g_min: analysis.protein_g_min,
-          protein_g_max: analysis.protein_g_max,
-          carbs_g_min: analysis.carbs_g_min,
-          carbs_g_max: analysis.carbs_g_max,
-          fat_g_min: analysis.fat_g_min,
-          fat_g_max: analysis.fat_g_max,
-          confidence_score: analysis.confidence_score,
-          user_warnings: analysis.user_warnings,
-          llm_call_id: llmCallId,
-        })
-        .eq('id', meal_log_id)
-
-      if (analysis.ingredients_detected.length > 0) {
-        await supabase.from('meal_log_items').insert(
-          analysis.ingredients_detected.map((ing) => ({
-            meal_log_id,
-            user_id,
-            label: ing.label,
-            portion_estimate: ing.portion_estimate,
-            grams_estimate: ing.grams_estimate,
-            kcal_estimate: Math.round(ing.kcal_estimate),
-            protein_g: ing.protein_g,
-            carbs_g: ing.carbs_g,
-            fat_g: ing.fat_g,
-          })),
-        )
-      }
+      await saveMealPhotoAnalysis({
+        supabase,
+        mealLogId: meal_log_id,
+        userId: user_id,
+        analysis,
+        llmCallId,
+      })
     })
 
     // Budget alert — log if monthly spend exceeds threshold
-    await step.run('budget-check', async () => {
-      const startOfMonth = new Date()
-      startOfMonth.setDate(1)
-      startOfMonth.setHours(0, 0, 0, 0)
-
-      const { data } = await supabase
-        .from('llm_calls')
-        .select('cost_usd')
-        .eq('user_id', user_id)
-        .gte('created_at', startOfMonth.toISOString())
-
-      const totalCost = (data ?? []).reduce((sum, r) => sum + (r.cost_usd ?? 0), 0)
-
-      if (totalCost > MONTHLY_COST_ALERT_USD) {
-        console.warn(
-          `[budget-alert] user=${user_id} monthly_cost=$${totalCost.toFixed(4)} exceeds $${MONTHLY_COST_ALERT_USD} threshold`,
-        )
-      }
-    })
+    await step.run('budget-check', async () => checkMealPhotoBudget({ supabase, userId: user_id }))
 
     return { success: true, meal_log_id }
   },
