@@ -8,13 +8,24 @@ type NudgeLogoProps = {
 
 export function NudgeLogo({ className, priority = false }: NudgeLogoProps) {
   return (
-    <Image
-      src="/brand/logo.png"
-      alt="Nudge"
-      width={1095}
-      height={327}
-      priority={priority}
-      className={cn('nudge-logo h-auto w-auto', className)}
-    />
+    <span className="inline-flex items-center">
+      <Image
+        src="/brand/logo-light.png"
+        alt="Nudge"
+        width={1150}
+        height={327}
+        priority={priority}
+        className={cn('nudge-logo nudge-logo--light h-auto w-auto', className)}
+      />
+      <Image
+        src="/brand/logo-dark.png"
+        alt=""
+        aria-hidden="true"
+        width={1150}
+        height={327}
+        priority={priority}
+        className={cn('nudge-logo nudge-logo--dark h-auto w-auto', className)}
+      />
+    </span>
   )
 }
