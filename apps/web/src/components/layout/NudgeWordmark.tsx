@@ -13,11 +13,11 @@ export function NudgeWordmark({ className }: NudgeWordmarkProps) {
         className,
       )}
     >
-      <span className={cn(fontDisplay.className, 'text-[1em] font-black italic')}>N</span>
+      <span className={cn(fontDisplay.className, 'text-[1em] font-normal italic')}>N</span>
       <span className={cn(fontWordmarkSans.className, 'text-[1em] font-black')}>u</span>
-      <span className={cn(fontWordmarkSans.className, 'text-[1em] font-bold')}>d</span>
+      <span className={cn(fontWordmarkSans.className, 'text-[1em] font-semibold')}>d</span>
       <span className={cn(fontWordmarkSans.className, 'text-[1em] font-normal')}>g</span>
-      <span className={cn(fontWordmarkSans.className, 'text-[1em] font-thin')}>e</span>
+      <span className={cn(fontWordmarkSans.className, 'text-[1em] font-extralight')}>e</span>
     </span>
   )
 }
