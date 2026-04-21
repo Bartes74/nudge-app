@@ -103,7 +103,7 @@ export default function MealPhotoPage() {
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="ds-card group flex aspect-square w-full max-w-sm flex-col items-center justify-center gap-3 self-center border-dashed bg-[var(--bg-inset)] text-[var(--fg-secondary)] transition-[border-color,background-color,transform] duration-[var(--dur-fast)] ease-premium hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)] active:scale-[0.99]"
+            className="ds-card group flex aspect-square w-full max-w-sm flex-col items-center justify-center gap-3 self-center border-dashed bg-[var(--bg-inset)] text-[var(--fg-secondary)] transition-[border-color,background-color,transform] duration-premium ease-premium hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)] active:scale-[0.99]"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--fg-primary)] text-[var(--bg-canvas)]">
               <Camera className="h-6 w-6" aria-hidden="true" />

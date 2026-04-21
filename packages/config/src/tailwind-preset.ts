@@ -109,6 +109,9 @@ export const nudgeTailwindPreset = {
       transitionTimingFunction: {
         premium: 'var(--ease-soft)',
       },
+      transitionDuration: {
+        premium: 'var(--dur-fast)',
+      },
       boxShadow: {
         xs: 'var(--shadow-xs)',
         sm: 'var(--shadow-sm)',

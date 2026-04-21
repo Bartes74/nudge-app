@@ -21,8 +21,7 @@ export default function SignInPage({
 
       <PageSection
         number="01 — Konto"
-        title={<span className="font-sans text-[28px] font-medium tracking-tight md:text-[32px]">Zaloguj się</span>}
-        description="Użyj adresu e-mail i hasła przypisanego do konta."
+        title={<span className="font-sans text-[22px] font-medium tracking-tight md:text-[26px]">Zaloguj się</span>}
         className="!border-b-0 !py-0 [&_.ds-section__desc]:mt-2 [&_.ds-section__header]:mb-4 [&_.ds-section__title]:mt-0"
       >
         <SignInForm searchParams={searchParams} />
