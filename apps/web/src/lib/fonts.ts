@@ -1,4 +1,4 @@
-import { Inter, JetBrains_Mono, Lora, Outfit, Playfair_Display } from 'next/font/google'
+import { Inter, JetBrains_Mono, Lora, Playfair_Display } from 'next/font/google'
 
 export const fontDisplay = Playfair_Display({
   subsets: ['latin', 'latin-ext'],
@@ -27,12 +27,5 @@ export const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['500'],
   variable: '--font-mono',
-  display: 'swap',
-})
-
-export const fontWordmarkSans = Outfit({
-  subsets: ['latin', 'latin-ext'],
-  weight: ['100', '400', '700', '900'],
-  variable: '--font-wordmark-sans',
   display: 'swap',
 })

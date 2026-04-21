@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
-import { NudgeWordmark } from '@/components/layout/NudgeWordmark'
+import { NudgeLogo } from '@/components/layout/NudgeLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { AppUserRole } from '@/lib/auth/roles'
 import { cn } from '@/lib/utils'
@@ -68,7 +68,7 @@ export function TopBar({ userEmail, avatarUrl, title, role = 'user' }: Props) {
         aria-label="Nudge — strona główna"
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground transition-opacity hover:opacity-80"
       >
-        <NudgeWordmark className="text-[20px]" />
+        <NudgeLogo className="h-[22px] w-auto" priority />
       </Link>
 
       {title && (

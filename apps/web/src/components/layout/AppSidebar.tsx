@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import type { User } from '@supabase/supabase-js'
-import { NudgeWordmark } from '@/components/layout/NudgeWordmark'
+import { NudgeLogo } from '@/components/layout/NudgeLogo'
 import type { AppUserRole } from '@/lib/auth/roles'
 
 const NAV_ITEMS = [
@@ -44,7 +44,7 @@ export function AppSidebar({
     <aside className="ds-sidebar">
       <div className="ds-sidebar__brand">
         <Link href="/app" className="ds-sidebar__brand-mark">
-          <NudgeWordmark />
+          <NudgeLogo className="h-[24px] w-auto" />
         </Link>
         <span className="ds-sidebar__brand-sub">Adaptacyjny AI coach treningowo-żywieniowy</span>
       </div>

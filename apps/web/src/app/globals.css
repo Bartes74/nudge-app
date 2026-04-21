@@ -165,6 +165,15 @@
     --shadow-ambient: 0 30px 80px rgba(0, 0, 0, 0.5);
   }
 
+  .nudge-logo {
+    display: block;
+    filter: brightness(0);
+  }
+
+  [data-theme='dark'] .nudge-logo {
+    filter: brightness(0) invert(1);
+  }
+
   * {
     box-sizing: border-box;
     margin: 0;

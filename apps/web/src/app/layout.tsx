@@ -10,7 +10,6 @@ import {
   fontEditorial,
   fontMono,
   fontSans,
-  fontWordmarkSans,
 } from '@/lib/fonts'
 import './globals.css'
 
@@ -64,7 +63,6 @@ export default function RootLayout({
         fontDisplay.variable,
         fontEditorial.variable,
         fontMono.variable,
-        fontWordmarkSans.variable,
       )}
     >
       <body>
