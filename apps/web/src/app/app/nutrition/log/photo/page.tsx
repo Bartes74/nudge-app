@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Camera, X, Send } from 'lucide-react'
+import { Camera, ImagePlus, X, Send } from 'lucide-react'
 import { PageBackLink, PageHero, PageSection } from '@/components/layout/PageHero'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -15,7 +15,8 @@ export default function MealPhotoPage() {
   const searchParams = useSearchParams()
   const showNote = searchParams.get('note') === '1'
 
-  const inputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [note, setNote] = useState('')
@@ -33,7 +34,8 @@ export default function MealPhotoPage() {
     setFile(null)
     if (preview) URL.revokeObjectURL(preview)
     setPreview(null)
-    if (inputRef.current) inputRef.current.value = ''
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (galleryInputRef.current) galleryInputRef.current.value = ''
   }
 
   async function handleSubmit() {
@@ -100,19 +102,38 @@ export default function MealPhotoPage() {
         className="gap-4"
       >
         {!preview ? (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="ds-card group flex aspect-square w-full max-w-sm flex-col items-center justify-center gap-3 self-center border-dashed bg-[var(--bg-inset)] text-[var(--fg-secondary)] transition-[border-color,background-color,transform] duration-premium ease-premium hover:border-[var(--border-strong)] hover:bg-[var(--bg-surface)] active:scale-[0.99]"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--fg-primary)] text-[var(--bg-canvas)]">
-              <Camera className="h-6 w-6" aria-hidden="true" />
+          <div className="flex w-full max-w-sm flex-col gap-4 self-center">
+            <div className="ds-card flex aspect-square flex-col items-center justify-center gap-3 border-dashed bg-[var(--bg-inset)] text-center text-[var(--fg-secondary)]">
+              <div className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-md)] bg-[var(--fg-primary)] text-[var(--bg-canvas)]">
+                <Camera className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <span className="text-body-m font-semibold tracking-tight text-[var(--fg-primary)]">
+                Dodaj zdjęcie posiłku
+              </span>
+              <span className="text-body-s">Możesz zrobić nowe zdjęcie albo wybrać je z galerii.</span>
             </div>
-            <span className="text-body-m font-semibold tracking-tight text-[var(--fg-primary)]">
-              Dotknij, aby zrobić zdjęcie
-            </span>
-            <span className="text-body-s">lub wybierz z galerii</span>
-          </button>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => cameraInputRef.current?.click()}
+                className="gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Zrób zdjęcie
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => galleryInputRef.current?.click()}
+                className="gap-2"
+              >
+                <ImagePlus className="h-4 w-4" />
+                Wybierz z galerii
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="relative w-full max-w-sm self-center overflow-hidden rounded-[var(--radius-md)] border border-[var(--border-subtle)] shadow-[var(--shadow-soft)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -130,10 +151,17 @@ export default function MealPhotoPage() {
       </PageSection>
 
       <input
-        ref={inputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
         className="hidden"
         onChange={handleFileChange}
       />
