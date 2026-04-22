@@ -4,7 +4,7 @@ import { evaluateGuardrails, hasBlockingGuardrail } from '@nudge/core/rules/guar
 import { selectTemplate } from '@nudge/core/planners/training/selectTemplate'
 import { fillTemplate } from '@nudge/core/planners/training/fillTemplate'
 import { generateGuidedBeginnerPlan } from '@nudge/core/planners/training/generateGuidedBeginnerPlan'
-import { logLlmCall } from '@nudge/core/llm/client'
+import { logAndRecordLlmUsage } from '@nudge/core/billing'
 import { prepareGuidedPlanContent, prepareStandardPlanContent } from '@nudge/core/planners/training/preparePlanContent'
 import type {
   ExerciseCatalogEntry,
@@ -230,7 +230,7 @@ export async function runGenerateTrainingPlanTask({
         promptId: promptData.id,
       })
 
-      const createdLlmCallId = await logLlmCall({
+      const createdLlmCallId = await logAndRecordLlmUsage({
         supabase,
         userId,
         meta: result.meta,
@@ -260,7 +260,7 @@ export async function runGenerateTrainingPlanTask({
         }),
       )
 
-      contentLlmCallId = await logLlmCall({
+      contentLlmCallId = await logAndRecordLlmUsage({
         supabase,
         userId,
         meta: preparedGuidedContent.meta,
@@ -299,7 +299,7 @@ export async function runGenerateTrainingPlanTask({
         }),
       )
 
-      contentLlmCallId = await logLlmCall({
+      contentLlmCallId = await logAndRecordLlmUsage({
         supabase,
         userId,
         meta: preparedStandardContent.meta,

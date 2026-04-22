@@ -48,12 +48,12 @@ export default async function AdminPage() {
     admin.rpc('admin_subscription_counts'),
     // MRR calculation
     admin.rpc('admin_mrr'),
-    // AI usage this month for cost per user
+    // AI usage in the current month for cost per AI-active user
     admin
       .from('user_ai_usage')
       .select('user_id, cost_usd_total')
       .eq('month_key', currentMonth),
-    // Top AI consumers last 30d
+    // Top AI consumers in the current month
     admin
       .from('user_ai_usage')
       .select('user_id, cost_usd_total, llm_calls_count, photo_analysis_count')
@@ -94,9 +94,9 @@ export default async function AdminPage() {
       (r) => r.status === 'cancelled',
     )?.count ?? 0
 
-  const totalActiveForCost = (aiUsage?.length ?? 0) || 1
+  const usersWithAiUsageThisMonth = (aiUsage?.length ?? 0) || 1
   const totalCost = aiUsage?.reduce((s, r) => s + Number(r.cost_usd_total), 0) ?? 0
-  const costPerUser = totalCost / totalActiveForCost
+  const costPerUser = totalCost / usersWithAiUsageThisMonth
   const authUsersById = new Map(
     (authUsersPage?.users ?? []).map((authUser) => [authUser.id, authUser]),
   )

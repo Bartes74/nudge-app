@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { queueAiTask } from '@/lib/aiTasks.server'
 import { dispatchInngestEvent } from '@/lib/inngest/dispatchEvent'
 import { env } from '@/lib/env'
+import { logAndRecordLlmUsage } from '@nudge/core/billing'
 import { evaluateRedFlagSymptoms } from '@nudge/core/rules/guardrails'
 import { decideBeginnerZeroProgression } from '@nudge/core/rules/beginnerZeroProgression'
 import {
@@ -14,7 +15,6 @@ import {
 } from '@nudge/core/planners/training/adaptation'
 import { extractWorkoutFeedback } from '@nudge/core/planners/training/extractWorkoutFeedback'
 import { guardWorkoutFeedbackInput } from '@nudge/core/planners/training/feedbackGuardrails'
-import { logLlmCall } from '@nudge/core/llm/client'
 import type { Database, Json, TablesInsert, TablesUpdate } from '@nudge/core/types/db'
 import { loadPlannerProfile } from '@/lib/training/loadPlannerProfile'
 import { buildTrainingPlannerContext } from '@/lib/training/buildTrainingPlannerContext'
@@ -169,7 +169,7 @@ export async function POST(
   })
 
   const feedbackLlmCallId = feedbackExtraction.meta
-    ? await logLlmCall({
+    ? await logAndRecordLlmUsage({
         supabase: adminSupabase,
         userId: user.id,
         meta: feedbackExtraction.meta,

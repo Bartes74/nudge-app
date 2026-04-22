@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { analyzeMealPhoto } from '@nudge/core/vision/analyzeMealPhoto'
-import { logLlmCall } from '@nudge/core/llm/client'
+import { logAndRecordLlmUsage } from '@nudge/core/billing'
 import { env } from '@/lib/env'
 
 const MONTHLY_COST_ALERT_USD = 5
@@ -51,12 +51,13 @@ export async function analyzeMealPhotoWithLlm(args: {
     note: args.note ?? undefined,
   })
 
-  const llmCallId = await logLlmCall({
+  const llmCallId = await logAndRecordLlmUsage({
     supabase: args.supabase,
     userId: args.userId,
     meta: result.meta,
     promptId: args.promptId,
     promptVersion: 1,
+    isPhotoAnalysis: true,
   })
 
   return { analysis: result.output, llmCallId }

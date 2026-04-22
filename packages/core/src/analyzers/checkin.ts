@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { callStructured, logLlmCall } from '../llm/client'
+import { callStructured } from '../llm/client'
+import { logAndRecordLlmUsage } from '../billing'
 
 export interface CheckinAggregates {
   weekOf: string
@@ -203,7 +204,7 @@ Zasady werdyktu:
     schemaName: 'checkin_analysis',
   })
 
-  const llmCallId = await logLlmCall({
+  const llmCallId = await logAndRecordLlmUsage({
     supabase: opts.supabase,
     userId: opts.userId,
     meta,

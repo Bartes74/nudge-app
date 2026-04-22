@@ -108,9 +108,9 @@ export function AdminDashboard({
           />
           <StatCard
             icon={<DollarSign className="h-4 w-4" />}
-            label="Koszt / user"
+            label="Koszt / user AI"
             value={`$${costPerUser.toFixed(2)}`}
-            sub="Bieżący miesiąc"
+            sub="Bieżący miesiąc · user z AI"
             tone={costAlert ? 'destructive' : 'success'}
           />
         </div>
@@ -214,7 +214,7 @@ export function AdminDashboard({
                     colSpan={4}
                     className="px-4 py-8 text-center text-body-s text-muted-foreground"
                   >
-                    Brak danych za bieżący miesiąc
+                    Brak danych o użyciu AI za bieżący miesiąc
                   </td>
                 </tr>
               )}

@@ -39,7 +39,7 @@ export interface LogLlmCallInput {
 }
 
 export async function logLlmCall(input: LogLlmCallInput): Promise<string | null> {
-  const { data } = await input.supabase
+  const { data, error } = await input.supabase
     .from('llm_calls')
     .insert({
       user_id: input.userId,
@@ -57,6 +57,11 @@ export async function logLlmCall(input: LogLlmCallInput): Promise<string | null>
     })
     .select('id')
     .single()
+
+  if (error) {
+    console.error(`logLlmCall: insert failed — ${error.message}`)
+    return null
+  }
 
   return data?.id ?? null
 }

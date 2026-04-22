@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '../types/db'
 
 export interface AIUsageIncrement {
   costUsd: number
@@ -21,7 +20,7 @@ function currentMonthKey(): string {
  * Called after every LLM invocation that is logged to llm_calls.
  */
 export async function recordAIUsage(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseClient,
   userId: string,
   usage: AIUsageIncrement,
 ): Promise<void> {

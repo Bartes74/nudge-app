@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { logLlmCall } from '@nudge/core/llm/client'
+import { logAndRecordLlmUsage } from '@nudge/core/billing'
 import {
   estimateManualMealItems,
   type ManualMealType,
@@ -132,7 +132,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         warnings.push(...estimation.output.user_warnings)
       }
 
-      llmCallId = await logLlmCall({
+      llmCallId = await logAndRecordLlmUsage({
         supabase: createAdminClient(),
         userId: user.id,
         meta: estimation.meta,

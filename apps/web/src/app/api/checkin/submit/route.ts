@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { computeAggregates, analyzeCheckin } from '@nudge/core/analyzers/checkin'
 
 const bodySchema = z.object({
@@ -17,6 +18,7 @@ const bodySchema = z.object({
 
 export async function POST(request: Request): Promise<NextResponse> {
   const supabase = await createClient()
+  const adminSupabase = createAdminClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -93,7 +95,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { verdict, llmCallId } = await analyzeCheckin(aggregates, subjective, profile, {
     apiKey,
-    supabase,
+    supabase: adminSupabase,
     userId: user.id,
   })
 
